@@ -15,6 +15,12 @@ export function ImportDropzone({
     <section
       className={`import-dropzone${compact ? ' import-dropzone--compact' : ''}`}
       aria-label="名单导入"
+      onDragOver={(event) => {
+        event.preventDefault();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+      }}
     >
       <div>
         <p className="section-kicker">{hasRoster ? '名单管理' : '第一步'}</p>

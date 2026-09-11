@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import * as drawEngine from '../shared/drawEngine';
 import type { ImportResult, NamePickerApi } from '../shared/ipcTypes';
 import type { RosterState, StudentRecord } from '../shared/types';
@@ -55,6 +55,12 @@ function createDeferred<T>() {
     reject = rejectPromise;
   });
   return { promise, resolve, reject };
+}
+
+async function flushPromises(): Promise<void> {
+  for (let index = 0; index < 6; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 describe('课堂主界面', () => {
@@ -168,6 +174,128 @@ describe('课堂主界面', () => {
     expect(api.saveState).toHaveBeenCalledTimes(1);
   });
 
+  it('非动画抽取在保存完成前拒绝重复操作，完成后才允许继续', async () => {
+    const pendingSaves: Array<{
+      deferred: ReturnType<typeof createDeferred<void>>;
+    }> = [];
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+      saveState: vi.fn(() => {
+        const deferred = createDeferred<void>();
+        pendingSaves.push({ deferred });
+        return deferred.promise;
+      }),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+
+    fireEvent.click(startButton);
+    fireEvent.click(startButton);
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    expect(pendingSaves).toHaveLength(1);
+
+    pendingSaves[0].deferred.resolve();
+    await act(async () => {
+      await pendingSaves[0].deferred.promise;
+      await flushPromises();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    fireEvent.click(startButton);
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+  });
+
+  it('重置本轮在保存完成前拒绝重复操作，完成后才允许继续', async () => {
+    const pendingSaves: Array<{
+      deferred: ReturnType<typeof createDeferred<void>>;
+    }> = [];
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+      saveState: vi.fn(() => {
+        const deferred = createDeferred<void>();
+        pendingSaves.push({ deferred });
+        return deferred.promise;
+      }),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    const resetButton = screen.getByRole('button', { name: '重置本轮' });
+
+    fireEvent.click(resetButton);
+    fireEvent.click(resetButton);
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    expect(pendingSaves).toHaveLength(1);
+
+    pendingSaves[0].deferred.resolve();
+    await act(async () => {
+      await pendingSaves[0].deferred.promise;
+      await flushPromises();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    fireEvent.click(resetButton);
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+  });
+
+  it('动画结果展示但保存未完成时仍拒绝重复操作，二者完成后才允许继续', async () => {
+    const pendingSaves: Array<{
+      deferred: ReturnType<typeof createDeferred<void>>;
+    }> = [];
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({
+          settings: { ...savedSettings, animationEnabled: true, animationDurationMs: 100 },
+        }),
+      ),
+      saveState: vi.fn(() => {
+        const deferred = createDeferred<void>();
+        pendingSaves.push({ deferred });
+        return deferred.promise;
+      }),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    vi.useFakeTimers();
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+    fireEvent.click(startButton);
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('heading', { name: '本次抽取结果' })).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(screen.getByRole('heading', { name: '本次抽取结果' })).toBeInTheDocument();
+
+    fireEvent.click(startButton);
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+
+    pendingSaves[0].deferred.resolve();
+    await act(async () => {
+      await pendingSaves[0].deferred.promise;
+      await flushPromises();
+    });
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    fireEvent.click(startButton);
+    await act(async () => {
+      await flushPromises();
+    });
+    expect(api.saveState).toHaveBeenCalledTimes(2);
+  });
+
   it('错误提示只面向教师，不暴露技术细节', async () => {
     const api = installApi({
       importRoster: vi.fn().mockRejectedValue(new Error('C:\\\\secret\\\\stack trace')),
@@ -210,17 +338,27 @@ describe('课堂主界面', () => {
     expect(api.saveState).not.toHaveBeenCalled();
   });
 
-  it('导入入口不声明或响应拖放能力', async () => {
+  it('阻止拖放默认行为且不调用导入', async () => {
     const api = installApi();
 
     render(<App />);
     expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
 
     expect(screen.queryByText(/拖/)).not.toBeInTheDocument();
-    fireEvent.drop(screen.getByRole('region', { name: '名单导入' }), {
-      dataTransfer: { files: [new File(['甲同学'], 'roster.txt', { type: 'text/plain' })] },
-    });
+    const importRegion = screen.getByRole('region', { name: '名单导入' });
+    const dataTransfer = {
+      files: [new File(['甲同学'], 'roster.txt', { type: 'text/plain' })],
+    };
+    const dragOverEvent = createEvent.dragOver(importRegion, { dataTransfer });
+    const dropEvent = createEvent.drop(importRegion, { dataTransfer });
+    const dragOverPreventDefault = vi.spyOn(dragOverEvent, 'preventDefault');
+    const dropPreventDefault = vi.spyOn(dropEvent, 'preventDefault');
 
+    fireEvent(importRegion, dragOverEvent);
+    fireEvent(importRegion, dropEvent);
+
+    expect(dragOverPreventDefault).toHaveBeenCalledTimes(1);
+    expect(dropPreventDefault).toHaveBeenCalledTimes(1);
     expect(api.importRoster).not.toHaveBeenCalled();
   });
 
@@ -314,7 +452,7 @@ describe('课堂主界面', () => {
     ).toEqual(drawnStudents.map((student) => student.id));
   });
 
-  it('连续抽取和重置按调用顺序串行保存，最终保留最新快照', async () => {
+  it('抽取保存完成后才允许重置，并最终保留最新快照', async () => {
     const pendingSaves: Array<{
       state: RosterState;
       deferred: ReturnType<typeof createDeferred<void>>;
@@ -343,6 +481,13 @@ describe('课堂主界面', () => {
     expect(pendingSaves[0].state.students.some((student) => student.drawnThisRound)).toBe(true);
 
     pendingSaves[0].deferred.resolve();
+    await act(async () => {
+      await pendingSaves[0].deferred.promise;
+      await flushPromises();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
     expect(pendingSaves[1].state.students.every((student) => !student.drawnThisRound)).toBe(true);
 
@@ -372,8 +517,14 @@ describe('课堂主界面', () => {
 
     expect(api.saveState).toHaveBeenCalledTimes(1);
     pendingSaves[0].deferred.reject(new Error('写入失败'));
-    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      await flushPromises();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
     expect(await screen.findByRole('alert')).toHaveTextContent('名单状态保存失败，请重试。');
+
+    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
 
     pendingSaves[1].deferred.resolve();
     await waitFor(() => expect(pendingSaves).toHaveLength(2));

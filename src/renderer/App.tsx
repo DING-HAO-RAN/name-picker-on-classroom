@@ -259,7 +259,24 @@ export function App() {
       };
       updateRoster(nextState);
       updateAnimationEnabled(shouldAnimate);
-      void saveState(nextState);
+
+      let saveCompleted = false;
+      let resultDisplayed = false;
+      const releaseInteractionLock = (): void => {
+        if (saveCompleted && resultDisplayed) {
+          interactionLockRef.current = false;
+        }
+      };
+      void saveState(nextState).then(
+        () => {
+          saveCompleted = true;
+          releaseInteractionLock();
+        },
+        () => {
+          saveCompleted = true;
+          releaseInteractionLock();
+        },
+      );
 
       if (drawResult.shortage) {
         setErrorMessage(`仅抽到 ${drawResult.selected.length} 人，当前可抽取学生不足。`);
@@ -270,7 +287,8 @@ export function App() {
           setErrorMessage('本轮没有可抽取的学生，请先重置本轮。');
         }
         setResultStudents([]);
-        interactionLockRef.current = false;
+        resultDisplayed = true;
+        releaseInteractionLock();
         return;
       }
 
@@ -278,7 +296,8 @@ export function App() {
       if (!shouldAnimate || duration === 0) {
         setResultStudents(drawResult.selected);
         setIsAnimating(false);
-        interactionLockRef.current = false;
+        resultDisplayed = true;
+        releaseInteractionLock();
         return;
       }
 
@@ -289,9 +308,10 @@ export function App() {
       setResultStudents([]);
       animationTimerRef.current = window.setTimeout(() => {
         animationTimerRef.current = null;
-        interactionLockRef.current = false;
         setResultStudents(drawResult.selected);
         setIsAnimating(false);
+        resultDisplayed = true;
+        releaseInteractionLock();
       }, duration);
     },
     [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster],
@@ -317,8 +337,14 @@ export function App() {
     updateRoster(nextState);
     setResultStudents([]);
     setErrorMessage(null);
-    void saveState(nextState);
-    interactionLockRef.current = false;
+    void saveState(nextState).then(
+      () => {
+        interactionLockRef.current = false;
+      },
+      () => {
+        interactionLockRef.current = false;
+      },
+    );
   }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
 
   const hasRoster = roster.students.length > 0;
