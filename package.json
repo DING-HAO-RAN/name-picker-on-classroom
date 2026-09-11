@@ -1,0 +1,43 @@
+{
+  "name": "name-picker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "离线课堂名字抽取器桌面应用",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "test": "vitest",
+    "test:e2e": "playwright test --pass-with-no-tests e2e",
+    "package:win": "electron-builder --win --x64"
+  },
+  "dependencies": {
+    "electron": "36.3.2",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.51.1",
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.3.0",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "@vitejs/plugin-react": "4.4.1",
+    "electron-builder": "26.0.12",
+    "electron-vite": "3.1.0",
+    "jsdom": "26.0.0",
+    "typescript": "5.8.3",
+    "vite": "6.3.5",
+    "vitest": "3.1.3"
+  },
+  "build": {
+    "appId": "com.namepicker.desktop",
+    "productName": "名字抽取器",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ]
+  }
+}

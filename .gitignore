@@ -4,6 +4,8 @@ release/
 coverage/
 playwright-report/
 test-results/
+screenshots/
+**/__screenshots__/
 .superpowers/
 .worktrees/
 .env*
