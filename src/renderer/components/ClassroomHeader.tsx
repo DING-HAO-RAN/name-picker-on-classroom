@@ -1,9 +1,10 @@
 export interface ClassroomHeaderProps {
   sourceName: string;
   studentCount: number;
+  onOpenSettings?: () => void;
 }
 
-export function ClassroomHeader({ sourceName, studentCount }: ClassroomHeaderProps) {
+export function ClassroomHeader({ sourceName, studentCount, onOpenSettings }: ClassroomHeaderProps) {
   return (
     <header className="classroom-header">
       <div>
@@ -14,6 +15,16 @@ export function ClassroomHeader({ sourceName, studentCount }: ClassroomHeaderPro
       <div className="classroom-summary" aria-label="课堂名单概况">
         <p className="summary-count">共 {studentCount} 名学生</p>
         <p className="summary-source">{sourceName ? `当前名单：${sourceName}` : '尚未导入名单'}</p>
+        {onOpenSettings ? (
+          <button
+            type="button"
+            className="settings-trigger secondary-button"
+            aria-label="打开设置"
+            onClick={onOpenSettings}
+          >
+            设置
+          </button>
+        ) : null}
       </div>
     </header>
   );

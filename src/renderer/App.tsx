@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { drawStudents, resetRound } from '../shared/drawEngine';
-import type { RosterState, StudentRecord } from '../shared/types';
+import { drawStudents, resetRound, validateWeight } from '../shared/drawEngine';
+import type { DrawHistoryItem, RosterState, StudentRecord } from '../shared/types';
 import { ClassroomHeader } from './components/ClassroomHeader';
 import { DrawControls } from './components/DrawControls';
 import { ImportDropzone } from './components/ImportDropzone';
 import { ResultCards } from './components/ResultCards';
+import { SettingsDrawer } from './components/SettingsDrawer';
 import { ToastMessage } from './components/ToastMessage';
 
 const DEFAULT_SETTINGS = {
@@ -12,6 +13,23 @@ const DEFAULT_SETTINGS = {
   animationDurationMs: 800,
   theme: 'light' as const,
 };
+const MAX_HISTORY_ITEMS = 50;
+
+function createHistoryId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `draw-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createHistoryItem(students: StudentRecord[]): DrawHistoryItem {
+  return {
+    id: createHistoryId(),
+    drawnAt: new Date().toISOString(),
+    studentNames: students.map((student) => student.name),
+  };
+}
 
 function createEmptyState(): RosterState {
   return {
@@ -57,6 +75,7 @@ export function App() {
   const [isImporting, setIsImporting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
   const rosterRef = useRef(roster);
   const animationEnabledRef = useRef(animationEnabled);
   const saveQueueRef = useRef<Promise<void> | null>(null);
@@ -100,6 +119,70 @@ export function App() {
     );
     return queuedSave;
   }, []);
+
+  const handleWeightChange = useCallback(
+    (id: string, weight: number): void => {
+      if (
+        isLoading ||
+        isImporting ||
+        isAnimating ||
+        !validateWeight(weight)
+      ) {
+        return;
+      }
+
+      const currentRoster = rosterRef.current;
+      if (!currentRoster.students.some((student) => student.id === id)) {
+        return;
+      }
+
+      const nextState: RosterState = {
+        ...currentRoster,
+        students: currentRoster.students.map((student) =>
+          student.id === id ? { ...student, weight } : student,
+        ),
+      };
+      updateRoster(nextState);
+      void saveState(nextState);
+    },
+    [isAnimating, isImporting, isLoading, saveState, updateRoster],
+  );
+
+  const handleResetWeights = useCallback((): void => {
+    if (isLoading || isImporting || isAnimating) {
+      return;
+    }
+
+    const currentRoster = rosterRef.current;
+    if (currentRoster.students.length === 0) {
+      return;
+    }
+
+    const nextState: RosterState = {
+      ...currentRoster,
+      students: currentRoster.students.map((student) => ({ ...student, weight: 1 })),
+    };
+    updateRoster(nextState);
+    void saveState(nextState);
+  }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
+
+  const handleClearHistory = useCallback((): void => {
+    if (isLoading || isImporting || isAnimating) {
+      return;
+    }
+
+    const currentRoster = rosterRef.current;
+    if (currentRoster.history.length === 0) {
+      return;
+    }
+
+    const nextState: RosterState = {
+      ...currentRoster,
+      history: [],
+    };
+    updateRoster(nextState);
+    void saveState(nextState);
+  }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -249,9 +332,13 @@ export function App() {
       const shouldAnimate = animate === animationEnabledRef.current
         ? animate
         : animationEnabledRef.current;
+      const nextHistory = drawResult.selected.length > 0
+        ? [createHistoryItem(drawResult.selected), ...currentRoster.history].slice(0, MAX_HISTORY_ITEMS)
+        : currentRoster.history;
       const nextState: RosterState = {
         ...currentRoster,
         students: drawResult.updatedStudents,
+        history: nextHistory,
         settings: {
           ...currentRoster.settings,
           animationEnabled: shouldAnimate,
@@ -352,7 +439,11 @@ export function App() {
 
   return (
     <main className="app-shell">
-      <ClassroomHeader sourceName={roster.sourceName} studentCount={roster.students.length} />
+      <ClassroomHeader
+        sourceName={roster.sourceName}
+        studentCount={roster.students.length}
+        onOpenSettings={() => setIsSettingsDrawerOpen(true)}
+      />
 
       {isLoading ? (
         <p className="loading-message" role="status">
@@ -412,6 +503,18 @@ export function App() {
           ) : null}
         </aside>
       </div>
+
+      {isSettingsDrawerOpen ? (
+        <SettingsDrawer
+          students={roster.students}
+          history={roster.history}
+          disabled={isLoading || isImporting || isAnimating}
+          onWeightChange={handleWeightChange}
+          onResetWeights={handleResetWeights}
+          onClearHistory={handleClearHistory}
+          onClose={() => setIsSettingsDrawerOpen(false)}
+        />
+      ) : null}
 
       <ToastMessage message={errorMessage} onDismiss={() => setErrorMessage(null)} />
     </main>
