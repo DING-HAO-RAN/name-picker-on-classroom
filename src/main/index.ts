@@ -1,6 +1,9 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { join } from 'node:path';
+import { createIpcHandlers, registerIpcHandlers } from './ipcHandlers';
+import { importRoster } from './importers/importRoster';
 import { getDevelopmentRendererUrl } from './renderer-url';
+import { LocalStore } from './storage/localStore';
 
 function createMainWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -30,6 +33,13 @@ function createMainWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  const handlers = createIpcHandlers({
+    showOpenDialog: (options) => dialog.showOpenDialog(options),
+    importRoster,
+    store: new LocalStore(app.getPath('userData')),
+  });
+  registerIpcHandlers(ipcMain, handlers);
+
   createMainWindow();
 
   app.on('activate', () => {

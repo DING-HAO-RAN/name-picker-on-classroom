@@ -1,14 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-export interface NamePickerApi {}
-
-declare global {
-  interface Window {
-    namePicker: NamePickerApi;
-  }
-}
-
 export function NamePickerApp() {
   return (
     <main className="app-shell">
