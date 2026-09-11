@@ -1,0 +1,13 @@
+node_modules/
+dist/
+release/
+coverage/
+playwright-report/
+test-results/
+.superpowers/
+.worktrees/
+.env*
+*.log
+*.tsbuildinfo
+.vscode/
+.idea/
