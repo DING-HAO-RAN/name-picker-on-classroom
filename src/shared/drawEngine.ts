@@ -26,7 +26,14 @@ export function drawStudents(
   const selectedIndices = new Set<number>();
 
   while (selected.length < count && remaining.length > 0) {
-    const totalWeight = remaining.reduce((total, { student }) => total + student.weight, 0);
+    const maxWeight = remaining.reduce(
+      (maximum, { student }) => Math.max(maximum, student.weight),
+      0,
+    );
+    const totalWeight = remaining.reduce(
+      (total, { student }) => total + student.weight / maxWeight,
+      0,
+    );
     if (totalWeight <= 0) {
       break;
     }
@@ -36,7 +43,7 @@ export function drawStudents(
     let winnerIndex = remaining.length - 1;
 
     for (let index = 0; index < remaining.length; index += 1) {
-      cumulativeWeight += remaining[index].student.weight;
+      cumulativeWeight += remaining[index].student.weight / maxWeight;
       if (target < cumulativeWeight) {
         winnerIndex = index;
         break;

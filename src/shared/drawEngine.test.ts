@@ -106,6 +106,30 @@ describe('加权无放回抽取核心', () => {
     expect(result.shortage).toBe(false);
   });
 
+  it('多个 Number.MAX_VALUE 权重相加时 random 为零仍选择首项', () => {
+    const students = [
+      student('max-a', Number.MAX_VALUE),
+      student('max-b', Number.MAX_VALUE),
+    ];
+
+    const result = drawStudents(students, 1, () => 0);
+
+    expect(result.selected.map((item) => item.id)).toEqual(['max-a']);
+    expect(result.shortage).toBe(false);
+  });
+
+  it('极大有限权重相加溢出时仍按权重比例选择', () => {
+    const students = [
+      student('max', Number.MAX_VALUE),
+      student('half-max', Number.MAX_VALUE / 2),
+    ];
+
+    const result = drawStudents(students, 1, () => 0.5);
+
+    expect(result.selected.map((item) => item.id)).toEqual(['max']);
+    expect(result.shortage).toBe(false);
+  });
+
   it.each([
     [0, true],
     [1, true],
