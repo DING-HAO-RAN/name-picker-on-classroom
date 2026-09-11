@@ -16,8 +16,11 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
   },
   renderer: {
+    base: './',
     build: {
       outDir: 'dist/renderer',
+      assetsDir: 'assets',
+      sourcemap: false,
     },
     resolve: {
       alias: {

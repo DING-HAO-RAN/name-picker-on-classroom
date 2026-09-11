@@ -1,24 +1,25 @@
 {
   "name": "name-picker",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "author": "NamePicker",
   "description": "离线课堂名字抽取器桌面应用",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "test": "vitest",
-    "test:e2e": "playwright test --pass-with-no-tests e2e",
-    "package:win": "electron-builder --win --x64"
+    "test:e2e": "npm run build && playwright test",
+    "package:win": "npm run build && electron-builder --win nsis portable --x64 --publish never"
   },
   "dependencies": {
-    "electron": "36.3.2",
     "papaparse": "5.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "xlsx": "0.18.5"
   },
   "devDependencies": {
+    "electron": "36.3.2",
     "@playwright/test": "1.51.1",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",
@@ -35,12 +36,39 @@
   },
   "build": {
     "appId": "com.namepicker.desktop",
-    "productName": "名字抽取器",
+    "productName": "NamePicker",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*"
-    ]
+    ],
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NamePicker",
+      "artifactName": "${productName} Setup-${version}.${ext}",
+      "include": "build/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}.${ext}"
+    }
   }
 }
