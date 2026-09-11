@@ -202,7 +202,7 @@ exit $overall
 [2] high-confidence credential/key patterns: matches=0; fixture placeholders not counted; exit code=0
 [3] runtime network APIs (source/config scope): matches=0; README/docs excluded because they contain audit wording; exit code=0
 [4] production preload Node imports/exposure: matches=0; static check passed; exit code=0
-Security scan overall exit code=0; tracked files after exclusions=50; audited source/config/README scope=46
+Security scan overall exit code=0; tracked files after exclusions=48; audited source/config/README scope=46
 ```
 
 ### preload 与打包后 API
@@ -273,7 +273,7 @@ git check-ignore -v --no-index dist/main/index.js release/NamePicker-1.0.0.exe c
 .gitignore:7:screenshots/         screenshots/example.png
 ```
 
-因此 `dist/`、`release/`、覆盖率、Playwright 报告、测试结果和截图输出均被忽略。最终提交只包含 README 与本清单；`task-8-report.md` 位于被忽略的 `.superpowers/` 目录，提交后追加最终 HEAD/status 作为审计尾证据。
+因此 `dist/`、`release/`、覆盖率、Playwright 报告、测试结果和截图输出均被忽略。`a2847cc` 仅移除两个误跟踪的 `.superpowers` 索引条目；`README.md` 与本清单仍是发布文档，功能源码未改；`task-8-report.md` 本地保留且位于被忽略的 `.superpowers/` 目录，提交后追加最终 HEAD/status 作为审计尾证据。
 
 ## 已知限制与发布前动作
 
