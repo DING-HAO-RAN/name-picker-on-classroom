@@ -97,6 +97,73 @@ describe('设置抽屉', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('按 Escape 关闭设置并恢复触发按钮焦点', async () => {
+    render(<DrawerHarness />);
+    const trigger = screen.getByRole('button', { name: '打开设置' });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    await waitFor(() => expect(screen.getByRole('button', { name: '关闭设置' })).toHaveFocus());
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '设置' })).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    expect(dialog).not.toBeInTheDocument();
+  });
+
+  it('按 Tab 和 Shift+Tab 在设置对话内循环焦点', async () => {
+    render(<DrawerHarness />);
+    const trigger = screen.getByRole('button', { name: '打开设置' });
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    await waitFor(() => expect(screen.getByRole('button', { name: '关闭设置' })).toHaveFocus());
+    const focusableElements = Array.from(
+      dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])'),
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    expect(firstElement).toBeDefined();
+    expect(lastElement).toBeDefined();
+
+    lastElement.focus();
+    fireEvent.keyDown(dialog, { key: 'Tab' });
+    expect(firstElement).toHaveFocus();
+
+    firstElement.focus();
+    fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+    expect(lastElement).toHaveFocus();
+  });
+
+  it('显示清除确认框时把焦点移入取消按钮，并可完成取消和确认流程', async () => {
+    const onClearHistory = vi.fn();
+    render(
+      <HistoryPanel history={[createHistoryItem(0)]} onClearHistory={onClearHistory} />,
+    );
+
+    const clearButton = screen.getByRole('button', { name: '清除历史记录' });
+    clearButton.focus();
+    fireEvent.click(clearButton);
+
+    const confirmation = screen.getByRole('alertdialog', { name: '确认清除历史记录' });
+    const cancelButton = within(confirmation).getByRole('button', { name: '取消' });
+    await waitFor(() => expect(cancelButton).toHaveFocus());
+
+    fireEvent.click(cancelButton);
+    expect(screen.queryByRole('alertdialog', { name: '确认清除历史记录' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '清除历史记录' }));
+    const secondConfirmation = screen.getByRole('alertdialog', { name: '确认清除历史记录' });
+    const confirmButton = within(secondConfirmation).getByRole('button', { name: '确认清除历史记录' });
+    await waitFor(() => expect(within(secondConfirmation).getByRole('button', { name: '取消' })).toHaveFocus());
+
+    fireEvent.click(confirmButton);
+    expect(onClearHistory).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alertdialog', { name: '确认清除历史记录' })).not.toBeInTheDocument();
+  });
+
   it('支持按姓名搜索、提示同名并把权重 0 设为暂不参与', () => {
     const onWeightChange = vi.fn();
     render(
@@ -159,6 +226,31 @@ describe('设置抽屉', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '恢复默认权重' }));
     expect(onResetWeights).toHaveBeenCalledTimes(1);
+  });
+
+  it('恢复默认权重后 App 状态和保存快照中的权重都为 1', async () => {
+    const loadedStudents = students.map((student, index) => ({
+      ...student,
+      weight: index + 0.25,
+    }));
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(createState({ students: loadedStudents })),
+    });
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    fireEvent.click(within(dialog).getByRole('button', { name: '恢复默认权重' }));
+
+    expect(
+      within(dialog)
+        .getAllByRole('spinbutton')
+        .map((input) => (input as HTMLInputElement).value),
+    ).toEqual(['1', '1', '1']);
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    const savedStudents = vi.mocked(api.saveState).mock.calls[0][0].students;
+    expect(savedStudents.map((student) => student.weight)).toEqual([1, 1, 1]);
   });
 
   it('点击遮罩关闭抽屉', () => {
@@ -229,6 +321,35 @@ describe('设置与 App 保存接线', () => {
     expect(savedState.history).toHaveLength(2);
     expect(savedState.history[0].studentNames).toHaveLength(1);
     expect(savedState.history[0].drawnAt).not.toHaveLength(0);
+  });
+
+  it('加载 51 条历史后立即保存最多 50 条，并保留后续设置保存', async () => {
+    const history = Array.from({ length: 51 }, (_, index) => createHistoryItem(index));
+    const loadedSettings = { ...settings, animationEnabled: true, animationDurationMs: 1200 };
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(createState({ history, settings: loadedSettings })),
+    });
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    const normalizedState = vi.mocked(api.saveState).mock.calls[0][0];
+    expect(normalizedState.history).toEqual(history.slice(0, 50));
+    expect(normalizedState.settings).toEqual(loadedSettings);
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    expect(within(dialog).getByText('50 条')).toBeInTheDocument();
+    expect(within(dialog).queryByText('学生50')).not.toBeInTheDocument();
+
+    fireEvent.change(
+      within(dialog).getAllByRole('spinbutton', { name: '林小雨权重' })[0],
+      { target: { value: '0' } },
+    );
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    const settingState = vi.mocked(api.saveState).mock.calls[1][0];
+    expect(settingState.history).toHaveLength(50);
+    expect(settingState.students[0].weight).toBe(0);
   });
 
   it('清除历史需通过 App 保存而不是直接清除文件', async () => {

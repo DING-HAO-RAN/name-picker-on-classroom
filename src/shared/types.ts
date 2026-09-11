@@ -1,3 +1,5 @@
+export const MAX_HISTORY_ITEMS = 50;
+
 export interface StudentRecord {
   id: string;
   name: string;

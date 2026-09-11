@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { MAX_HISTORY_ITEMS } from '../../shared/types';
 import type { DrawHistoryItem } from '../../shared/types';
 
 export interface HistoryPanelProps {
@@ -7,7 +8,7 @@ export interface HistoryPanelProps {
   disabled?: boolean;
 }
 
-export const MAX_HISTORY_ITEMS = 50;
+export { MAX_HISTORY_ITEMS };
 
 function formatDrawTime(drawnAt: string): string {
   const date = new Date(drawnAt);
@@ -26,7 +27,14 @@ function formatDrawTime(drawnAt: string): string {
 
 export function HistoryPanel({ history, onClearHistory, disabled = false }: HistoryPanelProps) {
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const visibleHistory = history.slice(0, MAX_HISTORY_ITEMS);
+
+  useEffect(() => {
+    if (isConfirmingClear) {
+      cancelButtonRef.current?.focus();
+    }
+  }, [isConfirmingClear]);
 
   useEffect(() => {
     if (history.length === 0) {
@@ -87,7 +95,12 @@ export function HistoryPanel({ history, onClearHistory, disabled = false }: Hist
         <div className="history-clear-confirm" role="alertdialog" aria-label="确认清除历史记录">
           <p>确定清除全部历史记录？</p>
           <div className="history-confirm-actions">
-            <button type="button" className="secondary-button" onClick={() => setIsConfirmingClear(false)}>
+            <button
+              ref={cancelButtonRef}
+              type="button"
+              className="secondary-button"
+              onClick={() => setIsConfirmingClear(false)}
+            >
               取消
             </button>
             <button type="button" className="primary-button" onClick={confirmClear}>

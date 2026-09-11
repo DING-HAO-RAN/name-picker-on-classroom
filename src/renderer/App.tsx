@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { drawStudents, resetRound, validateWeight } from '../shared/drawEngine';
+import { MAX_HISTORY_ITEMS } from '../shared/types';
 import type { DrawHistoryItem, RosterState, StudentRecord } from '../shared/types';
 import { ClassroomHeader } from './components/ClassroomHeader';
 import { DrawControls } from './components/DrawControls';
@@ -13,7 +14,6 @@ const DEFAULT_SETTINGS = {
   animationDurationMs: 800,
   theme: 'light' as const,
 };
-const MAX_HISTORY_ITEMS = 50;
 
 function createHistoryId(): string {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
@@ -29,6 +29,10 @@ function createHistoryItem(students: StudentRecord[]): DrawHistoryItem {
     drawnAt: new Date().toISOString(),
     studentNames: students.map((student) => student.name),
   };
+}
+
+function normalizeHistory(history: DrawHistoryItem[]): DrawHistoryItem[] {
+  return history.slice(0, MAX_HISTORY_ITEMS);
 }
 
 function createEmptyState(): RosterState {
@@ -141,6 +145,7 @@ export function App() {
         students: currentRoster.students.map((student) =>
           student.id === id ? { ...student, weight } : student,
         ),
+        history: normalizeHistory(currentRoster.history),
       };
       updateRoster(nextState);
       void saveState(nextState);
@@ -161,6 +166,7 @@ export function App() {
     const nextState: RosterState = {
       ...currentRoster,
       students: currentRoster.students.map((student) => ({ ...student, weight: 1 })),
+      history: normalizeHistory(currentRoster.history),
     };
     updateRoster(nextState);
     void saveState(nextState);
@@ -204,9 +210,20 @@ export function App() {
         }
 
         if (savedState) {
-          updateRoster(savedState);
-          updateAnimationEnabled(savedState.settings.animationEnabled);
+          const normalizedState: RosterState = {
+            ...savedState,
+            history: normalizeHistory(savedState.history),
+          };
+          updateRoster(normalizedState);
+          updateAnimationEnabled(normalizedState.settings.animationEnabled);
           setSelectedCount(1);
+
+          if (
+            hasValidRoster(normalizedState) &&
+            normalizedState.history.length !== savedState.history.length
+          ) {
+            await saveState(normalizedState);
+          }
         }
       } catch {
         if (!disposed) {
@@ -229,7 +246,7 @@ export function App() {
       }
       interactionLockRef.current = false;
     };
-  }, [updateAnimationEnabled, updateRoster]);
+  }, [saveState, updateAnimationEnabled, updateRoster]);
 
   const handleImport = useCallback(async (): Promise<void> => {
     const api = getNamePickerApi();
@@ -289,6 +306,7 @@ export function App() {
       const currentRoster = rosterRef.current;
       const nextState: RosterState = {
         ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
         settings: {
           ...currentRoster.settings,
           animationEnabled: enabled,
@@ -333,8 +351,8 @@ export function App() {
         ? animate
         : animationEnabledRef.current;
       const nextHistory = drawResult.selected.length > 0
-        ? [createHistoryItem(drawResult.selected), ...currentRoster.history].slice(0, MAX_HISTORY_ITEMS)
-        : currentRoster.history;
+        ? normalizeHistory([createHistoryItem(drawResult.selected), ...currentRoster.history])
+        : normalizeHistory(currentRoster.history);
       const nextState: RosterState = {
         ...currentRoster,
         students: drawResult.updatedStudents,
@@ -420,6 +438,7 @@ export function App() {
     const nextState: RosterState = {
       ...currentRoster,
       students: resetRound(currentRoster.students),
+      history: normalizeHistory(currentRoster.history),
     };
     updateRoster(nextState);
     setResultStudents([]);
