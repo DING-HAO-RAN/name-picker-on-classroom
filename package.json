@@ -10,7 +10,7 @@
     "build": "electron-vite build",
     "test": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "package:win": "npm run build && electron-builder --win nsis portable --x64 --publish never"
+    "package:win": "npm run build && electron-builder --config electron-builder.config.cjs --win nsis portable --x64 --publish never"
   },
   "dependencies": {
     "papaparse": "5.5.3",
@@ -56,7 +56,7 @@
         }
       ],
       "icon": "build/icon.ico",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": true
     },
     "nsis": {
       "oneClick": false,

@@ -5,6 +5,7 @@ export interface DrawControlsProps {
   animationEnabled: boolean;
   disabled?: boolean;
   isAnimating?: boolean;
+  isSaving?: boolean;
   onCountChange: (count: number) => void;
   onAnimationChange: (enabled: boolean) => void;
   onDraw: (count: number, animate: boolean) => void;
@@ -18,6 +19,7 @@ export function DrawControls({
   animationEnabled,
   disabled = false,
   isAnimating = false,
+  isSaving = false,
   onCountChange,
   onAnimationChange,
   onDraw,
@@ -26,7 +28,7 @@ export function DrawControls({
   const hasCandidates = maxCount > 0;
   const upperBound = Math.max(1, maxCount);
   const safeCount = Math.min(Math.max(1, count), upperBound);
-  const controlsDisabled = disabled || isAnimating;
+  const controlsDisabled = disabled || isAnimating || isSaving;
 
   function changeCount(nextCount: number): void {
     if (!hasCandidates || controlsDisabled) {
@@ -51,7 +53,15 @@ export function DrawControls({
           <p className="section-kicker">课堂操作</p>
           <h2 id="draw-controls-title">准备抽取</h2>
         </div>
-        {isAnimating ? <span className="control-status">结果准备中</span> : null}
+        <span
+          className="control-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label="名单保存状态"
+        >
+          {isSaving ? '正在保存…' : isAnimating ? '结果准备中' : '已保存'}
+        </span>
       </div>
 
       <div className="count-control">
@@ -109,7 +119,7 @@ export function DrawControls({
           className="primary-button draw-button"
           type="button"
           disabled={controlsDisabled || !hasCandidates}
-          aria-busy={isAnimating}
+          aria-busy={isAnimating || isSaving}
           onClick={() => onDraw(safeCount, animationEnabled)}
         >
           {isAnimating ? '正在抽取…' : '开始抽取'}

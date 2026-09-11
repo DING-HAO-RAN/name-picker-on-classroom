@@ -1,6 +1,7 @@
 export interface ImportDropzoneProps {
   onImport: () => void | Promise<void>;
   isImporting?: boolean;
+  disabled?: boolean;
   hasRoster?: boolean;
   compact?: boolean;
 }
@@ -8,6 +9,7 @@ export interface ImportDropzoneProps {
 export function ImportDropzone({
   onImport,
   isImporting = false,
+  disabled = false,
   hasRoster = false,
   compact = false,
 }: ImportDropzoneProps) {
@@ -35,7 +37,7 @@ export function ImportDropzone({
       <button
         className="secondary-button import-button"
         type="button"
-        disabled={isImporting}
+        disabled={disabled || isImporting}
         onClick={() => void onImport()}
       >
         {isImporting ? '正在导入…' : '导入名单'}

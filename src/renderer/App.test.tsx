@@ -107,7 +107,7 @@ describe('课堂主界面', () => {
   });
 
   it('支持抽取人数步进器和动画开关', async () => {
-    installApi({ loadState: vi.fn().mockResolvedValue(createState()) });
+    const api = installApi({ loadState: vi.fn().mockResolvedValue(createState()) });
 
     render(<App />);
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
@@ -122,6 +122,10 @@ describe('课堂主界面', () => {
     expect(countInput).toHaveValue(1);
     fireEvent.click(screen.getByRole('checkbox', { name: '显示抽取动画' }));
     expect(screen.getByRole('checkbox', { name: '显示抽取动画' })).not.toBeChecked();
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await flushPromises();
+    });
   });
 
   it('关闭动画时立即展示结果，重置本轮也会保存', async () => {
@@ -246,6 +250,34 @@ describe('课堂主界面', () => {
     expect(api.saveState).toHaveBeenCalledTimes(1);
     fireEvent.click(resetButton);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+  });
+
+  it('保存期间显示可观察状态并禁用会改变名单的控件', async () => {
+    const saveDeferred = createDeferred<void>();
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+      saveState: vi.fn(() => saveDeferred.promise),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+
+    fireEvent.click(startButton);
+
+    const saveStatus = screen.getByRole('status', { name: '名单保存状态' });
+    await waitFor(() => expect(saveStatus).toHaveTextContent('正在保存…'));
+    expect(startButton).toBeDisabled();
+    expect(screen.getByRole('button', { name: '重置本轮' })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: '显示抽取动画' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '打开设置' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '导入名单' })).toBeDisabled();
+
+    saveDeferred.resolve();
+    await waitFor(() => expect(saveStatus).toHaveTextContent('已保存'));
+    expect(startButton).not.toBeDisabled();
   });
 
   it('动画结果展示但保存未完成时仍拒绝重复操作，二者完成后才允许继续', async () => {
@@ -550,6 +582,9 @@ describe('课堂主界面', () => {
     expect(
       vi.mocked(api.saveState).mock.calls[0][0].students.filter((student) => student.drawnThisRound),
     ).toHaveLength(1);
+    await act(async () => {
+      await flushPromises();
+    });
   });
 
   it('同一事件批次的快速导入只调用一次导入 API', async () => {

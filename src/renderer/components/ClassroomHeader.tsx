@@ -2,9 +2,15 @@ export interface ClassroomHeaderProps {
   sourceName: string;
   studentCount: number;
   onOpenSettings?: () => void;
+  settingsDisabled?: boolean;
 }
 
-export function ClassroomHeader({ sourceName, studentCount, onOpenSettings }: ClassroomHeaderProps) {
+export function ClassroomHeader({
+  sourceName,
+  studentCount,
+  onOpenSettings,
+  settingsDisabled = false,
+}: ClassroomHeaderProps) {
   return (
     <header className="classroom-header">
       <div>
@@ -20,6 +26,7 @@ export function ClassroomHeader({ sourceName, studentCount, onOpenSettings }: Cl
             type="button"
             className="settings-trigger secondary-button"
             aria-label="打开设置"
+            disabled={settingsDisabled}
             onClick={onOpenSettings}
           >
             设置

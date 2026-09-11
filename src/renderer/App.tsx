@@ -77,12 +77,14 @@ export function App() {
   const [resultStudents, setResultStudents] = useState<StudentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
   const rosterRef = useRef(roster);
   const animationEnabledRef = useRef(animationEnabled);
   const saveQueueRef = useRef<Promise<void> | null>(null);
+  const pendingSaveCountRef = useRef(0);
   const interactionLockRef = useRef(false);
   const animationTimerRef = useRef<number | null>(null);
   const disposedRef = useRef(false);
@@ -103,6 +105,18 @@ export function App() {
       return true;
     }
 
+    pendingSaveCountRef.current += 1;
+    if (!disposedRef.current) {
+      setIsSaving(true);
+    }
+
+    const finishSave = (): void => {
+      pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
+      if (pendingSaveCountRef.current === 0 && !disposedRef.current) {
+        setIsSaving(false);
+      }
+    };
+
     const performSave = async (): Promise<boolean> => {
       try {
         await api.saveState(nextState);
@@ -117,11 +131,21 @@ export function App() {
     const queuedSave = saveQueueRef.current
       ? saveQueueRef.current.then(performSave)
       : performSave();
-    saveQueueRef.current = queuedSave.then(
+    const trackedSave = queuedSave.then(
+      (result) => {
+        finishSave();
+        return result;
+      },
+      (error) => {
+        finishSave();
+        throw error;
+      },
+    );
+    saveQueueRef.current = trackedSave.then(
       () => undefined,
       () => undefined,
     );
-    return queuedSave;
+    return trackedSave;
   }, []);
 
   const handleWeightChange = useCallback(
@@ -129,6 +153,7 @@ export function App() {
       if (
         isLoading ||
         isImporting ||
+        isSaving ||
         isAnimating ||
         !validateWeight(weight)
       ) {
@@ -150,11 +175,11 @@ export function App() {
       updateRoster(nextState);
       void saveState(nextState);
     },
-    [isAnimating, isImporting, isLoading, saveState, updateRoster],
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
   );
 
   const handleResetWeights = useCallback((): void => {
-    if (isLoading || isImporting || isAnimating) {
+    if (isLoading || isImporting || isSaving || isAnimating) {
       return;
     }
 
@@ -170,10 +195,10 @@ export function App() {
     };
     updateRoster(nextState);
     void saveState(nextState);
-  }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
+  }, [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster]);
 
   const handleClearHistory = useCallback((): void => {
-    if (isLoading || isImporting || isAnimating) {
+    if (isLoading || isImporting || isSaving || isAnimating) {
       return;
     }
 
@@ -188,7 +213,7 @@ export function App() {
     };
     updateRoster(nextState);
     void saveState(nextState);
-  }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
+  }, [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster]);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -254,6 +279,7 @@ export function App() {
       !api ||
       isLoading ||
       isImporting ||
+      isSaving ||
       isAnimating ||
       interactionLockRef.current
     ) {
@@ -293,11 +319,11 @@ export function App() {
       interactionLockRef.current = false;
       setIsImporting(false);
     }
-  }, [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster]);
+  }, [isAnimating, isImporting, isLoading, isSaving, saveState, updateAnimationEnabled, updateRoster]);
 
   const handleAnimationChange = useCallback(
     (enabled: boolean): void => {
-      if (isLoading || isImporting || isAnimating || interactionLockRef.current) {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
         return;
       }
 
@@ -323,7 +349,7 @@ export function App() {
         interactionLockRef.current = false;
       });
     },
-    [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster],
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateAnimationEnabled, updateRoster],
   );
 
   const handleDraw = useCallback(
@@ -332,6 +358,7 @@ export function App() {
       if (
         isLoading ||
         isImporting ||
+        isSaving ||
         isAnimating ||
         interactionLockRef.current ||
         currentRoster.students.length === 0
@@ -419,7 +446,7 @@ export function App() {
         releaseInteractionLock();
       }, duration);
     },
-    [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster],
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateAnimationEnabled, updateRoster],
   );
 
   const handleResetRound = useCallback((): void => {
@@ -427,6 +454,7 @@ export function App() {
     if (
       isLoading ||
       isImporting ||
+      isSaving ||
       isAnimating ||
       interactionLockRef.current ||
       currentRoster.students.length === 0
@@ -451,7 +479,7 @@ export function App() {
         interactionLockRef.current = false;
       },
     );
-  }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
+  }, [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster]);
 
   const hasRoster = roster.students.length > 0;
   const availableStudentCount = getAvailableStudentCount(roster.students);
@@ -461,6 +489,7 @@ export function App() {
       <ClassroomHeader
         sourceName={roster.sourceName}
         studentCount={roster.students.length}
+        settingsDisabled={isLoading || isImporting || isAnimating || isSaving}
         onOpenSettings={() => setIsSettingsDrawerOpen(true)}
       />
 
@@ -473,7 +502,11 @@ export function App() {
       <div className="classroom-layout">
         <section className="classroom-main" aria-label="课堂名单和抽取结果">
           {!hasRoster ? (
-            <ImportDropzone onImport={handleImport} isImporting={isImporting || isLoading} />
+            <ImportDropzone
+              onImport={handleImport}
+              isImporting={isImporting || isLoading}
+              disabled={isSaving}
+            />
           ) : (
             <section className="roster-section" aria-labelledby="roster-title">
               <div className="section-heading">
@@ -507,6 +540,7 @@ export function App() {
             animationEnabled={animationEnabled}
             disabled={isLoading || isImporting}
             isAnimating={isAnimating}
+            isSaving={isSaving}
             onCountChange={setSelectedCount}
             onAnimationChange={handleAnimationChange}
             onDraw={handleDraw}
@@ -518,6 +552,7 @@ export function App() {
               hasRoster
               onImport={handleImport}
               isImporting={isImporting || isAnimating || isLoading}
+              disabled={isSaving}
             />
           ) : null}
         </aside>
@@ -527,7 +562,7 @@ export function App() {
         <SettingsDrawer
           students={roster.students}
           history={roster.history}
-          disabled={isLoading || isImporting || isAnimating}
+          disabled={isLoading || isImporting || isAnimating || isSaving}
           onWeightChange={handleWeightChange}
           onResetWeights={handleResetWeights}
           onClearHistory={handleClearHistory}
