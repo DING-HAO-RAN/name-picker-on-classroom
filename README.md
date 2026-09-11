@@ -26,14 +26,22 @@ npm run package:win
 
 ## Windows x64 发布包
 
-当前版本为 `1.0.0`。运行 `npm run package:win` 后，产物位于 `release/`：
+当前版本为 `1.0.0`。本次在 Windows 11 x64 开发机上使用受限资源编辑模式打包，产物位于 `release/`：
 
-| 类型 | 文件 | SHA-256 |
-| --- | --- | --- |
-| NSIS 安装包 | `release/NamePicker Setup-1.0.0.exe` | `2C5AE8CBA6FEDB5EFC6AAA4866DABAC0E38809109E55392E73545EC2105B695B` |
-| portable | `release/NamePicker-1.0.0.exe` | `159AADE64C261689C198D17C81A8B24C7684C9DAAE059717D1AC9910EAEB8CAC` |
+```powershell
+$env:NAME_PICKER_SKIP_RESOURCE_EDIT = '1'
+npm run package:win
+Remove-Item Env:NAME_PICKER_SKIP_RESOURCE_EDIT
+```
 
-双击 NSIS 安装包并选择安装目录即可安装；portable 包可直接双击运行，无需安装。两种包均包含 Electron 运行时和应用资源，不需要额外运行时或网络连接。
+| 类型 | 文件 | 大小（字节） | SHA-256 | 签名 |
+| --- | --- | ---: | --- | --- |
+| NSIS 安装包 | `release/NamePicker Setup-1.0.0.exe` | 88822732 | `9D3165ADFB85B37B24D0AF8D383A1BC2722A84F078806A98CAAA660095B1D4AC` | `NotSigned` |
+| portable | `release/NamePicker-1.0.0.exe` | 88617100 | `C30EB9472620A079BF43C7EDBE38B3C5943790F3F17CD2AF51AFCCCD2E293ACE` | `NotSigned` |
+
+两个产物都包含 Electron 运行时和应用归档；安装版静默安装返回 0 且安装后的可执行文件进程保持响应，portable 进程启动检查也保持响应。应用归档包含主进程、预加载、渲染器以及 `papaparse`、`xlsx` 依赖，不需要额外运行时或网络连接。
+
+未设置跳过开关的完整资源编辑打包在本机因 `winCodeSign` 解包创建符号链接缺少权限而失败，因此本次结果不是完整资源发布验证。仓库没有签名证书，两个产物均为 unsigned；生产发布必须在具备资源编辑权限和签名配置的环境中重新验证。Windows 10 x64 尚未独立验证；当前自动化启动记录 `isMaximized=false`、`isFullScreen=false`，未宣称真全屏已验证。
 
 发布配置使用 `build/icon.ico` 和 `build/installer.nsh`，未配置发布服务器、自动更新、云同步、遥测或自定义联网协议。`release/` 中的二进制仅作为本地交付物，已加入 Git 忽略规则，不提交到仓库。
 
