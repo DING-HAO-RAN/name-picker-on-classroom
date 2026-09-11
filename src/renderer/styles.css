@@ -186,7 +186,7 @@ h2 {
   justify-content: center;
   gap: 26px;
   padding: clamp(28px, 5vw, 52px);
-  border: 3px dashed #a5b4fc;
+  border: 1px solid #a5b4fc;
   text-align: center;
 }
 
@@ -502,15 +502,11 @@ h2 {
 
 .toast-dismiss {
   min-width: 88px;
-  min-height: 48px;
+  min-height: 56px;
   padding: 8px 12px;
   border: 1px solid #f59e0b;
   background: #ffffff;
   color: #92400e;
-}
-
-.settings-drawer-slot {
-  display: none;
 }
 
 @media (max-width: 860px) {

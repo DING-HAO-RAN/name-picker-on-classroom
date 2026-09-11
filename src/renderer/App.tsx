@@ -30,6 +30,24 @@ function getNamePickerApi(): Window['namePicker'] | null {
   return window.namePicker ?? null;
 }
 
+function getErrorCode(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return undefined;
+  }
+
+  return typeof error.code === 'string' ? error.code : undefined;
+}
+
+function hasValidRoster(state: RosterState): boolean {
+  return state.sourceName.trim().length > 0 && state.students.length > 0;
+}
+
+function getAvailableStudentCount(students: StudentRecord[]): number {
+  return students.filter(
+    (student) => !student.drawnThisRound && Number.isFinite(student.weight) && student.weight > 0,
+  ).length;
+}
+
 export function App() {
   const [roster, setRoster] = useState<RosterState>(createEmptyState);
   const [selectedCount, setSelectedCount] = useState(1);
@@ -39,10 +57,22 @@ export function App() {
   const [isImporting, setIsImporting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // 后续设置任务将在此状态上挂载设置抽屉，不提前改变课堂主路径。
-  const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
+  const rosterRef = useRef(roster);
+  const animationEnabledRef = useRef(animationEnabled);
+  const saveQueueRef = useRef<Promise<void> | null>(null);
+  const interactionLockRef = useRef(false);
   const animationTimerRef = useRef<number | null>(null);
-  const animationLockRef = useRef(false);
+  const disposedRef = useRef(false);
+
+  const updateRoster = useCallback((nextState: RosterState): void => {
+    rosterRef.current = nextState;
+    setRoster(nextState);
+  }, []);
+
+  const updateAnimationEnabled = useCallback((enabled: boolean): void => {
+    animationEnabledRef.current = enabled;
+    setAnimationEnabled(enabled);
+  }, []);
 
   const saveState = useCallback(async (nextState: RosterState): Promise<boolean> => {
     const api = getNamePickerApi();
@@ -50,16 +80,29 @@ export function App() {
       return true;
     }
 
-    try {
-      await api.saveState(nextState);
-      return true;
-    } catch {
-      setErrorMessage('名单状态保存失败，请重试。');
-      return false;
-    }
+    const performSave = async (): Promise<boolean> => {
+      try {
+        await api.saveState(nextState);
+        return true;
+      } catch {
+        if (!disposedRef.current) {
+          setErrorMessage('名单状态保存失败，请重试。');
+        }
+        return false;
+      }
+    };
+    const queuedSave = saveQueueRef.current
+      ? saveQueueRef.current.then(performSave)
+      : performSave();
+    saveQueueRef.current = queuedSave.then(
+      () => undefined,
+      () => undefined,
+    );
+    return queuedSave;
   }, []);
 
   useEffect(() => {
+    disposedRef.current = false;
     let disposed = false;
 
     async function loadSavedState(): Promise<void> {
@@ -78,8 +121,8 @@ export function App() {
         }
 
         if (savedState) {
-          setRoster(savedState);
-          setAnimationEnabled(savedState.settings.animationEnabled);
+          updateRoster(savedState);
+          updateAnimationEnabled(savedState.settings.animationEnabled);
           setSelectedCount(1);
         }
       } catch {
@@ -97,134 +140,192 @@ export function App() {
 
     return () => {
       disposed = true;
+      disposedRef.current = true;
       if (animationTimerRef.current !== null) {
         window.clearTimeout(animationTimerRef.current);
       }
-      animationLockRef.current = false;
+      interactionLockRef.current = false;
     };
-  }, []);
+  }, [updateAnimationEnabled, updateRoster]);
 
   const handleImport = useCallback(async (): Promise<void> => {
     const api = getNamePickerApi();
-    if (!api || isLoading || isImporting || isAnimating) {
+    if (
+      !api ||
+      isLoading ||
+      isImporting ||
+      isAnimating ||
+      interactionLockRef.current
+    ) {
       return;
     }
 
+    interactionLockRef.current = true;
     setErrorMessage(null);
     setIsImporting(true);
 
     try {
       const importedRoster = await api.importRoster();
+      const currentRoster = rosterRef.current;
       const nextState: RosterState = {
         sourceName: importedRoster.sourceName,
         students: importedRoster.students.map((student) => ({ ...student })),
         history: [],
         settings: {
-          ...roster.settings,
-          animationEnabled,
+          ...currentRoster.settings,
+          animationEnabled: animationEnabledRef.current,
           theme: 'light',
         },
       };
 
-      setRoster(nextState);
+      updateRoster(nextState);
+      updateAnimationEnabled(nextState.settings.animationEnabled);
       setSelectedCount(1);
       setResultStudents([]);
       await saveState(nextState);
-    } catch {
-      setErrorMessage('导入名单失败，请重试。');
+    } catch (error) {
+      if (getErrorCode(error) === 'IMPORT_CANCELLED') {
+        setErrorMessage('已取消导入。');
+      } else {
+        setErrorMessage('导入名单失败，请重试。');
+      }
     } finally {
+      interactionLockRef.current = false;
       setIsImporting(false);
     }
-  }, [animationEnabled, isAnimating, isImporting, isLoading, roster.settings, saveState]);
+  }, [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster]);
 
   const handleAnimationChange = useCallback(
     (enabled: boolean): void => {
-      setAnimationEnabled(enabled);
+      if (isLoading || isImporting || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      updateAnimationEnabled(enabled);
+      const currentRoster = rosterRef.current;
       const nextState: RosterState = {
-        ...roster,
+        ...currentRoster,
         settings: {
-          ...roster.settings,
+          ...currentRoster.settings,
           animationEnabled: enabled,
         },
       };
-      setRoster(nextState);
-      void saveState(nextState);
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
     },
-    [roster, saveState],
+    [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster],
   );
 
   const handleDraw = useCallback(
     (count: number, animate: boolean): void => {
+      const currentRoster = rosterRef.current;
       if (
         isLoading ||
+        isImporting ||
         isAnimating ||
-        animationLockRef.current ||
-        roster.students.length === 0
+        interactionLockRef.current ||
+        currentRoster.students.length === 0
       ) {
         return;
       }
 
-      setErrorMessage(null);
-      const drawResult = drawStudents(roster.students, count);
-      const nextState: RosterState = {
-        ...roster,
-        students: drawResult.updatedStudents,
-        settings: {
-          ...roster.settings,
-          animationEnabled: animate,
-        },
-      };
-      setRoster(nextState);
-      void saveState(nextState);
-
-      if (drawResult.selected.length === 0) {
-        setResultStudents([]);
+      if (getAvailableStudentCount(currentRoster.students) === 0) {
         setErrorMessage('本轮没有可抽取的学生，请先重置本轮。');
         return;
       }
 
-      const duration = Math.max(0, nextState.settings.animationDurationMs);
-      if (!animate || duration === 0) {
-        setResultStudents(drawResult.selected);
-        setIsAnimating(false);
+      interactionLockRef.current = true;
+      setErrorMessage(null);
+      const drawResult = drawStudents(currentRoster.students, count);
+      const shouldAnimate = animate === animationEnabledRef.current
+        ? animate
+        : animationEnabledRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        students: drawResult.updatedStudents,
+        settings: {
+          ...currentRoster.settings,
+          animationEnabled: shouldAnimate,
+        },
+      };
+      updateRoster(nextState);
+      updateAnimationEnabled(shouldAnimate);
+      void saveState(nextState);
+
+      if (drawResult.shortage) {
+        setErrorMessage(`仅抽到 ${drawResult.selected.length} 人，当前可抽取学生不足。`);
+      }
+
+      if (drawResult.selected.length === 0) {
+        if (!drawResult.shortage) {
+          setErrorMessage('本轮没有可抽取的学生，请先重置本轮。');
+        }
+        setResultStudents([]);
+        interactionLockRef.current = false;
         return;
       }
 
-      animationLockRef.current = true;
+      const duration = Math.max(0, nextState.settings.animationDurationMs);
+      if (!shouldAnimate || duration === 0) {
+        setResultStudents(drawResult.selected);
+        setIsAnimating(false);
+        interactionLockRef.current = false;
+        return;
+      }
+
+      if (animationTimerRef.current !== null) {
+        window.clearTimeout(animationTimerRef.current);
+      }
       setIsAnimating(true);
       setResultStudents([]);
       animationTimerRef.current = window.setTimeout(() => {
         animationTimerRef.current = null;
-        animationLockRef.current = false;
+        interactionLockRef.current = false;
         setResultStudents(drawResult.selected);
         setIsAnimating(false);
       }, duration);
     },
-    [isAnimating, isLoading, roster, saveState],
+    [isAnimating, isImporting, isLoading, saveState, updateAnimationEnabled, updateRoster],
   );
 
   const handleResetRound = useCallback((): void => {
-    if (isLoading || isAnimating || roster.students.length === 0) {
+    const currentRoster = rosterRef.current;
+    if (
+      isLoading ||
+      isImporting ||
+      isAnimating ||
+      interactionLockRef.current ||
+      currentRoster.students.length === 0
+    ) {
       return;
     }
 
+    interactionLockRef.current = true;
     const nextState: RosterState = {
-      ...roster,
-      students: resetRound(roster.students),
+      ...currentRoster,
+      students: resetRound(currentRoster.students),
     };
-    setRoster(nextState);
+    updateRoster(nextState);
     setResultStudents([]);
     setErrorMessage(null);
     void saveState(nextState);
-  }, [isAnimating, isLoading, roster, saveState]);
+    interactionLockRef.current = false;
+  }, [isAnimating, isImporting, isLoading, saveState, updateRoster]);
 
   const hasRoster = roster.students.length > 0;
+  const availableStudentCount = getAvailableStudentCount(roster.students);
 
   return (
-    <main
-      className="app-shell"
-      data-drawer-open={isSettingsDrawerOpen ? 'true' : 'false'}
-    >
+    <main className="app-shell">
       <ClassroomHeader sourceName={roster.sourceName} studentCount={roster.students.length} />
 
       {isLoading ? (
@@ -265,7 +366,8 @@ export function App() {
         <aside className="control-column" aria-label="抽取控制">
           <DrawControls
             count={selectedCount}
-            maxCount={roster.students.length}
+            maxCount={availableStudentCount}
+            hasRoster={hasRoster}
             animationEnabled={animationEnabled}
             disabled={isLoading || isImporting}
             isAnimating={isAnimating}
@@ -286,13 +388,6 @@ export function App() {
       </div>
 
       <ToastMessage message={errorMessage} onDismiss={() => setErrorMessage(null)} />
-
-      <div
-        className="settings-drawer-slot"
-        data-drawer-slot="settings"
-        data-open={isSettingsDrawerOpen ? 'true' : 'false'}
-        aria-hidden="true"
-      />
     </main>
   );
 }

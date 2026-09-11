@@ -31,7 +31,7 @@ export function ResultCards({ students, isAnimating }: ResultCardsProps) {
       </div>
       <ul className="result-card-list" aria-label="本次抽取的学生">
         {students.map((student) => (
-          <li className="result-card" key={student.id}>
+          <li className="result-card" key={student.id} data-student-id={student.id}>
             <span className="result-card-mark" aria-hidden="true">
               ✓
             </span>

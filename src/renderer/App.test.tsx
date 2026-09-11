@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import * as drawEngine from '../shared/drawEngine';
 import type { ImportResult, NamePickerApi } from '../shared/ipcTypes';
 import type { RosterState, StudentRecord } from '../shared/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,6 +45,16 @@ function installApi(overrides: Partial<NamePickerApi> = {}): NamePickerApi {
     value: api,
   });
   return api;
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
 }
 
 describe('课堂主界面', () => {
@@ -170,5 +181,241 @@ describe('课堂主界面', () => {
     expect(alert).toHaveTextContent('导入名单失败，请重试。');
     expect(alert).not.toHaveTextContent('secret');
     expect(alert).not.toHaveTextContent('stack trace');
+  });
+
+  it('空名单切换动画只更新本地设置，不保存无效状态', async () => {
+    const api = installApi();
+
+    render(<App />);
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+
+    const animationToggle = screen.getByRole('checkbox', { name: '显示抽取动画' });
+    fireEvent.click(animationToggle);
+
+    expect(animationToggle).not.toBeChecked();
+    expect(api.saveState).not.toHaveBeenCalled();
+  });
+
+  it('导入取消时显示取消提示而不是失败提示', async () => {
+    const cancellation = Object.assign(new Error('用户取消'), { code: 'IMPORT_CANCELLED' });
+    const api = installApi({ importRoster: vi.fn().mockRejectedValue(cancellation) });
+
+    render(<App />);
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '导入名单' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('已取消导入。');
+    expect(alert).not.toHaveTextContent('导入名单失败');
+    expect(api.saveState).not.toHaveBeenCalled();
+  });
+
+  it('导入入口不声明或响应拖放能力', async () => {
+    const api = installApi();
+
+    render(<App />);
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+
+    expect(screen.queryByText(/拖/)).not.toBeInTheDocument();
+    fireEvent.drop(screen.getByRole('region', { name: '名单导入' }), {
+      dataTransfer: { files: [new File(['甲同学'], 'roster.txt', { type: 'text/plain' })] },
+    });
+
+    expect(api.importRoster).not.toHaveBeenCalled();
+  });
+
+  it('加载失败时显示教师可读错误', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockRejectedValue(new Error('C:\\\\private\\\\roster-state.json')),
+    });
+
+    render(<App />);
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('本地名单加载失败，请重试。');
+    expect(alert).not.toHaveTextContent('private');
+    expect(api.loadState).toHaveBeenCalledTimes(1);
+  });
+
+  it('只按未抽取且正权重候选计算上限，并允许全员已抽取后重置', async () => {
+    const loadedStudents: StudentRecord[] = [
+      { ...students[0], drawnThisRound: true },
+      { ...students[1], weight: 0 },
+      { ...students[2], drawnThisRound: false },
+    ];
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ students: loadedStudents, settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    expect(screen.getByText('最多可抽取 1 人')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('button', { name: '重置本轮' })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    const resetState = vi.mocked(api.saveState).mock.calls[1][0];
+    expect(resetState.students.every((student) => !student.drawnThisRound)).toBe(true);
+  });
+
+  it('抽取不足时展示实际抽取人数提示', async () => {
+    const loadedState = createState({ settings: { ...savedSettings, animationEnabled: false } });
+    const selectedStudent = { ...loadedState.students[0], drawnThisRound: true };
+    vi.spyOn(drawEngine, 'drawStudents').mockReturnValueOnce({
+      selected: [selectedStudent],
+      updatedStudents: loadedState.students.map((student, index) =>
+        index === 0 ? selectedStudent : student,
+      ),
+      shortage: true,
+    });
+    installApi({ loadState: vi.fn().mockResolvedValue(loadedState) });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('仅抽到 1 人');
+    expect(screen.getByRole('heading', { name: '本次抽取结果' })).toBeInTheDocument();
+  });
+
+  it('动画前后保持同一批抽取学生', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: true, animationDurationMs: 100 } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+
+    const drawnState = vi.mocked(api.saveState).mock.calls[0][0];
+    const drawnStudents = drawnState.students.filter((student) => student.drawnThisRound);
+    expect(drawnStudents).toHaveLength(1);
+    expect(screen.queryByRole('heading', { name: '本次抽取结果' })).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+
+    const resultList = screen.getByRole('list', { name: '本次抽取的学生' });
+    expect(within(resultList).getByText(drawnStudents[0].name)).toBeInTheDocument();
+    expect(
+      Array.from(resultList.querySelectorAll<HTMLElement>('.result-card')).map(
+        (card) => card.dataset.studentId,
+      ),
+    ).toEqual(drawnStudents.map((student) => student.id));
+  });
+
+  it('连续抽取和重置按调用顺序串行保存，最终保留最新快照', async () => {
+    const pendingSaves: Array<{
+      state: RosterState;
+      deferred: ReturnType<typeof createDeferred<void>>;
+    }> = [];
+    let persistedState: RosterState | null = null;
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+      saveState: vi.fn((state: RosterState) => {
+        const deferred = createDeferred<void>();
+        pendingSaves.push({ state, deferred });
+        return deferred.promise.then(() => {
+          persistedState = state;
+        });
+      }),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    expect(pendingSaves).toHaveLength(1);
+    expect(pendingSaves[0].state.students.some((student) => student.drawnThisRound)).toBe(true);
+
+    pendingSaves[0].deferred.resolve();
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    expect(pendingSaves[1].state.students.every((student) => !student.drawnThisRound)).toBe(true);
+
+    pendingSaves[1].deferred.resolve();
+    await waitFor(() => expect(persistedState).toEqual(pendingSaves[1].state));
+  });
+
+  it('保存失败不会阻塞后续快照写入', async () => {
+    const pendingSaves: Array<{
+      deferred: ReturnType<typeof createDeferred<void>>;
+    }> = [];
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+      saveState: vi.fn(() => {
+        const deferred = createDeferred<void>();
+        pendingSaves.push({ deferred });
+        return deferred.promise;
+      }),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    pendingSaves[0].deferred.reject(new Error('写入失败'));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('alert')).toHaveTextContent('名单状态保存失败，请重试。');
+
+    pendingSaves[1].deferred.resolve();
+    await waitFor(() => expect(pendingSaves).toHaveLength(2));
+  });
+
+  it('同一事件批次的快速抽取只执行一次', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+
+    act(() => {
+      fireEvent.click(startButton);
+      fireEvent.click(startButton);
+    });
+
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    expect(
+      vi.mocked(api.saveState).mock.calls[0][0].students.filter((student) => student.drawnThisRound),
+    ).toHaveLength(1);
+  });
+
+  it('同一事件批次的快速导入只调用一次导入 API', async () => {
+    const importDeferred = createDeferred<ImportResult>();
+    const api = installApi({ importRoster: vi.fn().mockReturnValue(importDeferred.promise) });
+
+    render(<App />);
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+    const importButton = screen.getByRole('button', { name: '导入名单' });
+
+    act(() => {
+      fireEvent.click(importButton);
+      fireEvent.click(importButton);
+    });
+
+    expect(api.importRoster).toHaveBeenCalledTimes(1);
+    importDeferred.resolve({ sourceName: '快速导入.txt', students });
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
   });
 });

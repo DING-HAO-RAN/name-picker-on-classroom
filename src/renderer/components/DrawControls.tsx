@@ -1,6 +1,7 @@
 export interface DrawControlsProps {
   count: number;
   maxCount: number;
+  hasRoster?: boolean;
   animationEnabled: boolean;
   disabled?: boolean;
   isAnimating?: boolean;
@@ -13,6 +14,7 @@ export interface DrawControlsProps {
 export function DrawControls({
   count,
   maxCount,
+  hasRoster = maxCount > 0,
   animationEnabled,
   disabled = false,
   isAnimating = false,
@@ -21,13 +23,13 @@ export function DrawControls({
   onDraw,
   onResetRound,
 }: DrawControlsProps) {
-  const hasStudents = maxCount > 0;
+  const hasCandidates = maxCount > 0;
   const upperBound = Math.max(1, maxCount);
   const safeCount = Math.min(Math.max(1, count), upperBound);
   const controlsDisabled = disabled || isAnimating;
 
   function changeCount(nextCount: number): void {
-    if (!hasStudents || controlsDisabled) {
+    if (!hasCandidates || controlsDisabled) {
       return;
     }
 
@@ -72,7 +74,7 @@ export function DrawControls({
             min={1}
             max={upperBound}
             value={safeCount}
-            disabled={controlsDisabled || !hasStudents}
+            disabled={controlsDisabled || !hasCandidates}
             onChange={(event) => handleInputChange(event.target.value)}
           />
           <button
@@ -106,7 +108,7 @@ export function DrawControls({
         <button
           className="primary-button draw-button"
           type="button"
-          disabled={controlsDisabled || !hasStudents}
+          disabled={controlsDisabled || !hasCandidates}
           aria-busy={isAnimating}
           onClick={() => onDraw(safeCount, animationEnabled)}
         >
@@ -115,7 +117,7 @@ export function DrawControls({
         <button
           className="secondary-button"
           type="button"
-          disabled={controlsDisabled || !hasStudents}
+          disabled={controlsDisabled || !hasRoster}
           onClick={onResetRound}
         >
           重置本轮
