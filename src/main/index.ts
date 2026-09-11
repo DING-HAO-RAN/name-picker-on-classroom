@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
+import { getDevelopmentRendererUrl } from './renderer-url';
 
 function createMainWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -15,7 +16,10 @@ function createMainWindow(): BrowserWindow {
     },
   });
 
-  const rendererUrl = process.env.ELECTRON_RENDERER_URL;
+  const rendererUrl = getDevelopmentRendererUrl(
+    app.isPackaged,
+    process.env.ELECTRON_RENDERER_URL,
+  );
   if (rendererUrl) {
     void mainWindow.loadURL(rendererUrl);
   } else {
