@@ -46,6 +46,17 @@ describe('名单导入', () => {
     expect(result.students.map((student) => student.name)).toEqual(['甲同学', '乙同学']);
   });
 
+  it('CSV 表头前有空行时仍跳过姓名表头', async () => {
+    const filePath = await writeFixture(
+      'roster-with-leading-empty-lines.csv',
+      '\n\r\n姓名,备注\n甲同学,甲\n乙同学,乙\n',
+    );
+
+    const result = await importRoster(filePath);
+
+    expect(result.students.map((student) => student.name)).toEqual(['甲同学', '乙同学']);
+  });
+
   it('读取 GB18030 编码的 CSV 第一列', async () => {
     const gb18030Content = Buffer.from([0xbc, 0xd7, 0x0d, 0x0a, 0xd2, 0xd2, 0x0d, 0x0a]);
     const filePath = await writeFixture('roster-gb18030.csv', gb18030Content);

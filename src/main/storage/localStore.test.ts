@@ -46,6 +46,84 @@ describe('本地名单存储', () => {
     await expect(store.load()).resolves.toBeNull();
   });
 
+  it.each([
+    ['JSON null', 'null'],
+    [
+      '缺少 settings',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [],
+        history: [],
+      }),
+    ],
+    [
+      'sourceName 类型错误',
+      JSON.stringify({ sourceName: 1, students: [], history: [], settings: savedState.settings }),
+    ],
+    [
+      'students 类型错误',
+      JSON.stringify({ sourceName: 'roster.csv', students: {}, history: [], settings: savedState.settings }),
+    ],
+    [
+      'history 类型错误',
+      JSON.stringify({ sourceName: 'roster.csv', students: [], history: {}, settings: savedState.settings }),
+    ],
+    [
+      'settings 类型错误',
+      JSON.stringify({ sourceName: 'roster.csv', students: [], history: [], settings: null }),
+    ],
+    [
+      'settings 字段类型错误',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [],
+        history: [],
+        settings: { ...savedState.settings, animationEnabled: 'false' },
+      }),
+    ],
+    [
+      'student id 类型错误',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [{ id: 1, name: '甲同学', weight: 1, drawnThisRound: false }],
+        history: [],
+        settings: savedState.settings,
+      }),
+    ],
+    [
+      'student name 类型错误',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [{ id: 'student-1', name: 1, weight: 1, drawnThisRound: false }],
+        history: [],
+        settings: savedState.settings,
+      }),
+    ],
+    [
+      'student weight 类型错误',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [{ id: 'student-1', name: '甲同学', weight: '1', drawnThisRound: false }],
+        history: [],
+        settings: savedState.settings,
+      }),
+    ],
+    [
+      'student drawnThisRound 类型错误',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [{ id: 'student-1', name: '甲同学', weight: 1, drawnThisRound: 'false' }],
+        history: [],
+        settings: savedState.settings,
+      }),
+    ],
+  ])('malformed JSON（%s）映射为 STORAGE_PARSE_FAILED', async (_description, content) => {
+    await writeFile(join(fixtureDirectory, 'roster-state.json'), content);
+    const store = new LocalStore(fixtureDirectory);
+
+    await expect(store.load()).rejects.toMatchObject({ code: 'STORAGE_PARSE_FAILED' });
+  });
+
   it('clear 会清除已保存的状态', async () => {
     const store = new LocalStore(fixtureDirectory);
     await store.save(savedState);

@@ -29,6 +29,55 @@ function isMissingFile(error: unknown): boolean {
   );
 }
 
+type UnknownRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isStudentRecord(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.weight === 'number' &&
+    Number.isFinite(value.weight) &&
+    typeof value.drawnThisRound === 'boolean'
+  );
+}
+
+function isDrawHistoryItem(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.drawnAt === 'string' &&
+    Array.isArray(value.studentNames) &&
+    value.studentNames.every((studentName) => typeof studentName === 'string')
+  );
+}
+
+function isAppSettings(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.animationEnabled === 'boolean' &&
+    typeof value.animationDurationMs === 'number' &&
+    Number.isFinite(value.animationDurationMs) &&
+    value.theme === 'light'
+  );
+}
+
+function isRosterState(value: unknown): value is RosterState {
+  return (
+    isRecord(value) &&
+    typeof value.sourceName === 'string' &&
+    Array.isArray(value.students) &&
+    value.students.every(isStudentRecord) &&
+    Array.isArray(value.history) &&
+    value.history.every(isDrawHistoryItem) &&
+    isAppSettings(value.settings)
+  );
+}
+
 export class LocalStore {
   private readonly userDataDirectory: string;
   private readonly stateFilePath: string;
@@ -49,11 +98,18 @@ export class LocalStore {
       throw new LocalStoreError('STORAGE_READ_FAILED', '本地名单读取失败。');
     }
 
+    let parsed: unknown;
     try {
-      return JSON.parse(content) as RosterState;
+      parsed = JSON.parse(content);
     } catch {
       throw new LocalStoreError('STORAGE_PARSE_FAILED', '本地名单数据损坏。');
     }
+
+    if (!isRosterState(parsed)) {
+      throw new LocalStoreError('STORAGE_PARSE_FAILED', '本地名单数据损坏。');
+    }
+
+    return parsed;
   }
 
   async save(state: RosterState): Promise<void> {
