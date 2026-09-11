@@ -29,7 +29,7 @@ describe('preload namePicker bridge', () => {
       history: [],
       settings: { animationEnabled: true, animationDurationMs: 300, theme: 'light' as const },
     };
-    electronMocks.invoke.mockResolvedValue(undefined);
+    electronMocks.invoke.mockResolvedValue({ ok: true, data: undefined });
 
     await import('./index');
 
@@ -49,9 +49,9 @@ describe('preload namePicker bridge', () => {
     expect(exposedApi).not.toHaveProperty('fs');
     expect(exposedApi).not.toHaveProperty('require');
 
-    electronMocks.invoke.mockResolvedValueOnce(importedRoster);
+    electronMocks.invoke.mockResolvedValueOnce({ ok: true, data: importedRoster });
     await expect(exposedApi.importRoster()).resolves.toEqual(importedRoster);
-    electronMocks.invoke.mockResolvedValueOnce(savedState);
+    electronMocks.invoke.mockResolvedValueOnce({ ok: true, data: savedState });
     await expect(exposedApi.loadState()).resolves.toEqual(savedState);
     await exposedApi.saveState(savedState);
     await exposedApi.clearState();
@@ -62,5 +62,26 @@ describe('preload namePicker bridge', () => {
       [IPC_CHANNELS.saveState, savedState],
       [IPC_CHANNELS.clearState],
     ]);
+  });
+
+  it('收到失败 envelope 时构造带 code 的 renderer Error', async () => {
+    electronMocks.invoke.mockResolvedValue({
+      ok: false,
+      error: { code: 'PARSE_FAILED', message: '名单文件解析失败。' },
+    });
+
+    await import('./index');
+
+    const [, exposedApi] = electronMocks.exposeInMainWorld.mock.calls[0] as [
+      string,
+      NamePickerApi,
+    ];
+    const rejection = exposedApi.importRoster();
+
+    await expect(rejection).rejects.toMatchObject({
+      code: 'PARSE_FAILED',
+      message: '名单文件解析失败。',
+    });
+    await expect(rejection).rejects.toBeInstanceOf(Error);
   });
 });
