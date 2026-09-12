@@ -1020,25 +1020,22 @@ export function App() {
       .filter((name, index, allNames) => allNames.indexOf(name) !== index),
   );
 
-  // 自定义背景：图片上叠一层与主题同色的半透明纱，保证前景文字可读
-  const backgroundStyle =
-    backgroundImage !== undefined
-      ? {
-          backgroundImage: `linear-gradient(${
-            theme === 'dark' ? 'rgba(11, 20, 19, 0.78)' : 'rgba(248, 246, 240, 0.82)'
-          }, ${
-            theme === 'dark' ? 'rgba(11, 20, 19, 0.78)' : 'rgba(248, 246, 240, 0.82)'
-          }), url("${backgroundImage}")`,
-        }
-      : undefined;
+  // 自定义背景：独立固定图层 + object-fit: fill 拉伸铺满整个窗口，
+  // 保证任何比例的图片都完整显示且不留黑边
+  const backgroundLayer = backgroundImage ? (
+    <div className="app-bg-layer" aria-hidden="true">
+      <img className="app-bg-layer__image" src={backgroundImage} alt="" draggable={false} />
+      <div className="app-bg-layer__veil" />
+    </div>
+  ) : null;
 
   return (
     <main
       className={`app-shell theme-${theme} color-${colorTheme}${
         backgroundImage ? ' app-shell--custom-bg' : ''
       }`}
-      style={backgroundStyle}
     >
+      {backgroundLayer}
       {/* 自绘标题栏：主进程使用 frame: false，这里固定在最上方按主题绘制标题与窗口按钮 */}
       <AppTitleBar />
 

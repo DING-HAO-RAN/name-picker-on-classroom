@@ -576,6 +576,7 @@ describe('主进程 IPC 业务 handler', () => {
       restore: vi.fn(),
       menu: vi.fn(),
       quit: vi.fn(),
+      move: vi.fn(),
     };
     const handlers = createIpcHandlers({
       showOpenDialog: vi.fn(),
@@ -587,9 +588,18 @@ describe('主进程 IPC 业务 handler', () => {
     await expect(handlers.floatingControl('restore')).resolves.toBeUndefined();
     await expect(handlers.floatingControl('menu')).resolves.toBeUndefined();
     await expect(handlers.floatingControl('quit')).resolves.toBeUndefined();
+    await expect(
+      handlers.floatingControl('move', { x: 120, y: 80 }),
+    ).resolves.toBeUndefined();
     expect(floatingControls.restore).toHaveBeenCalledTimes(1);
     expect(floatingControls.menu).toHaveBeenCalledTimes(1);
     expect(floatingControls.quit).toHaveBeenCalledTimes(1);
+    expect(floatingControls.move).toHaveBeenCalledWith(120, 80);
+
+    // 非法坐标不触发移动
+    await expect(handlers.floatingControl('move', { x: 'abc', y: 80 })).resolves.toBeUndefined();
+    await expect(handlers.floatingControl('move')).resolves.toBeUndefined();
+    expect(floatingControls.move).toHaveBeenCalledTimes(1);
 
     // 白名单外的悬浮球操作被拒绝
     await expect(handlers.floatingControl('minimize')).rejects.toEqual({

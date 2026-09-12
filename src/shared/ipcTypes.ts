@@ -18,11 +18,12 @@ export interface ImportResult {
 /** 自绘标题栏可以请求的窗口操作，主进程只接受这组固定取值 */
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close' | 'get-maximized';
 
-/** 悬浮球可以请求的操作：恢复主界面、弹出右键菜单、真正退出程序 */
-export type FloatingControlAction = 'restore' | 'menu' | 'quit';
+/** 悬浮球可以请求的操作：恢复主界面、弹出右键菜单、真正退出、拖动移动位置 */
+export type FloatingControlAction = 'restore' | 'menu' | 'quit' | 'move';
 
 export interface FloatingControlsApi {
-  control(action: FloatingControlAction): Promise<void>;
+  /** move 时 payload 为 { x, y }（屏幕坐标，球心对准该点） */
+  control(action: FloatingControlAction, payload?: { x?: number; y?: number }): Promise<void>;
 }
 
 export interface WindowControlsApi {

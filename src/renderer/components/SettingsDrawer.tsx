@@ -20,6 +20,8 @@ const COLOR_THEME_LABELS: Record<ColorTheme, string> = {
   ink: '墨青（默认）',
   sunset: '暖阳',
   meadow: '青禾',
+  dusk: '黛蓝',
+  plum: '绛霞',
 };
 
 /** 允许作为背景的图片 MIME 类型 */
@@ -406,6 +408,8 @@ export function SettingsDrawer({
                 {colorTheme === 'ink' && '沉稳的墨青主色，纸墨课堂气质。'}
                 {colorTheme === 'sunset' && '温暖的赭橙主色，适合轻松活跃的课堂。'}
                 {colorTheme === 'meadow' && '清新的草绿主色，自然明亮。'}
+                {colorTheme === 'dusk' && '沉静的靛蓝主色，冷静专注。'}
+                {colorTheme === 'plum' && '雅致的绛红主色，柔和有活力。'}
               </small>
             </div>
           </section>

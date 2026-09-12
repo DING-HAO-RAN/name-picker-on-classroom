@@ -145,11 +145,13 @@ describe('preload namePicker bridge', () => {
     await floatingControls?.control('restore');
     await floatingControls?.control('menu');
     await floatingControls?.control('quit');
+    await floatingControls?.control('move', { x: 120, y: 80 });
 
     expect(electronMocks.invoke.mock.calls).toEqual([
-      [IPC_CHANNELS.floatingControl, 'restore'],
-      [IPC_CHANNELS.floatingControl, 'menu'],
-      [IPC_CHANNELS.floatingControl, 'quit'],
+      [IPC_CHANNELS.floatingControl, 'restore', undefined],
+      [IPC_CHANNELS.floatingControl, 'menu', undefined],
+      [IPC_CHANNELS.floatingControl, 'quit', undefined],
+      [IPC_CHANNELS.floatingControl, 'move', { x: 120, y: 80 }],
     ]);
     vi.unstubAllGlobals();
   });

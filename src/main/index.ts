@@ -111,11 +111,11 @@ function hideMainWindowToFloating(mainWindow: BrowserWindow): void {
   floatingWindow.show();
 }
 
-/** 创建置顶悬浮球：56x56 透明无边框小窗，加载同一个渲染器页面（?window=floating） */
+/** 创建置顶悬浮球：64x64 透明无边框小窗，整个圆形区域可点击、可拖动 */
 function createFloatingWindow(): BrowserWindow {
   const floating = new BrowserWindow({
-    width: 56,
-    height: 56,
+    width: 64,
+    height: 64,
     useContentSize: true,
     frame: false,
     transparent: true,
@@ -194,6 +194,14 @@ const floatingControls = {
   quit() {
     isQuitting = true;
     app.quit();
+  },
+  /** 拖动移动：把悬浮球中心对准屏幕坐标，渲染器在指针移动时持续上报 */
+  move(x: number, y: number) {
+    if (!floatingWindow || floatingWindow.isDestroyed()) {
+      return;
+    }
+    const [width] = floatingWindow.getSize();
+    floatingWindow.setPosition(Math.round(x - width / 2), Math.round(y - width / 2));
   },
 };
 

@@ -42,6 +42,8 @@ export interface IpcFloatingControls {
   menu(): void;
   /** 真正退出程序（放行窗口关闭） */
   quit(): void;
+  /** 拖动移动：把悬浮球中心对准屏幕坐标 (x, y) */
+  move(x: number, y: number): void;
 }
 
 export interface IpcHandlerDependencies {
@@ -63,8 +65,8 @@ export interface IpcHandlers {
   clearState(): Promise<void>;
   /** 执行窗口操作并返回操作后的最大化状态 */
   windowControl(action: unknown): Promise<boolean>;
-  /** 执行悬浮球操作 */
-  floatingControl(action: unknown): Promise<void>;
+  /** 执行悬浮球操作；move 时 payload 为 { x, y } 屏幕坐标 */
+  floatingControl(action: unknown, payload?: unknown): Promise<void>;
 }
 
 export interface IpcMainLike {
@@ -165,7 +167,20 @@ const FLOATING_CONTROL_ACTIONS = new Set<FloatingControlAction>([
   'restore',
   'menu',
   'quit',
+  'move',
 ]);
+
+/** 校验 move 操作的坐标 payload：{ x, y } 均为有限数字 */
+function normalizeMovePosition(payload: unknown): { x: number; y: number } | undefined {
+  if (!isRecord(payload)) {
+    return undefined;
+  }
+  const { x, y } = payload;
+  if (typeof x !== 'number' || !Number.isFinite(x) || typeof y !== 'number' || !Number.isFinite(y)) {
+    return undefined;
+  }
+  return { x, y };
+}
 
 function isWindowControlAction(value: unknown): value is WindowControlAction {
   return typeof value === 'string' && WINDOW_CONTROL_ACTIONS.has(value as WindowControlAction);
@@ -498,7 +513,7 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
       return windowControls.isMaximized();
     },
 
-    async floatingControl(action: unknown): Promise<void> {
+    async floatingControl(action: unknown, payload?: unknown): Promise<void> {
       if (!isFloatingControlAction(action)) {
         throw invalidWindowActionError();
       }
@@ -514,6 +529,11 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
         floatingControls.menu();
       } else if (action === 'quit') {
         floatingControls.quit();
+      } else if (action === 'move') {
+        const position = normalizeMovePosition(payload);
+        if (position) {
+          floatingControls.move(position.x, position.y);
+        }
       }
     },
   };
@@ -580,7 +600,7 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   ipcMain.handle(IPC_CHANNELS.windowControl, (event, action) =>
     handleTrustedRequest(event, () => handlers.windowControl(action)),
   );
-  ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action) =>
-    handleTrustedRequest(event, () => handlers.floatingControl(action)),
+  ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action, payload) =>
+    handleTrustedRequest(event, () => handlers.floatingControl(action, payload)),
   );
 }

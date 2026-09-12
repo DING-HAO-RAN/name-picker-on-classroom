@@ -108,7 +108,8 @@ const namePicker: NamePickerApi = Object.freeze({
   floatingControls:
     typeof window !== 'undefined' && window.location.search.includes(FLOATING_WINDOW_QUERY)
       ? Object.freeze({
-          control: (action: string) => invoke<void>(IPC_CHANNELS.floatingControl, action),
+          control: (action: string, payload?: { x?: number; y?: number }) =>
+            invoke<void>(IPC_CHANNELS.floatingControl, action, payload),
         })
       : undefined,
 });

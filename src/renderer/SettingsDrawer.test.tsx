@@ -440,13 +440,13 @@ describe('设置与 App 保存接线', () => {
       target: { files: [new File(['fake'], 'bg.png', { type: 'image/png' })] },
     });
 
-    // 保存状态里带上 dataURL 背景，主界面挂上自定义背景类
+    // 保存状态里带上 dataURL 背景，主界面挂上自定义背景图层
     await waitFor(() => expect(api.saveState).toHaveBeenCalled());
     expect(vi.mocked(api.saveState).mock.calls.at(-1)?.[0].settings.backgroundImage).toMatch(
       /^data:image\/png;base64,/,
     );
     await waitFor(() =>
-      expect(container.querySelector('.app-shell--custom-bg')).not.toBeNull(),
+      expect(container.querySelector('.app-bg-layer__image')).not.toBeNull(),
     );
   });
 

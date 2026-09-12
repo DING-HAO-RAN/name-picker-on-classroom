@@ -1,36 +1,114 @@
+import { useRef } from 'react';
+
+/** 指针按下时的拖动状态：用于区分「点击」与「拖动」 */
+interface DragState {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+}
+
+/** 拖动死区（像素）：移动超过该距离才视为拖动，避免触控轻微抖动误触发 */
+const DRAG_THRESHOLD_PX = 4;
+
 /**
- * 悬浮球：主界面缩到后台时显示的置顶小圆钮。
- * - 单击：恢复主界面并隐藏悬浮球
- * - 右键：弹出系统菜单（打开主界面 / 退出程序）
- * - 整个小窗可拖动（-webkit-app-region: drag），球体本身不拦截拖拽
+ * 悬浮球：主界面缩到后台时显示的置顶圆形图标。
+ * - 整个圆形区域（64x64）任何位置都可点击与拖动，无额外边框或拖动区
+ * - 单击：恢复主界面；拖动：移动位置；右键：系统菜单（打开主界面 / 退出）
+ * - 使用 Pointer Events 统一鼠标与触控，配合 touch-action: none 优化触控手感
  */
 export function FloatingBall() {
-  function handleRestore(): void {
-    void window.namePicker?.floatingControls?.control('restore');
+  const dragRef = useRef<DragState | null>(null);
+
+  function control(action: 'restore' | 'menu'): void {
+    void window.namePicker?.floatingControls?.control(action);
   }
 
-  function handleContextMenu(event: React.MouseEvent): void {
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>): void {
+    if (dragRef.current) {
+      return;
+    }
+    // 捕获指针：移出窗口也能持续收到 move/up 事件
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.screenX,
+      startY: event.screenY,
+      moved: false,
+    };
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
+    const state = dragRef.current;
+    if (!state || state.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const dx = event.screenX - state.startX;
+    const dy = event.screenY - state.startY;
+    if (!state.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) {
+      return;
+    }
+    state.moved = true;
+    // 直接上报屏幕坐标，主进程把球心对准该点
+    void window.namePicker?.floatingControls?.control('move', {
+      x: event.screenX,
+      y: event.screenY,
+    });
+  }
+
+  function handlePointerUp(event: React.PointerEvent<HTMLDivElement>): void {
+    const state = dragRef.current;
+    dragRef.current = null;
+    if (!state || state.pointerId !== event.pointerId) {
+      return;
+    }
+    // 没有超出死区 = 一次点击，恢复主界面
+    if (!state.moved) {
+      control('restore');
+    }
+  }
+
+  function handleContextMenu(event: React.MouseEvent<HTMLDivElement>): void {
     event.preventDefault();
-    void window.namePicker?.floatingControls?.control('menu');
+    control('menu');
   }
 
   return (
-    <div className="floating-ball-layer" onContextMenu={handleContextMenu}>
-      <button
-        type="button"
-        className="floating-ball"
-        aria-label="恢复名字抽取器主界面"
-        title="点击回到主界面 · 右键更多操作"
-        onClick={handleRestore}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="floating-ball__icon">
-          {/* 六面骰子造型：呼应应用图标 */}
-          <rect x="4" y="4" width="16" height="16" rx="4" />
-          <circle cx="9" cy="9" r="1.4" fill="currentColor" stroke="none" />
-          <circle cx="15" cy="15" r="1.4" fill="currentColor" stroke="none" />
-          <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
-        </svg>
-      </button>
+    <div
+      className="floating-ball"
+      role="button"
+      aria-label="恢复名字抽取器主界面"
+      title="点击回到主界面 · 拖动移动 · 右键更多操作"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => {
+        dragRef.current = null;
+      }}
+      onContextMenu={handleContextMenu}
+    >
+      {/* 复刻应用图标的矢量版本：外圆环 + 内弧环 + 人像 + 双星，颜色跟随品牌蓝 */}
+      <svg className="floating-ball__icon" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="27.5" fill="none" stroke="currentColor" strokeWidth="4" />
+        <path
+          d="M 36.1 16.5 A 16 16 0 1 1 18.1 40"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <circle cx="32" cy="26.5" r="7" fill="currentColor" />
+        <path d="M 20.5 43 A 11.5 11.5 0 0 1 43.5 43 Z" fill="currentColor" />
+        <path
+          d="M 47 11.5 Q 48.6 16.4 53.5 18 Q 48.6 19.6 47 24.5 Q 45.4 19.6 40.5 18 Q 45.4 16.4 47 11.5 Z"
+          fill="currentColor"
+        />
+        <path
+          d="M 17.5 40 Q 18.9 44.1 23 45.5 Q 18.9 46.9 17.5 51 Q 16.1 46.9 12 45.5 Q 16.1 44.1 17.5 40 Z"
+          fill="currentColor"
+        />
+      </svg>
     </div>
   );
 }

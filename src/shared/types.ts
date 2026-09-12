@@ -35,10 +35,11 @@ export type AnimationStyle = 'slot' | 'marquee' | 'spotlight';
 // 界面主题：light 明亮模式 | dark 深色模式
 export type Theme = 'light' | 'dark';
 
-// 颜色主题（配色方案）：ink 墨青（默认）| sunset 暖阳 | meadow 青禾
-export type ColorTheme = 'ink' | 'sunset' | 'meadow';
+// 颜色主题（配色方案）：ink 墨青（默认）| sunset 暖阳 | meadow 青禾 | dusk 黛蓝 | plum 绛霞
+// 每个主题同时替换主色与界面纸感底色，而不只是强调色
+export type ColorTheme = 'ink' | 'sunset' | 'meadow' | 'dusk' | 'plum';
 
-export const COLOR_THEMES: ColorTheme[] = ['ink', 'sunset', 'meadow'];
+export const COLOR_THEMES: ColorTheme[] = ['ink', 'sunset', 'meadow', 'dusk', 'plum'];
 
 export interface AppSettings {
   animationEnabled: boolean;
