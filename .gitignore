@@ -13,3 +13,4 @@ screenshots/
 *.tsbuildinfo
 .vscode/
 .idea/
+.workbuddy/

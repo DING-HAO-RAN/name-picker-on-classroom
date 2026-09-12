@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { DrawHistoryItem, StudentRecord } from '../../shared/types';
+import type { AnimationStyle, DrawHistoryItem, StudentRecord } from '../../shared/types';
 import { HistoryPanel } from './HistoryPanel';
 import { StudentWeightList } from './StudentWeightList';
 
@@ -11,12 +11,16 @@ export interface SettingsDrawerProps {
   history?: DrawHistoryItem[];
   onClearHistory?: () => void;
   disabled?: boolean;
+  animationStyle?: AnimationStyle;
+  onAnimationStyleChange?: (style: AnimationStyle) => void;
+  animationDurationMs?: number;
+  onAnimationDurationChange?: (duration: number) => void;
 }
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(
     container.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
     ),
   ).filter((element) => !element.hasAttribute('aria-hidden'));
 }
@@ -29,6 +33,10 @@ export function SettingsDrawer({
   history = [],
   onClearHistory = () => undefined,
   disabled = false,
+  animationStyle = 'slot',
+  onAnimationStyleChange,
+  animationDurationMs = 1800,
+  onAnimationDurationChange,
 }: SettingsDrawerProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -118,6 +126,47 @@ export function SettingsDrawer({
         </div>
 
         <div className="settings-drawer__content">
+          {/* 动画效果设置区域 */}
+          <section className="settings-group" aria-labelledby="animation-settings-title">
+            <h3 id="animation-settings-title" className="settings-group-title">
+              抽取动画效果
+            </h3>
+            <div className="settings-field">
+              <label htmlFor="animation-style-select">动画样式</label>
+              <select
+                id="animation-style-select"
+                className="settings-select"
+                value={animationStyle}
+                disabled={disabled}
+                onChange={(e) => onAnimationStyleChange?.(e.target.value as AnimationStyle)}
+              >
+                <option value="slot">大卡片动态滚动（默认推荐）</option>
+                <option value="marquee">学生列表跳跃跑马灯</option>
+                <option value="spotlight">全屏聚焦弹窗轮播</option>
+              </select>
+              <small className="settings-field-hint">
+                {animationStyle === 'slot' && '卡片区快速翻滚名字，平滑减速定格，大屏视觉冲击力强。'}
+                {animationStyle === 'marquee' && '名单卡片高速轮巡高亮跳动，锁定抽中同学。'}
+                {animationStyle === 'spotlight' && '自动居中大屏弹窗飞速轮换人名，气场拉满。'}
+              </small>
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="animation-duration-select">动画时长</label>
+              <select
+                id="animation-duration-select"
+                className="settings-select"
+                value={animationDurationMs}
+                disabled={disabled}
+                onChange={(e) => onAnimationDurationChange?.(Number(e.target.value))}
+              >
+                <option value={1200}>快速（1.2 秒）</option>
+                <option value={1800}>标准（1.8 秒）</option>
+                <option value={2800}>悬念（2.8 秒）</option>
+              </select>
+            </div>
+          </section>
+
           <StudentWeightList
             students={students}
             onWeightChange={onWeightChange}

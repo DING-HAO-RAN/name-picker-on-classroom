@@ -870,6 +870,227 @@ h2 {
   }
 }
 
+/* ==========================================================================
+   全屏抽取结果弹窗（Fullscreen Result Overlay）
+   ========================================================================== */
+.fullscreen-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
+  animation: overlayFadeIn 0.25s ease-out;
+  cursor: pointer;
+}
+
+.fullscreen-result-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(90vw, 840px);
+  padding: clamp(32px, 6vw, 64px) clamp(24px, 5vw, 48px);
+  border: 2px solid #818cf8;
+  border-radius: 36px;
+  background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(99, 102, 241, 0.35);
+  text-align: center;
+  cursor: default;
+  transform: scale(1);
+  transition: transform 0.2s ease;
+}
+
+.fullscreen-result-container.is-settled {
+  animation: containerPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fullscreen-badge {
+  display: inline-block;
+  margin-bottom: 24px;
+  padding: 8px 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fde047;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.fullscreen-names-grid {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 12px 0 28px;
+}
+
+.fullscreen-name-card {
+  min-width: 180px;
+  padding: 16px 36px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  animation: cardBounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fullscreen-name-text {
+  color: #1e1b4b;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+}
+
+.fullscreen-tip {
+  margin-top: 10px;
+  margin-bottom: 0;
+  color: #c7d2fe;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   滚动抽取（Slot & Marquee）动画动效
+   ========================================================================== */
+.result-section--rolling {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
+
+.result-card--rolling {
+  border: 2px dashed #6366f1;
+  background: #ffffff;
+  animation: rollCardPulse 0.6s infinite alternate;
+}
+
+.result-card-mark--rolling {
+  background: #f59e0b;
+  animation: diceSpin 0.7s infinite linear;
+}
+
+.slot-roll-text {
+  color: #4338ca;
+  font-weight: 900;
+}
+
+.student-list-item--marquee {
+  border-color: #eab308 !important;
+  background: linear-gradient(90deg, #fef08a 0%, #fde047 100%) !important;
+  color: #713f12 !important;
+  font-weight: 800;
+  transform: scale(1.02);
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.55);
+  transition: all 0.08s ease;
+}
+
+/* ==========================================================================
+   控制面板开关组与设置字段
+   ========================================================================== */
+.controls-switches {
+  display: grid;
+  gap: 14px;
+  margin: 4px 0 10px;
+}
+
+.settings-group {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.settings-group-title {
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.settings-field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.settings-field label {
+  color: #475569;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.settings-select {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.settings-field-hint {
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   关键帧动画定义
+   ========================================================================== */
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes containerPop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardBounceIn {
+  0% {
+    transform: translateY(12px) scale(0.92);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rollCardPulse {
+  0% {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  }
+  100% {
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  }
+}
+
+@keyframes diceSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

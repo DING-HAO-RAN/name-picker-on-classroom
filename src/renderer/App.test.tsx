@@ -15,6 +15,9 @@ const students: StudentRecord[] = [
 const savedSettings = {
   animationEnabled: true,
   animationDurationMs: 800,
+  animationStyle: 'slot' as const,
+  allowDuplicates: false,
+  fullscreenDisplayMs: 1000,
   theme: 'light' as const,
 };
 
@@ -334,8 +337,8 @@ describe('课堂主界面', () => {
     });
 
     render(<App />);
-    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '导入名单' }));
+    const importButton = await screen.findByRole('button', { name: '导入名单' });
+    fireEvent.click(importButton);
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('导入名单失败，请重试。');
@@ -592,8 +595,7 @@ describe('课堂主界面', () => {
     const api = installApi({ importRoster: vi.fn().mockReturnValue(importDeferred.promise) });
 
     render(<App />);
-    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
-    const importButton = screen.getByRole('button', { name: '导入名单' });
+    const importButton = await screen.findByRole('button', { name: '导入名单' });
 
     act(() => {
       fireEvent.click(importButton);
@@ -603,5 +605,63 @@ describe('课堂主界面', () => {
     expect(api.importRoster).toHaveBeenCalledTimes(1);
     importDeferred.resolve({ sourceName: '快速导入.txt', students });
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+  });
+
+  it('支持允许重复抽取选项，开启后已抽取学生仍可被再次抽取', async () => {
+    // 3位学生全部处于已抽取状态
+    const allDrawnStudents = students.map((s) => ({ ...s, drawnThisRound: true }));
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({
+          students: allDrawnStudents,
+          settings: { ...savedSettings, animationEnabled: false, allowDuplicates: false },
+        }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+    // 未开启重复抽取时，可用人数为0，开始抽取被禁用
+    expect(startButton).toBeDisabled();
+
+    // 勾选“允许重复抽取”
+    const allowDuplicatesCheckbox = screen.getByRole('checkbox', { name: '允许重复抽取' });
+    expect(allowDuplicatesCheckbox).not.toBeChecked();
+    fireEvent.click(allowDuplicatesCheckbox);
+    expect(allowDuplicatesCheckbox).toBeChecked();
+
+    // 开启后，等待状态保存完成，开始抽取按钮变为可用
+    await waitFor(() => expect(startButton).not.toBeDisabled());
+    fireEvent.click(startButton);
+
+    // 触发成功抽取，全屏结果展示组件出现
+    expect(await screen.findByRole('dialog', { name: '抽取结果全屏展示' })).toBeInTheDocument();
+  });
+
+  it('抽取结果显示在全部名单区域上方，且抽取后默认触发全屏展示', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+    fireEvent.click(startButton);
+
+    // 全屏展示弹层出现
+    const fullscreenDialog = await screen.findByRole('dialog', { name: '抽取结果全屏展示' });
+    expect(fullscreenDialog).toBeInTheDocument();
+
+    // 结果区域处于学生列表上方
+    const resultHeading = screen.getByRole('heading', { name: '本次抽取结果' });
+    const rosterHeading = screen.getByRole('heading', { name: '学生列表' });
+    expect(resultHeading.compareDocumentPosition(rosterHeading)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 });

@@ -127,6 +127,31 @@ describe('加权无放回抽取核心', () => {
     expect(result.shortage).toBe(false);
   });
 
+  it('开启可重复抽取时，本轮已抽中学生仍可参与且不修改已抽状态', () => {
+    const students = [student('already', 10, true), student('candidate', 1)];
+    const random = vi.fn(() => 0);
+
+    const result = drawStudents(students, 1, random, { allowDuplicates: true });
+
+    expect(result.selected.map((item) => item.id)).toEqual(['already']);
+    // 不强制更新为 true，原状态保留
+    expect(result.updatedStudents).toEqual([
+      student('already', 10, true),
+      student('candidate', 1, false),
+    ]);
+  });
+
+  it('开启可重复抽取时，单次抽取多人依然互不重复', () => {
+    const students = [student('a'), student('b'), student('c')];
+
+    const result = drawStudents(students, 2, () => 0, { allowDuplicates: true });
+
+    expect(result.selected).toHaveLength(2);
+    expect(new Set(result.selected.map((item) => item.id)).size).toBe(2);
+    // 所有学生的 drawnThisRound 状态不被锁定
+    expect(result.updatedStudents.every((item) => !item.drawnThisRound)).toBe(true);
+  });
+
   it.each([
     [0, true],
     [1, true],

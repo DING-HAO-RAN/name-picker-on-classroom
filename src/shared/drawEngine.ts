@@ -6,6 +6,10 @@ export interface DrawResult {
   shortage: boolean;
 }
 
+export interface DrawOptions {
+  allowDuplicates?: boolean;
+}
+
 export function validateWeight(value: number): boolean {
   return Number.isFinite(value) && value >= 0;
 }
@@ -14,16 +18,20 @@ export function drawStudents(
   students: StudentRecord[],
   count: number,
   random: () => number = Math.random,
+  options?: DrawOptions,
 ): DrawResult {
   if (!Number.isInteger(count) || count <= 0) {
     throw new RangeError('抽取人数必须是正整数。');
   }
 
+  const allowDuplicates = options?.allowDuplicates ?? false;
   const candidates = students
     .map((student, index) => ({ student, index }))
     .filter(
       ({ student }) =>
-        !student.drawnThisRound && validateWeight(student.weight) && student.weight > 0,
+        (allowDuplicates || !student.drawnThisRound) &&
+        validateWeight(student.weight) &&
+        student.weight > 0,
     );
   const remaining = candidates.slice();
   const selected: StudentRecord[] = [];
@@ -55,13 +63,18 @@ export function drawStudents(
     }
 
     const [winner] = remaining.splice(winnerIndex, 1);
-    selected.push({ ...winner.student, drawnThisRound: true });
+    selected.push({
+      ...winner.student,
+      drawnThisRound: allowDuplicates ? winner.student.drawnThisRound : true,
+    });
     selectedIndices.add(winner.index);
   }
 
   const updatedStudents = students.map((student, index) => ({
     ...student,
-    drawnThisRound: selectedIndices.has(index) || student.drawnThisRound,
+    drawnThisRound: allowDuplicates
+      ? student.drawnThisRound
+      : selectedIndices.has(index) || student.drawnThisRound,
   }));
 
   return {

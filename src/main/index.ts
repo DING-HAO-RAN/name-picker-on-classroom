@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import { join } from 'node:path';
 import { createIpcHandlers, registerIpcHandlers } from './ipcHandlers';
 import { importRoster } from './importers/importRoster';
@@ -11,6 +11,7 @@ function createMainWindow(): BrowserWindow {
     height: 800,
     minWidth: 960,
     minHeight: 640,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -18,6 +19,10 @@ function createMainWindow(): BrowserWindow {
       sandbox: true,
     },
   });
+
+  // 隐藏窗口原生菜单栏
+  mainWindow.setMenuBarVisibility(false);
+  mainWindow.removeMenu();
 
   const rendererUrl = getDevelopmentRendererUrl(
     app.isPackaged,
@@ -33,6 +38,9 @@ function createMainWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  // 全局移除默认菜单栏
+  Menu.setApplicationMenu(null);
+
   const handlers = createIpcHandlers({
     showOpenDialog: (options) => dialog.showOpenDialog(options),
     importRoster,

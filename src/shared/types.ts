@@ -13,9 +13,15 @@ export interface DrawHistoryItem {
   studentNames: string[];
 }
 
+// 抽取动画样式：slot 大卡片滚动 | marquee 名单跳跃跑马灯 | spotlight 全屏聚焦弹窗轮播
+export type AnimationStyle = 'slot' | 'marquee' | 'spotlight';
+
 export interface AppSettings {
   animationEnabled: boolean;
   animationDurationMs: number;
+  animationStyle?: AnimationStyle;
+  allowDuplicates?: boolean;
+  fullscreenDisplayMs?: number;
   theme: 'light';
 }
 

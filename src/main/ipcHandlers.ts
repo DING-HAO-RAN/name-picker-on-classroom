@@ -216,11 +216,33 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     return undefined;
   }
 
-  return {
+  const normalizedSettings: AppSettings = {
     animationEnabled: value.animationEnabled,
     animationDurationMs: value.animationDurationMs,
     theme: 'light',
   };
+
+  if (
+    value.animationStyle === 'slot' ||
+    value.animationStyle === 'marquee' ||
+    value.animationStyle === 'spotlight'
+  ) {
+    normalizedSettings.animationStyle = value.animationStyle;
+  }
+
+  if (typeof value.allowDuplicates === 'boolean') {
+    normalizedSettings.allowDuplicates = value.allowDuplicates;
+  }
+
+  if (
+    typeof value.fullscreenDisplayMs === 'number' &&
+    Number.isFinite(value.fullscreenDisplayMs) &&
+    value.fullscreenDisplayMs >= 0
+  ) {
+    normalizedSettings.fullscreenDisplayMs = value.fullscreenDisplayMs;
+  }
+
+  return normalizedSettings;
 }
 
 export function normalizeRosterState(value: unknown): RosterState | undefined {

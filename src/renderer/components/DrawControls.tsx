@@ -3,11 +3,13 @@ export interface DrawControlsProps {
   maxCount: number;
   hasRoster?: boolean;
   animationEnabled: boolean;
+  allowDuplicates?: boolean;
   disabled?: boolean;
   isAnimating?: boolean;
   isSaving?: boolean;
   onCountChange: (count: number) => void;
   onAnimationChange: (enabled: boolean) => void;
+  onAllowDuplicatesChange?: (allowDuplicates: boolean) => void;
   onDraw: (count: number, animate: boolean) => void;
   onResetRound: () => void;
 }
@@ -17,11 +19,13 @@ export function DrawControls({
   maxCount,
   hasRoster = maxCount > 0,
   animationEnabled,
+  allowDuplicates = false,
   disabled = false,
   isAnimating = false,
   isSaving = false,
   onCountChange,
   onAnimationChange,
+  onAllowDuplicatesChange,
   onDraw,
   onResetRound,
 }: DrawControlsProps) {
@@ -97,22 +101,42 @@ export function DrawControls({
             +
           </button>
         </div>
-        <p className="control-hint">最多可抽取 {maxCount} 人</p>
+        <p className="control-hint">
+          {allowDuplicates
+            ? `可重复抽取模式（有效总数 ${maxCount} 人）`
+            : `最多可抽取 ${maxCount} 人`}
+        </p>
       </div>
 
-      <label className="switch-row">
-        <input
-          type="checkbox"
-          aria-label="显示抽取动画"
-          checked={animationEnabled}
-          disabled={controlsDisabled}
-          onChange={(event) => onAnimationChange(event.target.checked)}
-        />
-        <span>
-          <strong>显示抽取动画</strong>
-          <small>让结果稍后出现，课堂节奏更有期待感。</small>
-        </span>
-      </label>
+      <div className="controls-switches">
+        <label className="switch-row">
+          <input
+            type="checkbox"
+            aria-label="允许重复抽取"
+            checked={allowDuplicates}
+            disabled={controlsDisabled}
+            onChange={(event) => onAllowDuplicatesChange?.(event.target.checked)}
+          />
+          <span>
+            <strong>允许重复抽取</strong>
+            <small>已抽中的同学仍可再次被抽中（单次抽取多人时互不重复）。</small>
+          </span>
+        </label>
+
+        <label className="switch-row">
+          <input
+            type="checkbox"
+            aria-label="显示抽取动画"
+            checked={animationEnabled}
+            disabled={controlsDisabled}
+            onChange={(event) => onAnimationChange(event.target.checked)}
+          />
+          <span>
+            <strong>显示抽取动画</strong>
+            <small>快速滚动翻转人名，更具课堂悬念与期待感。</small>
+          </span>
+        </label>
+      </div>
 
       <div className="draw-actions">
         <button
