@@ -10,14 +10,14 @@ npm run package:win
 Remove-Item Env:NAME_PICKER_SKIP_RESOURCE_EDIT
 ```
 
-打包前先清理 `release/` 目录内部条目（保留目录本身，逐个删除其中的文件与子目录），否则上一轮失败残留的 `release/win-unpacked` 会导致 electron-builder 在 `packaging` 阶段无限重试。
+打包前先清理输出目录内部条目（保留目录本身，逐个删除其中的文件与子目录），否则上一轮失败残留的 `win-unpacked` 会导致 electron-builder 在 `packaging` 阶段无限重试。如果旧输出目录因文件被其他进程占用而无法清理，可以设置 `NAME_PICKER_OUTPUT_DIR`（如 `release2`）换一个全新的输出目录打包。
 
-命令会先构建再产出两个 x64 产物，输出到 `release/`：
+命令会先构建再产出两个 x64 产物，输出到 `release/`（或 `NAME_PICKER_OUTPUT_DIR` 指定的目录）：
 
 | 类型 | 产物 |
 |---|---|
-| NSIS 安装包 | `release/NamePicker Setup-1.0.0.exe` |
-| portable 便携包 | `release/NamePicker-1.0.0.exe` |
+| NSIS 安装包 | `NamePicker Setup-1.0.0.exe` |
+| portable 便携包 | `NamePicker-1.0.0.exe` |
 
 不做产物哈希校验：产物以 `release/` 目录内实际生成的文件为准，安装包能否使用以实际安装或直接运行的结果为准。
 
