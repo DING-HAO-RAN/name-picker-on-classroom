@@ -6,6 +6,8 @@ export interface HistoryPanelProps {
   history: DrawHistoryItem[];
   onClearHistory: () => void;
   disabled?: boolean;
+  /** 是否默认展开；默认折叠，避免设置面板一开始就堆满记录 */
+  defaultExpanded?: boolean;
 }
 
 export { MAX_HISTORY_ITEMS };
@@ -25,7 +27,13 @@ function formatDrawTime(drawnAt: string): string {
   }).format(date);
 }
 
-export function HistoryPanel({ history, onClearHistory, disabled = false }: HistoryPanelProps) {
+export function HistoryPanel({
+  history,
+  onClearHistory,
+  disabled = false,
+  defaultExpanded = false,
+}: HistoryPanelProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const visibleHistory = history.slice(0, MAX_HISTORY_ITEMS);
@@ -59,56 +67,73 @@ export function HistoryPanel({ history, onClearHistory, disabled = false }: Hist
       <div className="section-heading">
         <div>
           <p className="section-kicker">课堂记录</p>
-          <h3 id="history-panel-title">最近抽取</h3>
+          <h3 id="history-panel-title">
+            <button
+              type="button"
+              className="settings-collapse-toggle"
+              aria-expanded={isExpanded}
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+            >
+              <span className="settings-collapse-caret" aria-hidden="true">
+                {isExpanded ? '▾' : '▸'}
+              </span>
+              最近抽取
+            </button>
+          </h3>
         </div>
         <span className="settings-count">{visibleHistory.length} 条</span>
       </div>
 
-      {visibleHistory.length > 0 ? (
-        <ol className="history-list" aria-label="抽取历史记录">
-          {visibleHistory.map((item) => (
-            <li className="history-item" key={item.id} data-history-id={item.id}>
-              <div className="history-item-heading">
-                <time dateTime={item.drawnAt}>{formatDrawTime(item.drawnAt)}</time>
-                <span>{item.studentNames.length} 人</span>
-              </div>
-              <p>{item.studentNames.length > 0 ? item.studentNames.join('、') : '未记录姓名'}</p>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="empty-history-message" role="status">
-          暂无抽取记录。
-        </p>
-      )}
+      {/* 折叠时整块内容不渲染，保持设置面板简洁 */}
+      {isExpanded ? (
+        <>
+          {visibleHistory.length > 0 ? (
+            <ol className="history-list" aria-label="抽取历史记录">
+              {visibleHistory.map((item) => (
+                <li className="history-item" key={item.id} data-history-id={item.id}>
+                  <div className="history-item-heading">
+                    <time dateTime={item.drawnAt}>{formatDrawTime(item.drawnAt)}</time>
+                    <span>{item.studentNames.length} 人</span>
+                  </div>
+                  <p>{item.studentNames.length > 0 ? item.studentNames.join('、') : '未记录姓名'}</p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="empty-history-message" role="status">
+              暂无抽取记录。
+            </p>
+          )}
 
-      {!isConfirmingClear ? (
-        <button
-          type="button"
-          className="secondary-button history-clear-button"
-          disabled={disabled || visibleHistory.length === 0}
-          onClick={requestClear}
-        >
-          清除历史记录
-        </button>
-      ) : (
-        <div className="history-clear-confirm" role="alertdialog" aria-label="确认清除历史记录">
-          <p>确定清除全部历史记录？</p>
-          <div className="history-confirm-actions">
+          {!isConfirmingClear ? (
             <button
-              ref={cancelButtonRef}
               type="button"
-              className="secondary-button"
-              onClick={() => setIsConfirmingClear(false)}
+              className="secondary-button history-clear-button"
+              disabled={disabled || visibleHistory.length === 0}
+              onClick={requestClear}
             >
-              取消
+              清除历史记录
             </button>
-            <button type="button" className="primary-button" onClick={confirmClear}>
-              确认清除历史记录
-            </button>
-          </div>
-        </div>
-      )}
+          ) : (
+            <div className="history-clear-confirm" role="alertdialog" aria-label="确认清除历史记录">
+              <p>确定清除全部历史记录？</p>
+              <div className="history-confirm-actions">
+                <button
+                  ref={cancelButtonRef}
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setIsConfirmingClear(false)}
+                >
+                  取消
+                </button>
+                <button type="button" className="primary-button" onClick={confirmClear}>
+                  确认清除历史记录
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      ) : null}
     </section>
   );
 }

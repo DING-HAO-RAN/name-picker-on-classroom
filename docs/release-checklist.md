@@ -284,3 +284,41 @@ git check-ignore -v --no-index dist/main/index.js release/NamePicker-1.0.0.exe c
 5. 尚未在安装版和 portable 包内分别完成完整课堂 UI 流程；发布前应在两个包中重复离线课堂流程，并在 Windows 10 x64 上复测。
 6. 发布前应在具备 `winCodeSign` 资源编辑权限的环境重新运行不带跳过变量的命令，按组织流程完成代码签名，再更新产物哈希和验收证据。
 7. 本任务不修改功能源码、不新增网络/更新/遥测，不提交任何 release 二进制。
+
+## 界面改造后的复验记录（第二次）
+
+上面各节的产物哈希、ASAR 条目数和打包日志对应基线 `377f530`，仍然有效但**不再对应当前工作树**；界面改造后必须重新打包才能取得新的发布证据。
+
+本轮改造内容：移除首页副标题、抽取结果全屏停留时长默认 3 秒并可在设置中调整、窗口改为无边框并自绘标题栏、设置抽屉中的权重与历史默认折叠、抽取动画改为缓出加随机抖动。
+
+本轮可复现命令与结果：
+
+| 命令 | 实际结果 | 关键输出 |
+|---|---|---|
+| `npm exec -- tsc --noEmit` | 通过，退出码 `0` | 无输出 |
+| `npm test -- --run` | 通过，退出码 `0` | 10 个测试文件、164 个测试全部通过 |
+| `npm run build` | 通过，退出码 `0` | `dist/main/index.js` 23.62 kB、`dist/preload/index.js` 2.62 kB、渲染器 616.27 kB |
+| `npm run test:e2e` | 本机无法执行 | 沙箱内 Chromium GPU 进程无法启动（`GPU process isn't usable. Goodbye.`），与本仓库代码无关 |
+
+由于仓库自带的 Playwright Electron 用例在当前沙箱内无法 attach，本轮改用等价的本地临时脚本启动同一 `dist` 产物做端到端复验，覆盖 18 项检查并全部通过：
+
+```text
+PASS | 窗口无原生边框（内容区与窗口同尺寸） | {"widthDiff":0,"heightDiff":0}
+PASS | 顶部副标题已移除 | matchCount=0
+PASS | 标题栏按钮可用：最小化窗口 / 最大化窗口 / 关闭窗口
+PASS | 最大化生效且按钮切换为「还原」 / 还原生效且按钮切回「最大化」
+PASS | 最小化生效
+PASS | 导入名单 | 共 4 名学生
+PASS | 权重与历史默认折叠 | weight=false, history=false
+PASS | 折叠时权重输入框不渲染 | count=0
+PASS | 设置抽屉让开标题栏且标题未被挤压 | {"titlebarBottom":52,"panelTop":52,"titleWidth":66}
+PASS | 结果全屏停留时长默认 3000 毫秒 | value=3000
+PASS | 展开权重后可编辑并保存 | 甲同学权重=2
+PASS | 全屏结果提示 3 秒
+PASS | 全屏结果约 3 秒后自动关闭 | visibleMs=3380
+PASS | 重置本轮后恢复等待抽取 | 等待抽取 x4
+PASS | 关闭按钮退出应用 | quitDetected=true
+SUMMARY | total=18 passed=18 failed=0
+```
+
+该脚本只在本机沙箱内运行，同样不能替代安装版和 portable 包内的完整课堂 UI 流程验收；上面的已知限制 1 至 6 项在重新打包前依然成立。

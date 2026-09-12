@@ -77,12 +77,110 @@ h2 {
   line-height: 1.2;
 }
 
+/* 标题栏固定高度（px）：窗口内容需要让出这段空间 */
+:root {
+  --titlebar-height: 52px;
+}
+
 .app-shell {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
   gap: 28px;
-  padding: clamp(24px, 5vw, 64px);
+  /* 顶部内边距额外让出固定标题栏的高度 */
+  padding: calc(clamp(24px, 5vw, 64px) + var(--titlebar-height)) clamp(24px, 5vw, 64px)
+    clamp(24px, 5vw, 64px);
+}
+
+/* ==========================================================================
+   自绘标题栏（配合主进程 frame: false，替换 Windows 原生标题栏）
+   ========================================================================== */
+.app-titlebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  height: var(--titlebar-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 8px 0 18px;
+  border-bottom: 1px solid #dbe4ff;
+  background: linear-gradient(90deg, #eef2ff 0%, #ffffff 58%);
+  box-shadow: 0 2px 10px rgba(49, 46, 129, 0.07);
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.app-titlebar__brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-titlebar__mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.32);
+  font-size: 0.95rem;
+}
+
+.app-titlebar__title {
+  overflow: hidden;
+  color: #312e81;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-titlebar__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.app-titlebar__button {
+  display: grid;
+  width: 46px;
+  min-width: 46px;
+  height: 36px;
+  min-height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  background: transparent;
+  color: #4338ca;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.app-titlebar__button:hover:not(:disabled) {
+  background: #e0e7ff;
+}
+
+.app-titlebar__button--close:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.app-titlebar__icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .classroom-header {
@@ -101,13 +199,6 @@ h2 {
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0.14em;
-}
-
-.app-description {
-  margin-bottom: 0;
-  color: #475569;
-  font-size: 1.15rem;
-  line-height: 1.6;
 }
 
 .classroom-summary {
@@ -486,7 +577,9 @@ h2 {
 .settings-drawer {
   position: fixed;
   z-index: 20;
-  inset: 0;
+  /* 让出顶部自绘标题栏的高度：标题栏是窗口外框，抽屉从它下沿开始，
+     否则抽屉头部的「课堂设置」小标题会被压在标题栏底下 */
+  inset: var(--titlebar-height) 0 0;
   display: flex;
   justify-content: flex-end;
 }
@@ -503,7 +596,7 @@ h2 {
   position: relative;
   display: flex;
   width: min(620px, 100%);
-  max-height: 100vh;
+  max-height: calc(100vh - var(--titlebar-height));
   flex-direction: column;
   border-left: 1px solid #c7d2fe;
   background: #ffffff;
@@ -528,6 +621,9 @@ h2 {
 }
 
 .settings-drawer__close {
+  /* 关闭按钮虽复用 secondary-button（它是给纵向表单用的整宽按钮），
+     但在抽屉标题行里必须收成内容宽度，否则会把标题挤成竖排 */
+  width: auto;
   min-width: 100px;
   flex: 0 0 auto;
 }
@@ -807,15 +903,11 @@ h2 {
 @media (max-width: 520px) {
   .app-shell {
     gap: 20px;
-    padding: 20px 16px 32px;
+    padding: calc(20px + var(--titlebar-height)) 16px 32px;
   }
 
   .classroom-header {
     gap: 18px;
-  }
-
-  .app-description {
-    font-size: 1rem;
   }
 
   .roster-section,
@@ -954,6 +1046,11 @@ h2 {
   font-size: 0.95rem;
 }
 
+/* 全屏轮播时名字同样柔滑淡入 */
+.fullscreen-result-container.is-rolling .fullscreen-name-text {
+  animation: rollNameSwap 220ms ease-out;
+}
+
 /* ==========================================================================
    滚动抽取（Slot & Marquee）动画动效
    ========================================================================== */
@@ -965,17 +1062,19 @@ h2 {
 .result-card--rolling {
   border: 2px dashed #6366f1;
   background: #ffffff;
-  animation: rollCardPulse 0.6s infinite alternate;
+  animation: rollCardPulse 0.95s infinite alternate;
 }
 
 .result-card-mark--rolling {
   background: #f59e0b;
-  animation: diceSpin 0.7s infinite linear;
+  animation: diceSpin 1.5s infinite linear;
 }
 
 .slot-roll-text {
   color: #4338ca;
   font-weight: 900;
+  /* 每次名字切换重挂载一次，让文字柔滑地淡入，而不是生硬跳变 */
+  animation: rollNameSwap 220ms ease-out;
 }
 
 .student-list-item--marquee {
@@ -985,7 +1084,7 @@ h2 {
   font-weight: 800;
   transform: scale(1.02);
   box-shadow: 0 0 16px rgba(234, 179, 8, 0.55);
-  transition: all 0.08s ease;
+  transition: all 0.18s ease;
 }
 
 /* ==========================================================================
@@ -1009,6 +1108,35 @@ h2 {
   color: #1e293b;
   font-size: 1.1rem;
   font-weight: 800;
+}
+
+/* ==========================================================================
+   设置抽屉内的可折叠分组标题（学生权重 / 最近抽取）
+   ========================================================================== */
+.settings-collapse-toggle {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  background: none;
+  color: #1e293b;
+  font: inherit;
+  text-align: left;
+}
+
+.settings-collapse-toggle:hover:not(:disabled) {
+  color: #4f46e5;
+}
+
+.settings-collapse-caret {
+  display: inline-block;
+  width: 14px;
+  flex: 0 0 14px;
+  color: #4f46e5;
+  font-size: 0.8rem;
+  transition: transform 160ms ease;
 }
 
 .settings-field {
@@ -1079,6 +1207,20 @@ h2 {
   }
   100% {
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  }
+}
+
+/* 名字切换时的柔滑淡入 */
+@keyframes rollNameSwap {
+  0% {
+    opacity: 0.28;
+    filter: blur(3px);
+    transform: translateY(8px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1218,12 +1360,42 @@ h2 {
   color: #f1f5f9;
 }
 
+.app-shell.theme-dark .app-titlebar {
+  border-bottom-color: #334155;
+  background: linear-gradient(90deg, #111c33 0%, #0f1a2e 58%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.app-shell.theme-dark .app-titlebar__title {
+  color: #e0e7ff;
+}
+
+.app-shell.theme-dark .app-titlebar__button {
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .app-titlebar__button:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.app-shell.theme-dark .app-titlebar__button--close:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.app-shell.theme-dark .settings-collapse-toggle {
+  color: #e2e8f0;
+}
+
+.app-shell.theme-dark .settings-collapse-caret {
+  color: #a5b4fc;
+}
+
 .app-shell.theme-dark .app-kicker,
 .app-shell.theme-dark .section-kicker {
   color: #a5b4fc;
 }
 
-.app-shell.theme-dark .app-description,
 .app-shell.theme-dark .loading-message,
 .app-shell.theme-dark .control-hint,
 .app-shell.theme-dark .settings-search-summary,

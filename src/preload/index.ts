@@ -6,6 +6,8 @@ import {
   type IpcSuccessEnvelope,
   type NamePickerApi,
   type SerializedIpcError,
+  type WindowControlAction,
+  type WindowControlsApi,
 } from '../shared/ipcTypes';
 import type { RosterState } from '../shared/types';
 
@@ -67,11 +69,38 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   throw createRendererError(FALLBACK_ERROR);
 }
 
+async function requestWindowControl(action: WindowControlAction): Promise<boolean> {
+  return invoke<boolean>(IPC_CHANNELS.windowControl, action);
+}
+
+const windowControls: WindowControlsApi = Object.freeze({
+  async minimize(): Promise<void> {
+    await requestWindowControl('minimize');
+  },
+  async toggleMaximize(): Promise<void> {
+    await requestWindowControl('toggle-maximize');
+  },
+  async close(): Promise<void> {
+    await requestWindowControl('close');
+  },
+  isMaximized: () => requestWindowControl('get-maximized'),
+  onMaximizedChange(listener: (isMaximized: boolean) => void): () => void {
+    const handleChange = (_event: unknown, isMaximized: unknown): void => {
+      listener(isMaximized === true);
+    };
+    ipcRenderer.on(IPC_CHANNELS.windowMaximizedChanged, handleChange);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.windowMaximizedChanged, handleChange);
+    };
+  },
+});
+
 const namePicker: NamePickerApi = Object.freeze({
   importRoster: () => invoke<ImportResult>(IPC_CHANNELS.importRoster),
   loadState: () => invoke<RosterState | null>(IPC_CHANNELS.loadState),
   saveState: (state: RosterState) => invoke<void>(IPC_CHANNELS.saveState, state),
   clearState: () => invoke<void>(IPC_CHANNELS.clearState),
+  windowControls,
 });
 
 contextBridge.exposeInMainWorld('namePicker', namePicker);

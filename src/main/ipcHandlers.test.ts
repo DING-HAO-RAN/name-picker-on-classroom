@@ -416,6 +416,7 @@ describe('主进程 IPC 业务 handler', () => {
       IPC_CHANNELS.loadState,
       IPC_CHANNELS.saveState,
       IPC_CHANNELS.clearState,
+      IPC_CHANNELS.windowControl,
     ]);
     expect([...registered.keys()]).not.toContain('namePicker.chooseRosterFile');
 
@@ -423,6 +424,136 @@ describe('主进程 IPC 业务 handler', () => {
     expect(saveListener).toBeDefined();
     await saveListener?.(authorizedEvent, savedState);
     expect(store.save).toHaveBeenCalledWith(savedState);
+  });
+
+  it('丢弃越界的结果全屏停留时长，保留范围内的值', async () => {
+    const store = createStore();
+    store.save.mockResolvedValue(undefined);
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store,
+    });
+
+    // 旧版本内置的 1000ms 低于新的下限，写入时被丢弃，由渲染器回落到默认值
+    await handlers.saveState({
+      ...savedState,
+      settings: { ...savedState.settings, fullscreenDisplayMs: 1000 },
+    });
+    expect(store.save).toHaveBeenLastCalledWith(savedState);
+
+    await handlers.saveState({
+      ...savedState,
+      settings: { ...savedState.settings, fullscreenDisplayMs: 3000 },
+    });
+    expect(store.save).toHaveBeenLastCalledWith({
+      ...savedState,
+      settings: { ...savedState.settings, fullscreenDisplayMs: 3000 },
+    });
+  });
+
+  it('窗口操作按白名单分发并返回最大化状态', async () => {
+    const windowControls = {
+      minimize: vi.fn(),
+      toggleMaximize: vi.fn(),
+      close: vi.fn(),
+      isMaximized: vi.fn().mockReturnValue(false),
+    };
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store: createStore(),
+      windowControls,
+    });
+
+    await expect(handlers.windowControl('minimize')).resolves.toBe(false);
+    expect(windowControls.minimize).toHaveBeenCalledTimes(1);
+
+    windowControls.isMaximized.mockReturnValue(true);
+    await expect(handlers.windowControl('toggle-maximize')).resolves.toBe(true);
+    expect(windowControls.toggleMaximize).toHaveBeenCalledTimes(1);
+
+    await expect(handlers.windowControl('get-maximized')).resolves.toBe(true);
+    expect(windowControls.close).not.toHaveBeenCalled();
+
+    await expect(handlers.windowControl('close')).resolves.toBe(true);
+    expect(windowControls.close).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['未知动作', 'open-devtools'],
+    ['非字符串动作', 42],
+    ['空动作', ''],
+    ['原型污染尝试', '__proto__'],
+  ] as const)('拒绝白名单外的窗口操作（%s）', async (_description, action) => {
+    const windowControls = {
+      minimize: vi.fn(),
+      toggleMaximize: vi.fn(),
+      close: vi.fn(),
+      isMaximized: vi.fn().mockReturnValue(false),
+    };
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store: createStore(),
+      windowControls,
+    });
+
+    await expect(handlers.windowControl(action)).rejects.toEqual({
+      code: 'INVALID_WINDOW_ACTION',
+      message: '不支持的窗口操作。',
+    });
+    expect(windowControls.minimize).not.toHaveBeenCalled();
+    expect(windowControls.toggleMaximize).not.toHaveBeenCalled();
+    expect(windowControls.close).not.toHaveBeenCalled();
+  });
+
+  it('未提供窗口控制能力时窗口操作安全降级', async () => {
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store: createStore(),
+    });
+
+    await expect(handlers.windowControl('minimize')).resolves.toBe(false);
+  });
+
+  it('注册 listener 只把受信来源的窗口操作转发给主进程', async () => {
+    const windowControls = {
+      minimize: vi.fn(),
+      toggleMaximize: vi.fn(),
+      close: vi.fn(),
+      isMaximized: vi.fn().mockReturnValue(false),
+    };
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store: createStore(),
+      windowControls,
+    });
+    const registered = new Map<string, (...args: unknown[]) => unknown>();
+    const ipcMain: IpcMainLike = {
+      handle: vi.fn((channel, listener) => {
+        registered.set(channel, listener);
+      }),
+    };
+    registerIpcHandlers(ipcMain, handlers);
+
+    await expect(
+      registered.get(IPC_CHANNELS.windowControl)?.(authorizedEvent, 'minimize'),
+    ).resolves.toEqual({ ok: true, data: false });
+    expect(windowControls.minimize).toHaveBeenCalledTimes(1);
+
+    await expect(
+      registered.get(IPC_CHANNELS.windowControl)?.(
+        { senderFrame: { url: 'https://example.com/index.html' } },
+        'close',
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      error: { code: 'UNAUTHORIZED_SENDER', message: '未授权的调用来源。' },
+    });
+    expect(windowControls.close).not.toHaveBeenCalled();
   });
 
   it('注册 listener 将成功业务结果包装为成功 envelope', async () => {

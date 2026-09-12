@@ -1,12 +1,16 @@
 import { useEffect, useRef } from 'react';
-import type { StudentRecord } from '../../shared/types';
+import {
+  DEFAULT_FULLSCREEN_DISPLAY_MS,
+  MIN_FULLSCREEN_DISPLAY_MS,
+  type StudentRecord,
+} from '../../shared/types';
 
 export interface FullscreenResultOverlayProps {
   /** 是否显示全屏结果弹层 */
   isOpen: boolean;
   /** 抽中的学生列表 */
   students: StudentRecord[];
-  /** 展示持续时间（毫秒），默认 1000ms */
+  /** 展示持续时间（毫秒），默认 3 秒，可在设置中调整 */
   durationMs?: number;
   /** 是否正在滚动抽选中（用于全屏聚焦轮播模式） */
   isRolling?: boolean;
@@ -18,12 +22,12 @@ export interface FullscreenResultOverlayProps {
 
 /**
  * 抽取结果全屏沉浸式展示组件
- * 无论是否开启动画，抽取完成后默认全屏放大展示结果 1 秒，增强课堂点名的仪式感与大屏可见度。
+ * 抽取完成后按设置的全屏停留时长展示结果，增强课堂点名的仪式感与大屏可见度。
  */
 export function FullscreenResultOverlay({
   isOpen,
   students,
-  durationMs = 1000,
+  durationMs = DEFAULT_FULLSCREEN_DISPLAY_MS,
   isRolling = false,
   rollingNames = [],
   onClose,
@@ -44,8 +48,8 @@ export function FullscreenResultOverlay({
       return;
     }
 
-    // 抽取结果定格后，倒计时指定时间（默认1秒）自动关闭
-    const closeDelay = Math.max(500, durationMs);
+    // 抽取结果定格后，按设置的停留时长自动关闭
+    const closeDelay = Math.max(MIN_FULLSCREEN_DISPLAY_MS, durationMs);
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null;
       onClose();
@@ -69,6 +73,10 @@ export function FullscreenResultOverlay({
       ? rollingNames
       : ['抽取中…']
     : students.map((s) => s.name);
+
+  const displaySeconds = Number(
+    (Math.max(MIN_FULLSCREEN_DISPLAY_MS, durationMs) / 1000).toFixed(1),
+  );
 
   return (
     <div
@@ -95,7 +103,7 @@ export function FullscreenResultOverlay({
         </div>
 
         <p className="fullscreen-tip">
-          {isRolling ? '请屏息以待…' : '点击任意处或等待 1 秒自动关闭'}
+          {isRolling ? '请屏息以待…' : `点击任意处或等待 ${displaySeconds} 秒自动关闭`}
         </p>
       </div>
     </div>

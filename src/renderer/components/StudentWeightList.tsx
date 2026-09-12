@@ -6,6 +6,8 @@ export interface StudentWeightListProps {
   students: StudentRecord[];
   onWeightChange: (id: string, weight: number) => void;
   disabled?: boolean;
+  /** 是否默认展开；默认折叠，避免设置面板一开始就堆满名单 */
+  defaultExpanded?: boolean;
 }
 
 const INVALID_WEIGHT_MESSAGE = '权重必须是有限的非负数。';
@@ -30,7 +32,9 @@ export function StudentWeightList({
   students,
   onWeightChange,
   disabled = false,
+  defaultExpanded = false,
 }: StudentWeightListProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [searchQuery, setSearchQuery] = useState('');
   const [draftWeights, setDraftWeights] = useState<Record<string, string>>(() =>
     getInitialDraftWeights(students),
@@ -120,85 +124,102 @@ export function StudentWeightList({
       <div className="section-heading">
         <div>
           <p className="section-kicker">抽取偏好</p>
-          <h3 id="student-weight-title">学生权重</h3>
+          <h3 id="student-weight-title">
+            <button
+              type="button"
+              className="settings-collapse-toggle"
+              aria-expanded={isExpanded}
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+            >
+              <span className="settings-collapse-caret" aria-hidden="true">
+                {isExpanded ? '▾' : '▸'}
+              </span>
+              学生权重
+            </button>
+          </h3>
         </div>
         <span className="settings-count">{students.length} 人</span>
       </div>
 
-      <label className="settings-search-label" htmlFor="student-name-search">
-        搜索学生姓名
-      </label>
-      <input
-        id="student-name-search"
-        className="settings-search-input"
-        type="search"
-        placeholder="输入姓名筛选"
-        value={searchQuery}
-        disabled={disabled}
-        onChange={(event) => setSearchQuery(event.target.value)}
-      />
+      {/* 折叠时整块内容不渲染：既保持面板简洁，也避免焦点落到不可见控件上 */}
+      {isExpanded ? (
+        <>
+          <label className="settings-search-label" htmlFor="student-name-search">
+            搜索学生姓名
+          </label>
+          <input
+            id="student-name-search"
+            className="settings-search-input"
+            type="search"
+            placeholder="输入姓名筛选"
+            value={searchQuery}
+            disabled={disabled}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
 
-      {duplicateNames.size > 0 ? (
-        <p className="duplicate-name-hint" role="status">
-          发现同名学生，请根据各行分别调整权重。
-        </p>
+          {duplicateNames.size > 0 ? (
+            <p className="duplicate-name-hint" role="status">
+              发现同名学生，请根据各行分别调整权重。
+            </p>
+          ) : null}
+
+          <p className="settings-search-summary" aria-live="polite">
+            显示 {visibleStudents.length} / {students.length} 名学生
+          </p>
+
+          {visibleStudents.length > 0 ? (
+            <ul className="student-weight-items" aria-label="学生权重列表">
+              {visibleStudents.map((student) => {
+                const inputId = `student-weight-${student.id}`;
+                const errorId = `${inputId}-error`;
+                const currentWeight = getDraftWeight(student);
+                const hasError = Boolean(validationErrors[student.id]);
+                return (
+                  <li className="student-weight-item" key={student.id} data-student-id={student.id}>
+                    <div className="student-weight-name">
+                      <span>{student.name}</span>
+                      {duplicateNames.has(student.name) ? (
+                        <small className="duplicate-name-label">同名</small>
+                      ) : null}
+                    </div>
+                    <div className="student-weight-editor">
+                      <label htmlFor={inputId} className="visually-hidden">
+                        {student.name}权重
+                      </label>
+                      <input
+                        id={inputId}
+                        className="student-weight-input"
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="any"
+                        aria-label={`${student.name}权重`}
+                        aria-invalid={hasError}
+                        aria-describedby={hasError ? errorId : undefined}
+                        value={draftWeights[student.id] ?? String(student.weight)}
+                        disabled={disabled}
+                        onChange={(event) => handleWeightInput(student, event.target.value)}
+                      />
+                      {currentWeight === 0 && !hasError ? (
+                        <small className="student-weight-status">暂不参与抽取</small>
+                      ) : null}
+                      {hasError ? (
+                        <small id={errorId} className="student-weight-error" role="alert">
+                          {validationErrors[student.id]}
+                        </small>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="empty-search-message" role="status">
+              没有找到匹配的学生。
+            </p>
+          )}
+        </>
       ) : null}
-
-      <p className="settings-search-summary" aria-live="polite">
-        显示 {visibleStudents.length} / {students.length} 名学生
-      </p>
-
-      {visibleStudents.length > 0 ? (
-        <ul className="student-weight-items" aria-label="学生权重列表">
-          {visibleStudents.map((student) => {
-            const inputId = `student-weight-${student.id}`;
-            const errorId = `${inputId}-error`;
-            const currentWeight = getDraftWeight(student);
-            const hasError = Boolean(validationErrors[student.id]);
-            return (
-              <li className="student-weight-item" key={student.id} data-student-id={student.id}>
-                <div className="student-weight-name">
-                  <span>{student.name}</span>
-                  {duplicateNames.has(student.name) ? (
-                    <small className="duplicate-name-label">同名</small>
-                  ) : null}
-                </div>
-                <div className="student-weight-editor">
-                  <label htmlFor={inputId} className="visually-hidden">
-                    {student.name}权重
-                  </label>
-                  <input
-                    id={inputId}
-                    className="student-weight-input"
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="any"
-                    aria-label={`${student.name}权重`}
-                    aria-invalid={hasError}
-                    aria-describedby={hasError ? errorId : undefined}
-                    value={draftWeights[student.id] ?? String(student.weight)}
-                    disabled={disabled}
-                    onChange={(event) => handleWeightInput(student, event.target.value)}
-                  />
-                  {currentWeight === 0 && !hasError ? (
-                    <small className="student-weight-status">暂不参与抽取</small>
-                  ) : null}
-                  {hasError ? (
-                    <small id={errorId} className="student-weight-error" role="alert">
-                      {validationErrors[student.id]}
-                    </small>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className="empty-search-message" role="status">
-          没有找到匹配的学生。
-        </p>
-      )}
     </section>
   );
 }

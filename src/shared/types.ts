@@ -3,6 +3,15 @@ export const MAX_HISTORY_ITEMS = 50;
 // 动画时长上限（毫秒）：渲染器、主进程校验与本地存储共用同一边界
 export const MAX_ANIMATION_DURATION_MS = 5000;
 
+// 抽取结果全屏停留时长（毫秒）：默认 3 秒，可在设置中调整
+export const DEFAULT_FULLSCREEN_DISPLAY_MS = 3000;
+export const MIN_FULLSCREEN_DISPLAY_MS = 1500;
+export const MAX_FULLSCREEN_DISPLAY_MS = 10000;
+
+// 旧版本把它固定为 1000 毫秒且不对外开放。新的可选范围从 1500 毫秒起，
+// 因此 1000 只可能来自历史存档，不会和用户主动选择的值冲突，可安全迁移。
+export const LEGACY_FULLSCREEN_DISPLAY_MS = 1000;
+
 export interface StudentRecord {
   id: string;
   name: string;

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import * as drawEngine from '../shared/drawEngine';
-import type { ImportResult, NamePickerApi } from '../shared/ipcTypes';
+import type { ImportResult, NamePickerApi, WindowControlsApi } from '../shared/ipcTypes';
 import type { RosterState, StudentRecord } from '../shared/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -17,7 +17,7 @@ const savedSettings = {
   animationDurationMs: 800,
   animationStyle: 'slot' as const,
   allowDuplicates: false,
-  fullscreenDisplayMs: 1000,
+  fullscreenDisplayMs: 3000,
   theme: 'light' as const,
 };
 
@@ -672,9 +672,12 @@ describe('课堂主界面', () => {
     const startButton = screen.getByRole('button', { name: '开始抽取' });
     fireEvent.click(startButton);
 
-    // 全屏展示弹层出现
+    // 全屏展示弹层出现，默认停留 3 秒
     const fullscreenDialog = await screen.findByRole('dialog', { name: '抽取结果全屏展示' });
     expect(fullscreenDialog).toBeInTheDocument();
+    expect(
+      within(fullscreenDialog).getByText('点击任意处或等待 3 秒自动关闭'),
+    ).toBeInTheDocument();
 
     // 结果区域处于学生列表上方
     const resultHeading = screen.getByRole('heading', { name: '本次抽取结果' });
@@ -844,5 +847,89 @@ describe('课堂主界面', () => {
     expect(api.importRoster).not.toHaveBeenCalled();
 
     saveDeferred.resolve();
+  });
+
+  it('结果全屏停留时长默认 3 秒，并可在设置中修改后保存', async () => {
+    const api = installApi();
+
+    render(<App />);
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '导入名单' }));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(api.saveState).mock.calls[0][0].settings.fullscreenDisplayMs).toBe(3000);
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    const durationInput = within(dialog).getByRole('spinbutton', {
+      name: '结果全屏停留时长（毫秒）',
+    });
+    expect(durationInput).toHaveValue(3000);
+
+    fireEvent.change(durationInput, { target: { value: '5000' } });
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(api.saveState).mock.calls[1][0].settings.fullscreenDisplayMs).toBe(5000);
+  });
+
+  it('把历史存档里旧的内置停留时长迁移为默认 3 秒并回写', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, fullscreenDisplayMs: 1000 } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(api.saveState).mock.calls[0][0].settings.fullscreenDisplayMs).toBe(3000);
+  });
+
+  it('自绘标题栏转发窗口控制，并跟随最大化状态切换按钮', async () => {
+    let maximizedListener: ((isMaximized: boolean) => void) | null = null;
+    const windowControls: WindowControlsApi = {
+      minimize: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+      toggleMaximize: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+      close: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+      isMaximized: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+      onMaximizedChange: vi.fn((listener: (isMaximized: boolean) => void) => {
+        maximizedListener = listener;
+        return () => {
+          maximizedListener = null;
+        };
+      }),
+    };
+    installApi({ windowControls });
+
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '名字抽取器' })).toBeInTheDocument();
+
+    const minimizeButton = screen.getByRole('button', { name: '最小化窗口' });
+    fireEvent.click(minimizeButton);
+    expect(windowControls.minimize).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: '最大化窗口' }));
+    expect(windowControls.toggleMaximize).toHaveBeenCalledTimes(1);
+
+    // 主进程推送最大化状态后，按钮切换为「还原窗口」
+    act(() => {
+      maximizedListener?.(true);
+    });
+    expect(screen.getByRole('button', { name: '还原窗口' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '最大化窗口' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '关闭窗口' }));
+    expect(windowControls.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('没有窗口控制能力时标题栏按钮保持禁用', async () => {
+    installApi();
+
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '名字抽取器' })).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: '最小化窗口' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '最大化窗口' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '关闭窗口' })).toBeDisabled();
   });
 });

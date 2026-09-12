@@ -6,8 +6,15 @@ import {
   type IpcFailureEnvelope,
   type IpcResponse,
   type SerializedIpcError,
+  type WindowControlAction,
 } from '../shared/ipcTypes';
-import { MAX_ANIMATION_DURATION_MS, type RosterState, type StudentRecord } from '../shared/types';
+import {
+  MAX_ANIMATION_DURATION_MS,
+  MAX_FULLSCREEN_DISPLAY_MS,
+  MIN_FULLSCREEN_DISPLAY_MS,
+  type RosterState,
+  type StudentRecord,
+} from '../shared/types';
 
 export interface OpenDialogResult {
   canceled: boolean;
@@ -15,6 +22,14 @@ export interface OpenDialogResult {
 }
 
 export type ShowOpenDialog = (options: OpenDialogOptions) => Promise<OpenDialogResult>;
+
+/** 主进程窗口控制能力：由 main 进程绑定到真实 BrowserWindow */
+export interface IpcWindowControls {
+  minimize(): void;
+  toggleMaximize(): void;
+  close(): void;
+  isMaximized(): boolean;
+}
 
 export interface IpcHandlerDependencies {
   showOpenDialog: ShowOpenDialog;
@@ -24,6 +39,7 @@ export interface IpcHandlerDependencies {
     save: (state: RosterState) => Promise<void>;
     clear: () => Promise<void>;
   };
+  windowControls?: IpcWindowControls;
 }
 
 export interface IpcHandlers {
@@ -31,6 +47,8 @@ export interface IpcHandlers {
   loadState(): Promise<RosterState | null>;
   saveState(state: unknown): Promise<void>;
   clearState(): Promise<void>;
+  /** 执行窗口操作并返回操作后的最大化状态 */
+  windowControl(action: unknown): Promise<boolean>;
 }
 
 export interface IpcMainLike {
@@ -55,6 +73,7 @@ const ERROR_MESSAGES = {
   FILE_DIALOG_FAILED: '文件选择失败。',
   INVALID_STATE: '名单状态数据无效。',
   UNAUTHORIZED_SENDER: '未授权的调用来源。',
+  INVALID_WINDOW_ACTION: '不支持的窗口操作。',
   INTERNAL_ERROR: '操作失败。',
 } as const;
 
@@ -113,6 +132,21 @@ function invalidStateError(): SerializedIpcError {
 
 function unsupportedFormatError(): SerializedIpcError {
   return { code: 'UNSUPPORTED_FORMAT', message: ERROR_MESSAGES.UNSUPPORTED_FORMAT };
+}
+
+function invalidWindowActionError(): SerializedIpcError {
+  return { code: 'INVALID_WINDOW_ACTION', message: ERROR_MESSAGES.INVALID_WINDOW_ACTION };
+}
+
+const WINDOW_CONTROL_ACTIONS = new Set<WindowControlAction>([
+  'minimize',
+  'toggle-maximize',
+  'close',
+  'get-maximized',
+]);
+
+function isWindowControlAction(value: unknown): value is WindowControlAction {
+  return typeof value === 'string' && WINDOW_CONTROL_ACTIONS.has(value as WindowControlAction);
 }
 
 function normalizeRequiredString(value: unknown): string | undefined {
@@ -240,7 +274,8 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
   if (
     typeof value.fullscreenDisplayMs === 'number' &&
     Number.isFinite(value.fullscreenDisplayMs) &&
-    value.fullscreenDisplayMs >= 0
+    value.fullscreenDisplayMs >= MIN_FULLSCREEN_DISPLAY_MS &&
+    value.fullscreenDisplayMs <= MAX_FULLSCREEN_DISPLAY_MS
   ) {
     normalizedSettings.fullscreenDisplayMs = value.fullscreenDisplayMs;
   }
@@ -400,6 +435,27 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
         throw serializeIpcError(error);
       }
     },
+
+    async windowControl(action: unknown): Promise<boolean> {
+      if (!isWindowControlAction(action)) {
+        throw invalidWindowActionError();
+      }
+
+      const windowControls = dependencies.windowControls;
+      if (!windowControls) {
+        return false;
+      }
+
+      if (action === 'minimize') {
+        windowControls.minimize();
+      } else if (action === 'toggle-maximize') {
+        windowControls.toggleMaximize();
+      } else if (action === 'close') {
+        windowControls.close();
+      }
+
+      return windowControls.isMaximized();
+    },
   };
 }
 
@@ -460,5 +516,8 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   );
   ipcMain.handle(IPC_CHANNELS.clearState, (event) =>
     handleTrustedRequest(event, () => handlers.clearState()),
+  );
+  ipcMain.handle(IPC_CHANNELS.windowControl, (event, action) =>
+    handleTrustedRequest(event, () => handlers.windowControl(action)),
   );
 }

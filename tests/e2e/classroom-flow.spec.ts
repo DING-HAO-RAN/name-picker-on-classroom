@@ -50,6 +50,11 @@ test.afterAll(async () => {
 });
 
 test('完成启动、导入、抽取、重置和权重设置流程', async () => {
+  // 自绘标题栏就绪：按钮可用说明窗口控制桥接生效（原生标题栏已被替换）
+  await expect(page.getByRole('button', { name: '最小化窗口' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '最大化窗口' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '关闭窗口' })).toBeEnabled();
+
   await expect(page.getByRole('heading', { name: '名字抽取器' })).toBeVisible();
   await expect(page.getByText(emptyRosterMessage)).toBeVisible();
   await expect(page.getByRole('button', { name: '开始抽取' })).toBeDisabled();
@@ -65,6 +70,16 @@ test('完成启动、导入、抽取、重置和权重设置流程', async () =>
   await page.getByRole('button', { name: '打开设置' }).click();
   const settings = page.getByRole('dialog', { name: '设置' });
   await expect(settings).toBeVisible();
+  // 结果全屏停留时长默认 3 秒
+  await expect(
+    settings.getByRole('spinbutton', { name: '结果全屏停留时长（毫秒）' }),
+  ).toHaveValue('3000');
+  // 权重列表默认折叠，展开后编辑权重
+  await expect(settings.getByRole('button', { name: '学生权重' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await settings.getByRole('button', { name: '学生权重' }).click();
   const firstWeight = settings.getByRole('spinbutton', { name: '甲同学权重' });
   await firstWeight.fill('2');
   await expect(firstWeight).toHaveValue('2');
@@ -75,6 +90,7 @@ test('完成启动、导入、抽取、重置和权重设置流程', async () =>
   await page.getByRole('button', { name: '打开设置' }).click();
   const reopenedSettings = page.getByRole('dialog', { name: '设置' });
   await expect(reopenedSettings).toBeVisible();
+  await reopenedSettings.getByRole('button', { name: '学生权重' }).click();
   await expect(reopenedSettings.getByRole('spinbutton', { name: '甲同学权重' })).toHaveValue('2');
   await page.getByRole('button', { name: '关闭设置' }).click();
   await expect(reopenedSettings).toBeHidden();

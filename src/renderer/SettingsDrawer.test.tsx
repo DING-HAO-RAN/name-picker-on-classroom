@@ -78,6 +78,11 @@ function DrawerHarness() {
   );
 }
 
+function expandSection(name: '学生权重' | '最近抽取'): void {
+  // 权重与历史默认折叠，需要先展开才能操作内部控件
+  fireEvent.click(screen.getByRole('button', { name }));
+}
+
 afterEach(() => {
   Reflect.deleteProperty(window, 'namePicker');
   vi.restoreAllMocks();
@@ -142,6 +147,7 @@ describe('设置抽屉', () => {
     render(
       <HistoryPanel history={[createHistoryItem(0)]} onClearHistory={onClearHistory} />,
     );
+    expandSection('最近抽取');
 
     const clearButton = screen.getByRole('button', { name: '清除历史记录' });
     clearButton.focus();
@@ -177,6 +183,7 @@ describe('设置抽屉', () => {
       />,
     );
 
+    expandSection('学生权重');
     expect(screen.getByText('发现同名学生，请根据各行分别调整权重。')).toBeInTheDocument();
     const searchInput = screen.getByRole('searchbox', { name: '搜索学生姓名' });
     fireEvent.change(searchInput, { target: { value: '周' } });
@@ -204,11 +211,44 @@ describe('设置抽屉', () => {
       />,
     );
 
+    expandSection('学生权重');
     const input = screen.getAllByRole('spinbutton', { name: '林小雨权重' })[0];
     fireEvent.change(input, { target: { value: '-1' } });
 
     expect(screen.getByText('权重必须是有限的非负数。')).toBeInTheDocument();
     expect(onWeightChange).not.toHaveBeenCalled();
+  });
+
+  it('权重与历史默认折叠，展开后才渲染内部内容', () => {
+    render(
+      <SettingsDrawer
+        students={students}
+        history={[createHistoryItem(0)]}
+        onWeightChange={vi.fn()}
+        onResetWeights={vi.fn()}
+        onClearHistory={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const weightToggle = screen.getByRole('button', { name: '学生权重' });
+    const historyToggle = screen.getByRole('button', { name: '最近抽取' });
+    expect(weightToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(historyToggle).toHaveAttribute('aria-expanded', 'false');
+    // 折叠时内部控件不渲染，避免焦点落到不可见元素上
+    expect(screen.queryByRole('spinbutton', { name: '林小雨权重' })).not.toBeInTheDocument();
+    expect(screen.queryByText('学生0')).not.toBeInTheDocument();
+    // 数量徽标仍随标题可见
+    expect(screen.getByText('3 人')).toBeInTheDocument();
+    expect(screen.getByText('1 条')).toBeInTheDocument();
+
+    fireEvent.click(weightToggle);
+    expect(weightToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByRole('spinbutton', { name: '林小雨权重' })).toHaveLength(2);
+
+    fireEvent.click(historyToggle);
+    expect(historyToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('学生0')).toBeInTheDocument();
   });
 
   it('点击恢复默认权重会通知父级', () => {
@@ -241,6 +281,7 @@ describe('设置抽屉', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
     const dialog = screen.getByRole('dialog', { name: '设置' });
+    expandSection('学生权重');
     fireEvent.click(within(dialog).getByRole('button', { name: '恢复默认权重' }));
 
     expect(
@@ -277,6 +318,7 @@ describe('抽取历史', () => {
     const history = Array.from({ length: 51 }, (_, index) => createHistoryItem(index));
     const onClearHistory = vi.fn();
     render(<HistoryPanel history={history} onClearHistory={onClearHistory} />);
+    expandSection('最近抽取');
 
     expect(screen.getByText('学生0')).toBeInTheDocument();
     expect(screen.getByText('学生49')).toBeInTheDocument();
@@ -298,6 +340,7 @@ describe('设置与 App 保存接线', () => {
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    expandSection('学生权重');
     const weightInput = within(screen.getByRole('dialog', { name: '设置' })).getAllByRole(
       'spinbutton',
       { name: '林小雨权重' },
@@ -343,6 +386,7 @@ describe('设置与 App 保存接线', () => {
     expect(within(dialog).getByText('50 条')).toBeInTheDocument();
     expect(within(dialog).queryByText('学生50')).not.toBeInTheDocument();
 
+    expandSection('学生权重');
     fireEvent.change(
       within(dialog).getAllByRole('spinbutton', { name: '林小雨权重' })[0],
       { target: { value: '0' } },
@@ -361,6 +405,7 @@ describe('设置与 App 保存接线', () => {
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    expandSection('最近抽取');
     fireEvent.click(screen.getByRole('button', { name: '清除历史记录' }));
     fireEvent.click(screen.getByRole('button', { name: '确认清除历史记录' }));
 

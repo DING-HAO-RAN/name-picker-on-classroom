@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { drawStudents, resetRound, validateWeight } from '../shared/drawEngine';
-import { MAX_HISTORY_ITEMS } from '../shared/types';
+import {
+  DEFAULT_FULLSCREEN_DISPLAY_MS,
+  LEGACY_FULLSCREEN_DISPLAY_MS,
+  MAX_HISTORY_ITEMS,
+} from '../shared/types';
 import type {
   AnimationStyle,
   AppSettings,
@@ -9,6 +13,8 @@ import type {
   StudentRecord,
   Theme,
 } from '../shared/types';
+import { getRollIntervalMs, pickRollingName } from './rollPacing';
+import { AppTitleBar } from './components/AppTitleBar';
 import { ClassroomHeader } from './components/ClassroomHeader';
 import { DrawControls } from './components/DrawControls';
 import { FullscreenResultOverlay } from './components/FullscreenResultOverlay';
@@ -22,7 +28,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   animationDurationMs: 800,
   animationStyle: 'slot',
   allowDuplicates: false,
-  fullscreenDisplayMs: 1000,
+  fullscreenDisplayMs: DEFAULT_FULLSCREEN_DISPLAY_MS,
   theme: 'light',
 };
 
@@ -44,6 +50,24 @@ function createHistoryItem(students: StudentRecord[]): DrawHistoryItem {
 
 function normalizeHistory(history: DrawHistoryItem[]): DrawHistoryItem[] {
   return history.slice(0, MAX_HISTORY_ITEMS);
+}
+
+/**
+ * 旧版本把结果全屏停留时长固定为 1 秒，这里把历史存档迁移到新的默认值。
+ * 新版本的可选范围从 1500 毫秒起，因此 1000 只可能来自历史存档。
+ */
+function migrateLegacySettings(settings: AppSettings): {
+  settings: AppSettings;
+  migrated: boolean;
+} {
+  if (settings.fullscreenDisplayMs !== LEGACY_FULLSCREEN_DISPLAY_MS) {
+    return { settings, migrated: false };
+  }
+
+  return {
+    settings: { ...settings, fullscreenDisplayMs: DEFAULT_FULLSCREEN_DISPLAY_MS },
+    migrated: true,
+  };
 }
 
 function createEmptyState(): RosterState {
@@ -105,6 +129,8 @@ export function App() {
 
   // 动画与全屏展示状态
   const [rollingNames, setRollingNames] = useState<string[]>([]);
+  // 每次名字切换自增：作为 React key 让文字过渡动效重新播放
+  const [rollTick, setRollTick] = useState(0);
   const [marqueeStudentId, setMarqueeStudentId] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [isRollingFullscreen, setIsRollingFullscreen] = useState(false);
@@ -118,7 +144,7 @@ export function App() {
   const pendingSaveCountRef = useRef(0);
   const interactionLockRef = useRef(false);
   const animationTimerRef = useRef<number | null>(null);
-  const rollIntervalRef = useRef<number | null>(null);
+  const rollTimerRef = useRef<number | null>(null);
   const disposedRef = useRef(false);
 
   const updateRoster = useCallback((nextState: RosterState): void => {
@@ -287,9 +313,11 @@ export function App() {
         }
 
         if (savedState) {
+          const migratedSettings = migrateLegacySettings(savedState.settings);
           const normalizedState: RosterState = {
             ...savedState,
             history: normalizeHistory(savedState.history),
+            settings: migratedSettings.settings,
           };
           updateRoster(normalizedState);
           updateAnimationEnabled(normalizedState.settings.animationEnabled);
@@ -304,7 +332,8 @@ export function App() {
 
           if (
             hasValidRoster(normalizedState) &&
-            normalizedState.history.length !== savedState.history.length
+            (normalizedState.history.length !== savedState.history.length ||
+              migratedSettings.migrated)
           ) {
             await saveState(normalizedState);
           }
@@ -328,8 +357,8 @@ export function App() {
       if (animationTimerRef.current !== null) {
         window.clearTimeout(animationTimerRef.current);
       }
-      if (rollIntervalRef.current !== null) {
-        window.clearInterval(rollIntervalRef.current);
+      if (rollTimerRef.current !== null) {
+        window.clearTimeout(rollTimerRef.current);
       }
       interactionLockRef.current = false;
     };
@@ -512,6 +541,36 @@ export function App() {
     [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
   );
 
+  const handleFullscreenDurationChange = useCallback(
+    (durationMs: number): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const currentRoster = rosterRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: {
+          ...currentRoster.settings,
+          fullscreenDisplayMs: durationMs,
+        },
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
+  );
+
   const handleDraw = useCallback(
     (count: number, animate: boolean): void => {
       const currentRoster = rosterRef.current;
@@ -610,12 +669,12 @@ export function App() {
         window.clearTimeout(animationTimerRef.current);
         animationTimerRef.current = null;
       }
-      if (rollIntervalRef.current !== null) {
-        window.clearInterval(rollIntervalRef.current);
-        rollIntervalRef.current = null;
+      if (rollTimerRef.current !== null) {
+        window.clearTimeout(rollTimerRef.current);
+        rollTimerRef.current = null;
       }
 
-      // 如果不展示动画，直接呈现结果并默认全屏展示 1 秒
+      // 如果不展示动画，直接呈现结果并全屏展示
       if (!shouldAnimate || duration === 0) {
         setResultStudents(drawResult.selected);
         setIsAnimating(false);
@@ -638,30 +697,51 @@ export function App() {
         setIsFullscreenOpen(true);
       }
 
-      // 启动高速名字翻滚定时器（60ms）
-      rollIntervalRef.current = window.setInterval(() => {
-        if (candidateNames.length > 0) {
-          const countToPick = drawResult.selected.length;
-          const randomBatch = Array.from({ length: countToPick }, () => {
-            const index = Math.floor(Math.random() * candidateNames.length);
-            return candidateNames[index] ?? '候选人';
-          });
-          setRollingNames(randomBatch);
+      const pickCount = drawResult.selected.length;
+      let elapsed = 0;
+      let previousNames: string[] = [];
 
-          if (currentStyle === 'marquee') {
-            const randomCandidate = candidates[Math.floor(Math.random() * candidates.length)];
-            if (randomCandidate) {
-              setMarqueeStudentId(randomCandidate.id);
-            }
+      // 翻一次名字：每个位置都尽量避免与上一帧同名，避免看起来「卡住」
+      const rollNames = (): void => {
+        const nextNames = Array.from({ length: pickCount }, (_, index) =>
+          pickRollingName(candidateNames, previousNames[index]),
+        );
+        previousNames = nextNames;
+        setRollingNames(nextNames);
+        setRollTick((tick) => tick + 1);
+
+        if (currentStyle === 'marquee') {
+          const randomCandidate = candidates[Math.floor(Math.random() * candidates.length)];
+          if (randomCandidate) {
+            setMarqueeStudentId(randomCandidate.id);
           }
         }
-      }, 60);
+      };
 
-      // 动画计时结束，定格结果并触发全屏展示 1 秒
+      // 递归定时器：间隔由缓出曲线加抖动给出，节奏先快后慢且不均匀
+      const scheduleNextRoll = (): void => {
+        const interval = getRollIntervalMs(elapsed, duration);
+        rollTimerRef.current = window.setTimeout(() => {
+          rollTimerRef.current = null;
+          elapsed += interval;
+          // 剩余时间不足以再翻一次时收手，把最后一步交给结算定时器
+          if (elapsed >= duration) {
+            return;
+          }
+          rollNames();
+          scheduleNextRoll();
+        }, interval);
+      };
+
+      // 先立即给出一屏名字，避免动画开头出现空档
+      rollNames();
+      scheduleNextRoll();
+
+      // 动画计时结束，定格结果并触发全屏展示
       animationTimerRef.current = window.setTimeout(() => {
-        if (rollIntervalRef.current !== null) {
-          window.clearInterval(rollIntervalRef.current);
-          rollIntervalRef.current = null;
+        if (rollTimerRef.current !== null) {
+          window.clearTimeout(rollTimerRef.current);
+          rollTimerRef.current = null;
         }
         animationTimerRef.current = null;
 
@@ -670,7 +750,7 @@ export function App() {
         setMarqueeStudentId(null);
         setResultStudents(drawResult.selected);
 
-        // 默认将结果全屏显示 1 秒
+        // 定格后进入全屏结果展示
         setIsRollingFullscreen(false);
         setIsFullscreenOpen(true);
 
@@ -851,6 +931,9 @@ export function App() {
 
   return (
     <main className={`app-shell theme-${theme}`}>
+      {/* 自绘标题栏：主进程使用 frame: false，这里固定在最上方按主题绘制标题与窗口按钮 */}
+      <AppTitleBar />
+
       <ClassroomHeader
         sourceName={roster.sourceName}
         studentCount={roster.students.length}
@@ -881,6 +964,7 @@ export function App() {
                 isAnimating={isAnimating}
                 animationStyle={animationStyle}
                 rollingNames={rollingNames}
+                rollTick={rollTick}
               />
 
               {/* 全部学生名单区域 */}
@@ -964,6 +1048,10 @@ export function App() {
           onAnimationStyleChange={handleAnimationStyleChange}
           animationDurationMs={roster.settings.animationDurationMs}
           onAnimationDurationChange={handleAnimationDurationChange}
+          fullscreenDisplayMs={
+            roster.settings.fullscreenDisplayMs ?? DEFAULT_FULLSCREEN_DISPLAY_MS
+          }
+          onFullscreenDisplayChange={handleFullscreenDurationChange}
           theme={theme}
           onThemeChange={handleThemeChange}
           onClearLocalData={handleClearLocalData}
@@ -974,11 +1062,11 @@ export function App() {
         />
       ) : null}
 
-      {/* 抽取完名字后全屏结果展示组件（默认展示 1 秒） */}
+      {/* 抽取完名字后全屏结果展示组件 */}
       <FullscreenResultOverlay
         isOpen={isFullscreenOpen}
         students={resultStudents}
-        durationMs={roster.settings.fullscreenDisplayMs ?? 1000}
+        durationMs={roster.settings.fullscreenDisplayMs ?? DEFAULT_FULLSCREEN_DISPLAY_MS}
         isRolling={isRollingFullscreen}
         rollingNames={rollingNames}
         onClose={() => setIsFullscreenOpen(false)}

@@ -5,6 +5,8 @@ export interface ResultCardsProps {
   isAnimating: boolean;
   animationStyle?: AnimationStyle;
   rollingNames?: string[];
+  /** 每翻一次名字自增：用于让文字过渡动效随切换重新播放 */
+  rollTick?: number;
 }
 
 export function ResultCards({
@@ -12,6 +14,7 @@ export function ResultCards({
   isAnimating,
   animationStyle = 'slot',
   rollingNames = [],
+  rollTick = 0,
 }: ResultCardsProps) {
   // 正在执行抽取动画
   if (isAnimating) {
@@ -28,7 +31,11 @@ export function ResultCards({
           </div>
           <ul className="result-card-list" aria-label="正在滚动的候选人">
             {rollingNames.map((name, index) => (
-              <li className="result-card result-card--rolling" key={`rolling-${index}`}>
+              <li
+                // 带上 rollTick 让每次切换都重挂载，触发柔和的文字过渡
+                key={`rolling-${index}-${rollTick}`}
+                className="result-card result-card--rolling"
+              >
                 <span className="result-card-mark result-card-mark--rolling" aria-hidden="true">
                   🎲
                 </span>
