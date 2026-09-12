@@ -7,6 +7,15 @@
 - 技术栈：Electron 36 + React 19 + TypeScript 5.8 + electron-vite
 - 目标平台：Windows 10/11 x64
 
+## 下载
+
+不想自己构建的话，直接从 Releases 取编译好的 Windows x64 程序：
+
+- [NamePicker-Setup-1.0.0.exe](https://github.com/DING-HAO-RAN/name-picker-on-classroom/releases/download/v1.0.0/NamePicker-Setup-1.0.0.exe)：NSIS 安装包，可选安装位置和快捷方式，能在「应用和功能」里卸载
+- [NamePicker-1.0.0.exe](https://github.com/DING-HAO-RAN/name-picker-on-classroom/releases/download/v1.0.0/NamePicker-1.0.0.exe)：便携包，不需要安装权限，可直接放进 U 盘随堂携带
+
+两者都没有代码签名，Windows SmartScreen 会提示「未知发布者」，需要点「更多信息 → 仍要运行」。下载后建议核对 Release 页面里给出的 SHA-256，完整的验证边界同样写在页面说明中。
+
 ## 功能
 
 - 导入名单：支持 `txt` / `csv` / `xlsx`，导入后即可调整抽取人数
