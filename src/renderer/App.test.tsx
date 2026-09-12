@@ -276,7 +276,8 @@ describe('课堂主界面', () => {
     expect(screen.getByRole('button', { name: '重置本轮' })).toBeDisabled();
     expect(screen.getByRole('checkbox', { name: '显示抽取动画' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '打开设置' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '导入名单' })).toBeDisabled();
+    // 导入入口已移入设置抽屉；保存期间抽屉无法打开（见上两行断言）
+    expect(screen.queryByRole('button', { name: '重新选取人员名单' })).not.toBeInTheDocument();
 
     saveDeferred.resolve();
     await waitFor(() => expect(saveStatus).toHaveTextContent('已保存'));
@@ -567,7 +568,8 @@ describe('课堂主界面', () => {
     expect(startButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
     expect(animationToggle).toBeDisabled();
-    expect(screen.getByRole('button', { name: '导入名单' })).toBeDisabled();
+    // 导入入口已移入设置抽屉；保存失败期间抽屉无法打开
+    expect(screen.queryByRole('button', { name: '重新选取人员名单' })).not.toBeInTheDocument();
 
     const retryButton = screen.getByRole('button', { name: '重试保存' });
     expect(retryButton).toBeEnabled();
@@ -624,6 +626,29 @@ describe('课堂主界面', () => {
     expect(api.importRoster).toHaveBeenCalledTimes(1);
     importDeferred.resolve({ sourceName: '快速导入.txt', students });
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+  });
+
+  it('重新选取人员名单入口在设置抽屉里，导入成功后回到主界面', async () => {
+    const api = installApi({
+      importRoster: vi.fn<() => Promise<ImportResult>>().mockResolvedValue({
+        sourceName: '新名单.txt',
+        students: [students[0]],
+      }),
+      loadState: vi.fn().mockResolvedValue(createState()),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    // 主界面控制栏不再提供导入入口
+    expect(screen.queryByText('更换课堂名单')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    fireEvent.click(screen.getByRole('button', { name: '重新选取人员名单' }));
+
+    await waitFor(() => expect(api.importRoster).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('共 1 名学生')).toBeInTheDocument();
+    // 导入成功后设置抽屉自动关闭
+    expect(screen.queryByRole('dialog', { name: '设置' })).not.toBeInTheDocument();
   });
 
   it('支持允许重复抽取选项，开启后已抽取学生仍可被再次抽取', async () => {

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export interface DrawControlsProps {
   count: number;
   maxCount: number;
@@ -39,6 +41,9 @@ export function DrawControls({
   const safeCount = Math.min(Math.max(1, count), upperBound);
   // 保存失败时一并锁定所有会改变名单的控件，避免继续写入不一致状态
   const controlsDisabled = disabled || isAnimating || isSaving || saveFailed;
+  // 人数输入的草稿态：输入过程中保留原文，避免每次按键都被收敛成一个数字
+  const [countDraft, setCountDraft] = useState<string | null>(null);
+  const displayCount = countDraft ?? String(safeCount);
 
   function changeCount(nextCount: number): void {
     if (!hasCandidates || controlsDisabled) {
@@ -46,13 +51,17 @@ export function DrawControls({
     }
 
     const normalizedCount = Math.min(Math.max(1, Math.floor(nextCount)), upperBound);
+    setCountDraft(null);
     onCountChange(normalizedCount);
   }
 
-  function handleInputChange(value: string): void {
-    const nextCount = Number(value);
-    if (Number.isFinite(nextCount)) {
-      changeCount(nextCount);
+  function handleCountInput(value: string): void {
+    setCountDraft(value);
+    const parsedCount = Number(value);
+    // 空串或非数字是输入中间态，等失焦时再收敛；完整合法的整数立即提交
+    if (value.trim() !== '' && Number.isInteger(parsedCount)) {
+      const normalizedCount = Math.min(Math.max(1, parsedCount), upperBound);
+      onCountChange(normalizedCount);
     }
   }
 
@@ -101,9 +110,10 @@ export function DrawControls({
             inputMode="numeric"
             min={1}
             max={upperBound}
-            value={safeCount}
+            value={displayCount}
             disabled={controlsDisabled || !hasCandidates}
-            onChange={(event) => handleInputChange(event.target.value)}
+            onChange={(event) => handleCountInput(event.target.value)}
+            onBlur={() => setCountDraft(null)}
           />
           <button
             className="step-button"

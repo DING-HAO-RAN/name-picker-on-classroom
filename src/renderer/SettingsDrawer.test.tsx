@@ -188,10 +188,10 @@ describe('设置抽屉', () => {
     const searchInput = screen.getByRole('searchbox', { name: '搜索学生姓名' });
     fireEvent.change(searchInput, { target: { value: '周' } });
     expect(screen.getByText('周明')).toBeInTheDocument();
-    expect(screen.queryAllByRole('spinbutton', { name: '林小雨权重' })).toHaveLength(0);
+    expect(screen.queryAllByRole('textbox', { name: '林小雨权重' })).toHaveLength(0);
 
     fireEvent.change(searchInput, { target: { value: '' } });
-    const weightInputs = screen.getAllByRole('spinbutton', { name: '林小雨权重' });
+    const weightInputs = screen.getAllByRole('textbox', { name: '林小雨权重' });
     fireEvent.change(weightInputs[0], { target: { value: '0' } });
 
     expect(onWeightChange).toHaveBeenCalledWith('1', 0);
@@ -212,11 +212,37 @@ describe('设置抽屉', () => {
     );
 
     expandSection('学生权重');
-    const input = screen.getAllByRole('spinbutton', { name: '林小雨权重' })[0];
+    const input = screen.getAllByRole('textbox', { name: '林小雨权重' })[0];
     fireEvent.change(input, { target: { value: '-1' } });
 
-    expect(screen.getByText('权重必须是有限的非负数。')).toBeInTheDocument();
+    expect(screen.getByText('权重格式无效：请输入非负数字，支持小数，例如 1.5。')).toBeInTheDocument();
     expect(onWeightChange).not.toHaveBeenCalled();
+  });
+
+  it('权重支持小数并提交数值', () => {
+    const onWeightChange = vi.fn();
+    render(
+      <SettingsDrawer
+        students={students}
+        history={[]}
+        onWeightChange={onWeightChange}
+        onResetWeights={vi.fn()}
+        onClearHistory={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expandSection('学生权重');
+    const input = screen.getAllByRole('textbox', { name: '林小雨权重' })[0];
+    fireEvent.change(input, { target: { value: '1.5' } });
+
+    expect(onWeightChange).toHaveBeenCalledWith('1', 1.5);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    // 负数和多个小数点都属于格式错误
+    fireEvent.change(input, { target: { value: '1.2.3' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('权重格式无效');
+    expect(onWeightChange).toHaveBeenCalledTimes(1);
   });
 
   it('权重与历史默认折叠，展开后才渲染内部内容', () => {
@@ -236,7 +262,7 @@ describe('设置抽屉', () => {
     expect(weightToggle).toHaveAttribute('aria-expanded', 'false');
     expect(historyToggle).toHaveAttribute('aria-expanded', 'false');
     // 折叠时内部控件不渲染，避免焦点落到不可见元素上
-    expect(screen.queryByRole('spinbutton', { name: '林小雨权重' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: '林小雨权重' })).not.toBeInTheDocument();
     expect(screen.queryByText('学生0')).not.toBeInTheDocument();
     // 数量徽标仍随标题可见
     expect(screen.getByText('3 人')).toBeInTheDocument();
@@ -244,7 +270,7 @@ describe('设置抽屉', () => {
 
     fireEvent.click(weightToggle);
     expect(weightToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('spinbutton', { name: '林小雨权重' })).toHaveLength(2);
+    expect(screen.getAllByRole('textbox', { name: '林小雨权重' })).toHaveLength(2);
 
     fireEvent.click(historyToggle);
     expect(historyToggle).toHaveAttribute('aria-expanded', 'true');
@@ -287,7 +313,7 @@ describe('设置抽屉', () => {
     expect(
       within(dialog)
         // 只取学生权重输入框：设置面板里还有「动画时长」等其他数字输入
-        .getAllByRole('spinbutton', { name: /权重$/ })
+        .getAllByRole('textbox', { name: /权重$/ })
         .map((input) => (input as HTMLInputElement).value),
     ).toEqual(['1', '1', '1']);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
@@ -342,7 +368,7 @@ describe('设置与 App 保存接线', () => {
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
     expandSection('学生权重');
     const weightInput = within(screen.getByRole('dialog', { name: '设置' })).getAllByRole(
-      'spinbutton',
+      'textbox',
       { name: '林小雨权重' },
     )[0];
     fireEvent.change(weightInput, { target: { value: '0' } });
@@ -388,7 +414,7 @@ describe('设置与 App 保存接线', () => {
 
     expandSection('学生权重');
     fireEvent.change(
-      within(dialog).getAllByRole('spinbutton', { name: '林小雨权重' })[0],
+      within(dialog).getAllByRole('textbox', { name: '林小雨权重' })[0],
       { target: { value: '0' } },
     );
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));

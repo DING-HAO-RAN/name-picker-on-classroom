@@ -31,6 +31,10 @@ export interface SettingsDrawerProps {
   onThemeChange?: (theme: Theme) => void;
   /** 清除本机保存的名单、权重与历史；由上层负责调用主进程并更新界面 */
   onClearLocalData?: () => void | Promise<void>;
+  /** 重新选取人员名单：由上层调用主进程导入并更新界面 */
+  onImport?: () => void | Promise<void>;
+  /** 是否正在导入名单 */
+  isImporting?: boolean;
 }
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -81,6 +85,8 @@ export function SettingsDrawer({
   theme = 'light',
   onThemeChange,
   onClearLocalData,
+  onImport,
+  isImporting = false,
 }: SettingsDrawerProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -89,6 +95,9 @@ export function SettingsDrawer({
   const cancelClearButtonRef = useRef<HTMLButtonElement>(null);
   const isClearConfirmOpenRef = useRef(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  // 数字输入的草稿态：输入过程中保留原文，避免每次按键都被收敛成一个数字
+  const [animationDurationDraft, setAnimationDurationDraft] = useState<string | null>(null);
+  const [fullscreenDurationDraft, setFullscreenDurationDraft] = useState<string | null>(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -229,9 +238,17 @@ export function SettingsDrawer({
                 min={0}
                 max={MAX_ANIMATION_DURATION_MS}
                 step={100}
-                value={animationDurationMs}
+                value={animationDurationDraft ?? String(animationDurationMs)}
                 disabled={disabled}
-                onChange={(e) => onAnimationDurationChange?.(clampAnimationDuration(e.target.value))}
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  setAnimationDurationDraft(rawValue);
+                  // 空串或非数字是输入中间态，等失焦时再收敛
+                  if (rawValue.trim() !== '' && Number.isFinite(Number(rawValue))) {
+                    onAnimationDurationChange?.(clampAnimationDuration(rawValue));
+                  }
+                }}
+                onBlur={() => setAnimationDurationDraft(null)}
               />
               <small className="settings-field-hint">
                 支持 0 - {MAX_ANIMATION_DURATION_MS} 毫秒，数值越大悬念越强。
@@ -248,11 +265,17 @@ export function SettingsDrawer({
                 min={MIN_FULLSCREEN_DISPLAY_MS}
                 max={MAX_FULLSCREEN_DISPLAY_MS}
                 step={500}
-                value={fullscreenDisplayMs}
+                value={fullscreenDurationDraft ?? String(fullscreenDisplayMs)}
                 disabled={disabled}
-                onChange={(e) =>
-                  onFullscreenDisplayChange?.(clampFullscreenDisplay(e.target.value))
-                }
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  setFullscreenDurationDraft(rawValue);
+                  // 空串或非数字是输入中间态，等失焦时再收敛
+                  if (rawValue.trim() !== '' && Number.isFinite(Number(rawValue))) {
+                    onFullscreenDisplayChange?.(clampFullscreenDisplay(rawValue));
+                  }
+                }}
+                onBlur={() => setFullscreenDurationDraft(null)}
               />
               <small className="settings-field-hint">
                 抽取结果自动全屏展示的时长，默认{' '}
@@ -298,6 +321,24 @@ export function SettingsDrawer({
             disabled={disabled}
             onClearHistory={onClearHistory}
           />
+
+          {/* 名单管理区域：重新选取人员名单入口从主界面移到这里 */}
+          <section className="settings-group" aria-labelledby="roster-management-title">
+            <h3 id="roster-management-title" className="settings-group-title">
+              名单管理
+            </h3>
+            <p className="settings-group-hint">
+              支持 TXT、CSV 和 XLSX 文件；重新选取名单会开始新一轮课堂抽取，并清空抽取历史。
+            </p>
+            <button
+              type="button"
+              className="secondary-button settings-import-button"
+              disabled={disabled || isImporting}
+              onClick={() => void onImport?.()}
+            >
+              {isImporting ? '正在导入…' : '重新选取人员名单'}
+            </button>
+          </section>
 
           {/* 本机数据管理区域 */}
           <section className="settings-group settings-group--danger" aria-labelledby="local-data-title">

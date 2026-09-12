@@ -405,6 +405,8 @@ export function App() {
       setRollingNames([]);
       setMarqueeStudentId(null);
       setIsFullscreenOpen(false);
+      // 重新选取名单成功后回到主界面，方便确认新名单
+      setIsSettingsDrawerOpen(false);
       await saveState(nextState);
     } catch (error) {
       if (getErrorCode(error) === 'IMPORT_CANCELLED') {
@@ -1027,15 +1029,6 @@ export function App() {
             onResetRound={handleResetRound}
             onRetrySave={handleRetrySave}
           />
-          {hasRoster ? (
-            <ImportDropzone
-              compact
-              hasRoster
-              onImport={handleImport}
-              isImporting={isImporting || isAnimating || isLoading}
-              disabled={isSaving || saveFailed}
-            />
-          ) : null}
         </aside>
       </div>
 
@@ -1055,6 +1048,8 @@ export function App() {
           theme={theme}
           onThemeChange={handleThemeChange}
           onClearLocalData={handleClearLocalData}
+          onImport={handleImport}
+          isImporting={isImporting}
           onWeightChange={handleWeightChange}
           onResetWeights={handleResetWeights}
           onClearHistory={handleClearHistory}

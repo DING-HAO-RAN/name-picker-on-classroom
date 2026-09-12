@@ -10,7 +10,9 @@ export interface StudentWeightListProps {
   defaultExpanded?: boolean;
 }
 
-const INVALID_WEIGHT_MESSAGE = '权重必须是有限的非负数。';
+const INVALID_WEIGHT_MESSAGE = '权重格式无效：请输入非负数字，支持小数，例如 1.5。';
+// 权重草稿格式：只允许数字和至多一个小数点，兼容「1.」「.5」等输入中间态
+const WEIGHT_DRAFT_PATTERN = /^\d*(\.\d*)?$/;
 
 function getInitialDraftWeights(students: StudentRecord[]): Record<string, string> {
   return Object.fromEntries(students.map((student) => [student.id, String(student.weight)]));
@@ -90,8 +92,14 @@ export function StudentWeightList({
     }));
 
     const trimmedValue = value.trim();
-    const parsedWeight = trimmedValue.length > 0 ? Number(trimmedValue) : Number.NaN;
-    if (!validateWeight(parsedWeight)) {
+    // 清空输入是中间态：不报错也不提交，等输入完成或失焦后恢复原值
+    if (trimmedValue.length === 0) {
+      clearWeightError(student.id);
+      return;
+    }
+
+    // 格式确认：先做字符级校验（拒绝负号、字母、多个小数点），再做数值校验
+    if (!WEIGHT_DRAFT_PATTERN.test(trimmedValue)) {
       setValidationErrors((currentErrors) => ({
         ...currentErrors,
         [student.id]: INVALID_WEIGHT_MESSAGE,
@@ -99,15 +107,29 @@ export function StudentWeightList({
       return;
     }
 
+    const parsedWeight = Number(trimmedValue);
+    if (!Number.isFinite(parsedWeight) || !validateWeight(parsedWeight)) {
+      setValidationErrors((currentErrors) => ({
+        ...currentErrors,
+        [student.id]: INVALID_WEIGHT_MESSAGE,
+      }));
+      return;
+    }
+
+    clearWeightError(student.id);
+    onWeightChange(student.id, parsedWeight);
+  }
+
+  /** 清除指定学生的权重错误提示 */
+  function clearWeightError(id: string): void {
     setValidationErrors((currentErrors) => {
-      if (!currentErrors[student.id]) {
+      if (!currentErrors[id]) {
         return currentErrors;
       }
       const nextErrors = { ...currentErrors };
-      delete nextErrors[student.id];
+      delete nextErrors[id];
       return nextErrors;
     });
-    onWeightChange(student.id, parsedWeight);
   }
 
   function getDraftWeight(student: StudentRecord): number {
@@ -189,15 +211,14 @@ export function StudentWeightList({
                       <input
                         id={inputId}
                         className="student-weight-input"
-                        type="number"
+                        type="text"
                         inputMode="decimal"
-                        min={0}
-                        step="any"
                         aria-label={`${student.name}权重`}
                         aria-invalid={hasError}
                         aria-describedby={hasError ? errorId : undefined}
                         value={draftWeights[student.id] ?? String(student.weight)}
                         disabled={disabled}
+                        placeholder="1 或 1.5"
                         onChange={(event) => handleWeightInput(student, event.target.value)}
                       />
                       {currentWeight === 0 && !hasError ? (
