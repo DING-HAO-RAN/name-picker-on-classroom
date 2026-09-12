@@ -469,6 +469,7 @@ describe('主进程 IPC 业务 handler', () => {
       IPC_CHANNELS.saveState,
       IPC_CHANNELS.clearState,
       IPC_CHANNELS.windowControl,
+      IPC_CHANNELS.floatingControl,
     ]);
     expect([...registered.keys()]).not.toContain('namePicker.chooseRosterFile');
 
@@ -568,6 +569,63 @@ describe('主进程 IPC 业务 handler', () => {
     });
 
     await expect(handlers.windowControl('minimize')).resolves.toBe(false);
+  });
+
+  it('悬浮球操作按白名单分发到主进程控制', async () => {
+    const floatingControls = {
+      restore: vi.fn(),
+      menu: vi.fn(),
+      quit: vi.fn(),
+    };
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store: createStore(),
+      floatingControls,
+    });
+
+    await expect(handlers.floatingControl('restore')).resolves.toBeUndefined();
+    await expect(handlers.floatingControl('menu')).resolves.toBeUndefined();
+    await expect(handlers.floatingControl('quit')).resolves.toBeUndefined();
+    expect(floatingControls.restore).toHaveBeenCalledTimes(1);
+    expect(floatingControls.menu).toHaveBeenCalledTimes(1);
+    expect(floatingControls.quit).toHaveBeenCalledTimes(1);
+
+    // 白名单外的悬浮球操作被拒绝
+    await expect(handlers.floatingControl('minimize')).rejects.toEqual({
+      code: 'INVALID_WINDOW_ACTION',
+      message: '不支持的窗口操作。',
+    });
+  });
+
+  it('saveState 保留合法的颜色主题，丢弃未知主题', async () => {
+    const store = createStore();
+    store.save.mockResolvedValue(undefined);
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store,
+    });
+
+    await handlers.saveState({
+      ...savedState,
+      settings: { ...savedState.settings, colorTheme: 'sunset' },
+    });
+    expect(store.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({ colorTheme: 'sunset' }),
+      }),
+    );
+
+    await handlers.saveState({
+      ...savedState,
+      settings: { ...savedState.settings, colorTheme: 'neon' },
+    });
+    expect(store.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        settings: expect.not.objectContaining({ colorTheme: expect.anything() }),
+      }),
+    );
   });
 
   it('注册 listener 只把受信来源的窗口操作转发给主进程', async () => {

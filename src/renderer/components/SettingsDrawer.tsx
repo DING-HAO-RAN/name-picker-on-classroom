@@ -1,17 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  COLOR_THEMES,
   DEFAULT_FULLSCREEN_DISPLAY_MS,
   MAX_ANIMATION_DURATION_MS,
   MAX_BACKGROUND_IMAGE_LENGTH,
   MAX_FULLSCREEN_DISPLAY_MS,
   MIN_FULLSCREEN_DISPLAY_MS,
   type AnimationStyle,
+  type ColorTheme,
   type DrawHistoryItem,
   type StudentRecord,
   type Theme,
 } from '../../shared/types';
 import { HistoryPanel } from './HistoryPanel';
 import { StudentWeightList } from './StudentWeightList';
+
+/** 颜色主题的界面文案 */
+const COLOR_THEME_LABELS: Record<ColorTheme, string> = {
+  ink: '墨青（默认）',
+  sunset: '暖阳',
+  meadow: '青禾',
+};
 
 /** 允许作为背景的图片 MIME 类型 */
 const ACCEPTED_IMAGE_TYPES = new Set([
@@ -42,6 +51,9 @@ export interface SettingsDrawerProps {
   onFullscreenDisplayChange?: (durationMs: number) => void;
   theme?: Theme;
   onThemeChange?: (theme: Theme) => void;
+  /** 配色方案；缺省表示默认墨青 */
+  colorTheme?: ColorTheme;
+  onColorThemeChange?: (colorTheme: ColorTheme) => void;
   /** 清除本机保存的名单、权重与历史；由上层负责调用主进程并更新界面 */
   onClearLocalData?: () => void | Promise<void>;
   /** 重新选取人员名单：由上层调用主进程导入并更新界面 */
@@ -101,6 +113,8 @@ export function SettingsDrawer({
   onFullscreenDisplayChange,
   theme = 'light',
   onThemeChange,
+  colorTheme = 'ink',
+  onColorThemeChange,
   onClearLocalData,
   onImport,
   isImporting = false,
@@ -117,9 +131,33 @@ export function SettingsDrawer({
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
   // 背景图片选择的错误提示：格式不支持 / 文件过大 / 读取失败
   const [backgroundError, setBackgroundError] = useState<string | null>(null);
-  // 数字输入的草稿态：输入过程中保留原文，避免每次按键都被收敛成一个数字
+  // 数字输入的纯草稿态：输入过程只保留原文不提交，失焦或回车时一次性收敛
   const [animationDurationDraft, setAnimationDurationDraft] = useState<string | null>(null);
   const [fullscreenDurationDraft, setFullscreenDurationDraft] = useState<string | null>(null);
+
+  /** 收敛动画时长草稿并提交；空串视为放弃修改 */
+  function commitAnimationDurationDraft(): void {
+    if (animationDurationDraft === null) {
+      return;
+    }
+    const trimmedDraft = animationDurationDraft.trim();
+    setAnimationDurationDraft(null);
+    if (trimmedDraft !== '' && Number.isFinite(Number(trimmedDraft))) {
+      onAnimationDurationChange?.(clampAnimationDuration(trimmedDraft));
+    }
+  }
+
+  /** 收敛全屏停留时长草稿并提交；空串视为放弃修改 */
+  function commitFullscreenDurationDraft(): void {
+    if (fullscreenDurationDraft === null) {
+      return;
+    }
+    const trimmedDraft = fullscreenDurationDraft.trim();
+    setFullscreenDurationDraft(null);
+    if (trimmedDraft !== '' && Number.isFinite(Number(trimmedDraft))) {
+      onFullscreenDisplayChange?.(clampFullscreenDisplay(trimmedDraft));
+    }
+  }
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -288,22 +326,18 @@ export function SettingsDrawer({
               <input
                 id="animation-duration-input"
                 className="settings-input"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={0}
-                max={MAX_ANIMATION_DURATION_MS}
-                step={100}
                 value={animationDurationDraft ?? String(animationDurationMs)}
                 disabled={disabled}
-                onChange={(e) => {
-                  const rawValue = e.target.value;
-                  setAnimationDurationDraft(rawValue);
-                  // 空串或非数字是输入中间态，等失焦时再收敛
-                  if (rawValue.trim() !== '' && Number.isFinite(Number(rawValue))) {
-                    onAnimationDurationChange?.(clampAnimationDuration(rawValue));
+                onChange={(e) => setAnimationDurationDraft(e.target.value)}
+                onBlur={commitAnimationDurationDraft}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitAnimationDurationDraft();
                   }
                 }}
-                onBlur={() => setAnimationDurationDraft(null)}
               />
               <small className="settings-field-hint">
                 支持 0 - {MAX_ANIMATION_DURATION_MS} 毫秒，数值越大悬念越强。
@@ -315,22 +349,18 @@ export function SettingsDrawer({
               <input
                 id="fullscreen-duration-input"
                 className="settings-input"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={MIN_FULLSCREEN_DISPLAY_MS}
-                max={MAX_FULLSCREEN_DISPLAY_MS}
-                step={500}
                 value={fullscreenDurationDraft ?? String(fullscreenDisplayMs)}
                 disabled={disabled}
-                onChange={(e) => {
-                  const rawValue = e.target.value;
-                  setFullscreenDurationDraft(rawValue);
-                  // 空串或非数字是输入中间态，等失焦时再收敛
-                  if (rawValue.trim() !== '' && Number.isFinite(Number(rawValue))) {
-                    onFullscreenDisplayChange?.(clampFullscreenDisplay(rawValue));
+                onChange={(e) => setFullscreenDurationDraft(e.target.value)}
+                onBlur={commitFullscreenDurationDraft}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitFullscreenDurationDraft();
                   }
                 }}
-                onBlur={() => setFullscreenDurationDraft(null)}
               />
               <small className="settings-field-hint">
                 抽取结果自动全屏展示的时长，默认{' '}
@@ -354,6 +384,28 @@ export function SettingsDrawer({
               <small className="settings-field-hint">
                 {theme === 'light' && '明亮的课堂投影配色，适合白天与常规教室。'}
                 {theme === 'dark' && '深色低眩光配色，适合暗光教室与长时间投屏。'}
+              </small>
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="color-theme-select">颜色主题</label>
+              <select
+                id="color-theme-select"
+                className="settings-select"
+                value={colorTheme}
+                disabled={disabled}
+                onChange={(e) => onColorThemeChange?.(e.target.value as ColorTheme)}
+              >
+                {COLOR_THEMES.map((themeName) => (
+                  <option key={themeName} value={themeName}>
+                    {COLOR_THEME_LABELS[themeName]}
+                  </option>
+                ))}
+              </select>
+              <small className="settings-field-hint">
+                {colorTheme === 'ink' && '沉稳的墨青主色，纸墨课堂气质。'}
+                {colorTheme === 'sunset' && '温暖的赭橙主色，适合轻松活跃的课堂。'}
+                {colorTheme === 'meadow' && '清新的草绿主色，自然明亮。'}
               </small>
             </div>
           </section>

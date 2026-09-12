@@ -2,6 +2,7 @@ import { basename, extname, win32 } from 'node:path';
 import type { OpenDialogOptions } from 'electron';
 import {
   IPC_CHANNELS,
+  type FloatingControlAction,
   type ImportResult,
   type IpcFailureEnvelope,
   type IpcResponse,
@@ -9,6 +10,7 @@ import {
   type WindowControlAction,
 } from '../shared/ipcTypes';
 import {
+  COLOR_THEMES,
   MAX_ANIMATION_DURATION_MS,
   MAX_BACKGROUND_IMAGE_LENGTH,
   MAX_FULLSCREEN_DISPLAY_MS,
@@ -32,6 +34,16 @@ export interface IpcWindowControls {
   isMaximized(): boolean;
 }
 
+/** 悬浮球控制能力：由 main 进程绑定到真实窗口行为 */
+export interface IpcFloatingControls {
+  /** 隐藏悬浮球并显示主界面 */
+  restore(): void;
+  /** 在悬浮球位置弹出右键菜单（打开主界面 / 退出程序） */
+  menu(): void;
+  /** 真正退出程序（放行窗口关闭） */
+  quit(): void;
+}
+
 export interface IpcHandlerDependencies {
   showOpenDialog: ShowOpenDialog;
   importRoster: (filePath: string) => Promise<ImportResult>;
@@ -41,6 +53,7 @@ export interface IpcHandlerDependencies {
     clear: () => Promise<void>;
   };
   windowControls?: IpcWindowControls;
+  floatingControls?: IpcFloatingControls;
 }
 
 export interface IpcHandlers {
@@ -50,6 +63,8 @@ export interface IpcHandlers {
   clearState(): Promise<void>;
   /** 执行窗口操作并返回操作后的最大化状态 */
   windowControl(action: unknown): Promise<boolean>;
+  /** 执行悬浮球操作 */
+  floatingControl(action: unknown): Promise<void>;
 }
 
 export interface IpcMainLike {
@@ -146,8 +161,18 @@ const WINDOW_CONTROL_ACTIONS = new Set<WindowControlAction>([
   'get-maximized',
 ]);
 
+const FLOATING_CONTROL_ACTIONS = new Set<FloatingControlAction>([
+  'restore',
+  'menu',
+  'quit',
+]);
+
 function isWindowControlAction(value: unknown): value is WindowControlAction {
   return typeof value === 'string' && WINDOW_CONTROL_ACTIONS.has(value as WindowControlAction);
+}
+
+function isFloatingControlAction(value: unknown): value is FloatingControlAction {
+  return typeof value === 'string' && FLOATING_CONTROL_ACTIONS.has(value as FloatingControlAction);
 }
 
 function normalizeRequiredString(value: unknown): string | undefined {
@@ -289,6 +314,11 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     /^data:image\/(?:png|jpe?g|webp|bmp|gif);base64,[A-Za-z0-9+/=]+$/.test(value.backgroundImage)
   ) {
     normalizedSettings.backgroundImage = value.backgroundImage;
+  }
+
+  // 配色方案：只接受预定义主题，其他取值丢弃回到默认墨青
+  if (typeof value.colorTheme === 'string' && (COLOR_THEMES as string[]).includes(value.colorTheme)) {
+    normalizedSettings.colorTheme = value.colorTheme as RosterState['settings']['colorTheme'];
   }
 
   return normalizedSettings;
@@ -467,6 +497,25 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
 
       return windowControls.isMaximized();
     },
+
+    async floatingControl(action: unknown): Promise<void> {
+      if (!isFloatingControlAction(action)) {
+        throw invalidWindowActionError();
+      }
+
+      const floatingControls = dependencies.floatingControls;
+      if (!floatingControls) {
+        return;
+      }
+
+      if (action === 'restore') {
+        floatingControls.restore();
+      } else if (action === 'menu') {
+        floatingControls.menu();
+      } else if (action === 'quit') {
+        floatingControls.quit();
+      }
+    },
   };
 }
 
@@ -530,5 +579,8 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   );
   ipcMain.handle(IPC_CHANNELS.windowControl, (event, action) =>
     handleTrustedRequest(event, () => handlers.windowControl(action)),
+  );
+  ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action) =>
+    handleTrustedRequest(event, () => handlers.floatingControl(action)),
   );
 }

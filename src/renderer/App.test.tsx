@@ -19,6 +19,7 @@ const savedSettings = {
   allowDuplicates: false,
   fullscreenDisplayMs: 3000,
   theme: 'light' as const,
+  colorTheme: 'ink' as const,
 };
 
 function createState(overrides: Partial<RosterState> = {}): RosterState {
@@ -115,14 +116,15 @@ describe('课堂主界面', () => {
     render(<App />);
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
 
-    const countInput = await screen.findByRole('spinbutton', { name: '抽取人数' });
-    expect(countInput).toHaveValue(1);
+    // 人数输入已改为 text 型草稿态输入，角色是 textbox 而非 spinbutton
+    const countInput = await screen.findByRole('textbox', { name: '抽取人数' });
+    expect(countInput).toHaveValue('1');
     expect(screen.getByRole('checkbox', { name: '显示抽取动画' })).toBeChecked();
 
     fireEvent.click(screen.getByRole('button', { name: '增加抽取人数' }));
-    expect(countInput).toHaveValue(2);
+    expect(countInput).toHaveValue('2');
     fireEvent.click(screen.getByRole('button', { name: '减少抽取人数' }));
-    expect(countInput).toHaveValue(1);
+    expect(countInput).toHaveValue('1');
     fireEvent.click(screen.getByRole('checkbox', { name: '显示抽取动画' }));
     expect(screen.getByRole('checkbox', { name: '显示抽取动画' })).not.toBeChecked();
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
@@ -745,12 +747,14 @@ describe('课堂主界面', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
     const dialog = screen.getByRole('dialog', { name: '设置' });
-    const durationInput = within(dialog).getByRole('spinbutton', { name: '动画时长（毫秒）' });
+    // 时长输入是 text 型草稿态输入，角色是 textbox，失焦后才提交
+    const durationInput = within(dialog).getByRole('textbox', { name: '动画时长（毫秒）' });
     const themeSelect = within(dialog).getByRole('combobox', { name: '界面主题' });
-    expect(durationInput).toHaveValue(1200);
+    expect(durationInput).toHaveValue('1200');
     expect(themeSelect).toHaveValue('dark');
 
     fireEvent.change(durationInput, { target: { value: '1600' } });
+    fireEvent.blur(durationInput);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
     expect(vi.mocked(api.saveState).mock.calls[0][0].settings.animationDurationMs).toBe(1600);
 
@@ -830,7 +834,7 @@ describe('课堂主界面', () => {
 
     render(<App />);
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
-    const countInput = screen.getByRole('spinbutton', { name: '抽取人数' });
+    const countInput = screen.getByRole('textbox', { name: '抽取人数' });
 
     fireEvent.keyDown(countInput, { key: ' ', code: 'Space' });
     fireEvent.keyDown(countInput, { key: 'r' });
@@ -886,12 +890,14 @@ describe('课堂主界面', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
     const dialog = screen.getByRole('dialog', { name: '设置' });
-    const durationInput = within(dialog).getByRole('spinbutton', {
+    // 时长输入是 text 型草稿态输入，角色是 textbox，失焦后才提交
+    const durationInput = within(dialog).getByRole('textbox', {
       name: '结果全屏停留时长（毫秒）',
     });
-    expect(durationInput).toHaveValue(3000);
+    expect(durationInput).toHaveValue('3000');
 
     fireEvent.change(durationInput, { target: { value: '5000' } });
+    fireEvent.blur(durationInput);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
     expect(vi.mocked(api.saveState).mock.calls[1][0].settings.fullscreenDisplayMs).toBe(5000);
   });

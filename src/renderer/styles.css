@@ -1,6 +1,18 @@
 :root {
   font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
-  color: #12332f;
+  /* 课堂纸墨色板：核心主色抽为变量，供「颜色主题」切换（墨青为默认方案） */
+  --c-primary: var(--c-primary);
+  --c-primary-strong: var(--c-primary-strong);
+  --c-primary-rgb: 15, 118, 110;
+  --c-primary-muted: var(--c-primary-muted);
+  --c-ink: var(--c-ink);
+  --c-ink-soft: var(--c-ink-soft);
+  --c-wash: var(--c-wash);
+  --c-wash-border: var(--c-wash-border);
+  --c-hover: var(--c-hover);
+  --c-accent: var(--c-accent);
+  --c-focus: var(--c-focus);
+  color: var(--c-ink);
   background: #f6f4ee;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,7 +34,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 10% 0%, rgba(15, 118, 110, 0.09), transparent 32rem),
+    radial-gradient(circle at 10% 0%, rgba(var(--c-primary-rgb), 0.09), transparent 32rem),
     #f6f4ee;
 }
 
@@ -49,7 +61,7 @@ input:disabled {
 button:focus-visible,
 input:focus-visible,
 [role="button"]:focus-visible {
-  outline: 4px solid #d97706;
+  outline: 4px solid var(--c-focus);
   outline-offset: 3px;
 }
 
@@ -61,7 +73,7 @@ p {
 
 h1,
 h2 {
-  color: #12332f;
+  color: var(--c-ink);
 }
 
 h1 {
@@ -94,12 +106,14 @@ h2 {
 }
 
 /* ==========================================================================
-   自定义背景图模式：图片铺满窗口，标题栏改为半透明毛玻璃融入背景
+   自定义背景图模式：图片拉伸铺满整个窗口（保持完整、不留黑边），
+   标题栏改为半透明毛玻璃融入背景
    ========================================================================== */
 .app-shell--custom-bg {
   background-repeat: no-repeat;
   background-position: center;
-  background-size: cover;
+  /* 100% 100%：横向纵向都拉伸到窗口大小，图片完整显示且不露底色 */
+  background-size: 100% 100%;
   background-attachment: fixed;
 }
 
@@ -185,14 +199,14 @@ h2 {
   flex: 0 0 28px;
   place-items: center;
   border-radius: 9px;
-  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.3);
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-strong) 100%);
+  box-shadow: 0 4px 10px rgba(var(--c-primary-rgb), 0.3);
   font-size: 0.95rem;
 }
 
 .app-titlebar__title {
   overflow: hidden;
-  color: #0f3d38;
+  color: var(--c-ink-soft);
   font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -217,12 +231,12 @@ h2 {
   place-items: center;
   border-radius: 10px;
   background: transparent;
-  color: #0f766e;
+  color: var(--c-primary);
   transition: background-color 120ms ease, color 120ms ease;
 }
 
 .app-titlebar__button:hover:not(:disabled) {
-  background: #d9e8e2;
+  background: var(--c-hover);
 }
 
 .app-titlebar__button--close:hover:not(:disabled) {
@@ -252,7 +266,7 @@ h2 {
 .app-kicker,
 .section-kicker {
   margin-bottom: 10px;
-  color: #b45309;
+  color: var(--c-accent);
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -261,7 +275,7 @@ h2 {
 .classroom-summary {
   min-width: 220px;
   padding: 18px 22px;
-  border: 1px solid #cfd8d0;
+  border: 1px solid var(--c-wash-border);
   border-radius: 14px;
   background: #fffdf8;
   box-shadow: 0 8px 22px rgba(23, 46, 42, 0.08);
@@ -273,7 +287,7 @@ h2 {
 }
 
 .summary-count {
-  color: #0f3d38;
+  color: var(--c-ink-soft);
   font-size: 1.2rem;
   font-weight: 800;
 }
@@ -339,7 +353,7 @@ h2 {
   justify-content: center;
   gap: 26px;
   padding: clamp(28px, 5vw, 52px);
-  border: 1px solid #9cc5ba;
+  border: 1px solid var(--c-primary-muted);
   text-align: center;
 }
 
@@ -395,8 +409,8 @@ h2 {
   flex: 0 0 auto;
   padding: 9px 14px;
   border-radius: 999px;
-  background: #e4efe9;
-  color: #115e59;
+  background: var(--c-wash);
+  color: var(--c-primary-strong);
   font-size: 0.95rem;
   font-weight: 800;
 }
@@ -438,8 +452,8 @@ h2 {
 }
 
 .result-section {
-  border-color: #6ba79b;
-  background: linear-gradient(135deg, #fffdf8 0%, #e4efe9 100%);
+  border-color: var(--c-primary-muted);
+  background: linear-gradient(135deg, #fffdf8 0%, var(--c-wash) 100%);
 }
 
 .result-section--waiting {
@@ -450,7 +464,7 @@ h2 {
 
 .result-waiting {
   margin: 0;
-  color: #0f766e;
+  color: var(--c-primary);
   font-size: 1.15rem;
   font-weight: 800;
 }
@@ -465,7 +479,7 @@ h2 {
   align-items: center;
   gap: 18px;
   padding: 16px 20px;
-  border: 1px solid #cfd8d0;
+  border: 1px solid var(--c-wash-border);
   border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 6px 16px rgba(23, 46, 42, 0.08);
@@ -478,7 +492,7 @@ h2 {
   flex: 0 0 40px;
   place-items: center;
   border-radius: 50%;
-  background: #0f766e;
+  background: var(--c-primary);
   color: #ffffff;
   font-size: 1.4rem;
   font-weight: 900;
@@ -486,7 +500,7 @@ h2 {
 
 .result-card-name {
   overflow-wrap: anywhere;
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-size: clamp(1.35rem, 3vw, 2rem);
   font-weight: 900;
 }
@@ -531,18 +545,18 @@ h2 {
 }
 
 .step-button {
-  border: 2px solid #cfd8d0;
-  background: #e4efe9;
-  color: #115e59;
+  border: 2px solid var(--c-wash-border);
+  background: var(--c-wash);
+  color: var(--c-primary-strong);
   font-size: 1.7rem;
 }
 
 .stepper input {
   width: 100%;
-  border: 2px solid #cfd8d0;
+  border: 2px solid var(--c-wash-border);
   border-radius: 12px;
   background: #ffffff;
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-size: 1.6rem;
   font-weight: 900;
   text-align: center;
@@ -572,7 +586,7 @@ h2 {
   width: 30px;
   height: 30px;
   flex: 0 0 30px;
-  accent-color: #0f766e;
+  accent-color: var(--c-primary);
 }
 
 .switch-row span {
@@ -581,7 +595,7 @@ h2 {
 }
 
 .switch-row strong {
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-size: 1rem;
 }
 
@@ -603,20 +617,20 @@ h2 {
 }
 
 .primary-button {
-  background: #0f766e;
+  background: var(--c-primary);
   color: #ffffff;
-  box-shadow: 0 7px 16px rgba(15, 118, 110, 0.26);
+  box-shadow: 0 7px 16px rgba(var(--c-primary-rgb), 0.26);
 }
 
 .primary-button:disabled {
-  background: #7fb5aa;
+  background: var(--c-primary-muted);
   box-shadow: none;
 }
 
 .secondary-button {
-  border: 2px solid #0f766e;
+  border: 2px solid var(--c-primary);
   background: #ffffff;
-  color: #115e59;
+  color: var(--c-primary-strong);
 }
 
 .secondary-button:disabled,
@@ -655,7 +669,7 @@ h2 {
   width: min(620px, 100%);
   max-height: calc(100vh - var(--titlebar-height));
   flex-direction: column;
-  border-left: 1px solid #cfd8d0;
+  border-left: 1px solid var(--c-wash-border);
   background: #fffdf8;
   box-shadow: -18px 0 40px rgba(15, 23, 42, 0.2);
 }
@@ -705,10 +719,10 @@ h2 {
 .settings-search-input {
   width: 100%;
   padding: 10px 16px;
-  border: 2px solid #cfd8d0;
+  border: 2px solid var(--c-wash-border);
   border-radius: 12px;
   background: #ffffff;
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-size: 1.05rem;
 }
 
@@ -785,10 +799,10 @@ h2 {
 .student-weight-input {
   width: 124px;
   padding: 8px 10px;
-  border: 2px solid #cfd8d0;
+  border: 2px solid var(--c-wash-border);
   border-radius: 10px;
   background: #ffffff;
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-size: 1.1rem;
   font-weight: 800;
   text-align: right;
@@ -859,7 +873,7 @@ h2 {
 }
 
 .history-item-heading span {
-  color: #115e59;
+  color: var(--c-primary-strong);
   font-weight: 800;
   white-space: nowrap;
 }
@@ -867,7 +881,7 @@ h2 {
 .history-item p {
   margin: 8px 0 0;
   overflow-wrap: anywhere;
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-weight: 800;
   line-height: 1.5;
 }
@@ -1043,10 +1057,10 @@ h2 {
   justify-content: center;
   width: min(90vw, 840px);
   padding: clamp(32px, 6vw, 64px) clamp(24px, 5vw, 48px);
-  border: 2px solid #6ba79b;
+  border: 2px solid var(--c-primary-muted);
   border-radius: 22px;
   background: linear-gradient(145deg, #0c2b28 0%, #134640 100%);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(20, 184, 166, 0.25);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(var(--c-primary-rgb), 0.25);
   text-align: center;
   cursor: default;
   transform: scale(1);
@@ -1089,7 +1103,7 @@ h2 {
 }
 
 .fullscreen-name-text {
-  color: #0f2e2a;
+  color: var(--c-ink);
   font-size: clamp(2.4rem, 6vw, 4.2rem);
   font-weight: 900;
   line-height: 1.15;
@@ -1099,7 +1113,7 @@ h2 {
 .fullscreen-tip {
   margin-top: 10px;
   margin-bottom: 0;
-  color: #b7d6cd;
+  color: var(--c-primary-soft);
   font-size: 0.95rem;
 }
 
@@ -1112,12 +1126,12 @@ h2 {
    滚动抽取（Slot & Marquee）动画动效
    ========================================================================== */
 .result-section--rolling {
-  border-color: #0f766e;
-  background: linear-gradient(135deg, #e4efe9 0%, #d3e6de 100%);
+  border-color: var(--c-primary);
+  background: linear-gradient(135deg, var(--c-wash) 0%, #d3e6de 100%);
 }
 
 .result-card--rolling {
-  border: 2px dashed #0f766e;
+  border: 2px dashed var(--c-primary);
   background: #ffffff;
   animation: rollCardPulse 0.95s infinite alternate;
 }
@@ -1128,7 +1142,7 @@ h2 {
 }
 
 .slot-roll-text {
-  color: #0f766e;
+  color: var(--c-primary);
   font-weight: 900;
   /* 每次名字切换重挂载一次，让文字柔滑地淡入，而不是生硬跳变 */
   animation: rollNameSwap 220ms ease-out;
@@ -1184,14 +1198,14 @@ h2 {
 }
 
 .settings-collapse-toggle:hover:not(:disabled) {
-  color: #0f766e;
+  color: var(--c-primary);
 }
 
 .settings-collapse-caret {
   display: inline-block;
   width: 14px;
   flex: 0 0 14px;
-  color: #0f766e;
+  color: var(--c-primary);
   font-size: 0.8rem;
   transition: transform 160ms ease;
 }
@@ -1260,10 +1274,10 @@ h2 {
 
 @keyframes rollCardPulse {
   0% {
-    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
+    box-shadow: 0 4px 12px rgba(var(--c-primary-rgb), 0.15);
   }
   100% {
-    box-shadow: 0 8px 24px rgba(15, 118, 110, 0.38);
+    box-shadow: 0 8px 24px rgba(var(--c-primary-rgb), 0.38);
   }
 }
 
@@ -1410,6 +1424,12 @@ h2 {
   color-scheme: dark;
   background: #0c1715;
   color: #e2e8f0;
+  /* 深色模式下的墨青变量覆盖：主色提亮以保持对比度 */
+  --c-primary: #2a9d8f;
+  --c-primary-strong: #1f5f57;
+  --c-primary-rgb: 42, 157, 143;
+  --c-primary-soft: #a9d8cd;
+  --c-accent: #e0a96d;
 }
 
 .app-shell.theme-dark h1,
@@ -1424,11 +1444,11 @@ h2 {
 }
 
 .app-shell.theme-dark .app-titlebar__title {
-  color: #d5ece5;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .app-titlebar__button {
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .app-titlebar__button:hover:not(:disabled) {
@@ -1445,12 +1465,12 @@ h2 {
 }
 
 .app-shell.theme-dark .settings-collapse-caret {
-  color: #8fd0c4;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .app-kicker,
 .app-shell.theme-dark .section-kicker {
-  color: #e0a96d;
+  color: var(--c-accent);
 }
 
 .app-shell.theme-dark .loading-message,
@@ -1468,7 +1488,7 @@ h2 {
 }
 
 .app-shell.theme-dark .summary-count {
-  color: #d5ece5;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .summary-source {
@@ -1484,12 +1504,12 @@ h2 {
 }
 
 .app-shell.theme-dark .result-section {
-  border-color: #2a9d8f;
+  border-color: var(--c-primary);
   background: linear-gradient(135deg, #11221f 0%, #0c2b28 100%);
 }
 
 .app-shell.theme-dark .result-waiting {
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .import-dropzone--compact {
@@ -1505,7 +1525,7 @@ h2 {
 .app-shell.theme-dark .result-count,
 .app-shell.theme-dark .control-status {
   background: #1c332e;
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .student-list-item {
@@ -1519,7 +1539,7 @@ h2 {
 }
 
 .app-shell.theme-dark .result-card {
-  border-color: #2a9d8f;
+  border-color: var(--c-primary);
   background: #142823;
 }
 
@@ -1528,12 +1548,12 @@ h2 {
 }
 
 .app-shell.theme-dark .result-card--rolling {
-  border-color: #2a9d8f;
+  border-color: var(--c-primary);
   background: linear-gradient(135deg, #0c2b28 0%, #134640 100%);
 }
 
 .app-shell.theme-dark .slot-roll-text {
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .count-control label,
@@ -1543,9 +1563,9 @@ h2 {
 }
 
 .app-shell.theme-dark .step-button {
-  border-color: #1f5f57;
+  border-color: var(--c-primary-strong);
   background: #1c332e;
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .stepper input,
@@ -1578,7 +1598,7 @@ h2 {
 }
 
 .app-shell.theme-dark .history-item-heading span {
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .history-panel {
@@ -1591,7 +1611,7 @@ h2 {
 
 .app-shell.theme-dark .secondary-button {
   background: #142823;
-  color: #a9d8cd;
+  color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .secondary-button:disabled,
@@ -1628,4 +1648,95 @@ h2 {
 .app-shell.theme-dark .retry-save-button {
   border-color: #f87171;
   color: #fca5a5;
+}
+
+/* ==========================================================================
+   颜色主题（配色方案）：在墨青默认方案之外提供「暖阳」与「青禾」。
+   只覆盖与主色相关的变量，纸感底色与排版保持统一。
+   ========================================================================== */
+.app-shell.color-sunset {
+  --c-primary: #c2571f;
+  --c-primary-strong: #9a4517;
+  --c-primary-rgb: 194, 87, 31;
+  --c-primary-muted: #cf9268;
+  --c-ink: #3d2417;
+  --c-ink-soft: #4a2c1d;
+  --c-wash: #f7e9dd;
+  --c-wash-border: #e3cdb9;
+  --c-hover: #f3ddc9;
+}
+
+.app-shell.theme-dark.color-sunset {
+  --c-primary: #e08b4c;
+  --c-primary-strong: #8a4a1f;
+  --c-primary-rgb: 224, 139, 76;
+  --c-primary-soft: #f0c9a8;
+}
+
+.app-shell.color-meadow {
+  --c-primary: #4d7c0f;
+  --c-primary-strong: #3f6212;
+  --c-primary-rgb: 77, 124, 15;
+  --c-primary-muted: #8aa653;
+  --c-ink: #1a2e05;
+  --c-ink-soft: #23330a;
+  --c-wash: #ecf3d8;
+  --c-wash-border: #d3dfae;
+  --c-hover: #e4eec6;
+}
+
+.app-shell.theme-dark.color-meadow {
+  --c-primary: #86b83e;
+  --c-primary-strong: #4d7c0f;
+  --c-primary-rgb: 134, 184, 62;
+  --c-primary-soft: #d3ecb2;
+}
+
+/* ==========================================================================
+   悬浮球：主界面缩到后台时显示的置顶小圆钮（transparent 无边框小窗）
+   ========================================================================== */
+.floating-ball-layer {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  /* 整个小窗可拖动，球体按钮自身 no-drag 负责点击 */
+  -webkit-app-region: drag;
+  background: transparent;
+}
+
+.floating-ball {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--c-primary) 0%, var(--c-primary-strong) 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.floating-ball:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.floating-ball:active {
+  transform: scale(0.96);
+}
+
+.floating-ball__icon {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

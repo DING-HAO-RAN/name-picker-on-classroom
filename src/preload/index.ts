@@ -20,6 +20,9 @@ const FALLBACK_ERROR: SerializedIpcError = {
   message: '操作失败。',
 };
 
+/** 悬浮球在 URL 上携带的窗口标识 */
+const FLOATING_WINDOW_QUERY = 'window=floating';
+
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -101,6 +104,13 @@ const namePicker: NamePickerApi = Object.freeze({
   saveState: (state: RosterState) => invoke<void>(IPC_CHANNELS.saveState, state),
   clearState: () => invoke<void>(IPC_CHANNELS.clearState),
   windowControls,
+  // 悬浮球窗口才提供 floatingControls，主界面窗口不注入该能力
+  floatingControls:
+    typeof window !== 'undefined' && window.location.search.includes(FLOATING_WINDOW_QUERY)
+      ? Object.freeze({
+          control: (action: string) => invoke<void>(IPC_CHANNELS.floatingControl, action),
+        })
+      : undefined,
 });
 
 contextBridge.exposeInMainWorld('namePicker', namePicker);

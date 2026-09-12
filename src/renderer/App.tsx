@@ -8,6 +8,7 @@ import {
 import type {
   AnimationStyle,
   AppSettings,
+  ColorTheme,
   DrawHistoryItem,
   RosterState,
   StudentRecord,
@@ -117,6 +118,9 @@ export function App() {
   );
   const [allowDuplicates, setAllowDuplicates] = useState(DEFAULT_SETTINGS.allowDuplicates);
   const [theme, setTheme] = useState<Theme>(DEFAULT_SETTINGS.theme);
+  const [colorTheme, setColorTheme] = useState<ColorTheme>(
+    DEFAULT_SETTINGS.colorTheme ?? 'ink',
+  );
   const [resultStudents, setResultStudents] = useState<StudentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
@@ -140,6 +144,7 @@ export function App() {
   const animationStyleRef = useRef(animationStyle);
   const allowDuplicatesRef = useRef(allowDuplicates);
   const themeRef = useRef(theme);
+  const colorThemeRef = useRef(colorTheme);
   // 当前自定义背景图（dataURL）：从设置读取，导入名单时也需要原样保留
   const backgroundImage = roster.settings.backgroundImage;
   const backgroundImageRef = useRef(backgroundImage);
@@ -174,6 +179,11 @@ export function App() {
   const updateTheme = useCallback((nextTheme: Theme): void => {
     themeRef.current = nextTheme;
     setTheme(nextTheme);
+  }, []);
+
+  const updateColorTheme = useCallback((nextColorTheme: ColorTheme): void => {
+    colorThemeRef.current = nextColorTheme;
+    setColorTheme(nextColorTheme);
   }, []);
 
   const saveState = useCallback(async (nextState: RosterState): Promise<boolean> => {
@@ -332,6 +342,9 @@ export function App() {
             updateAllowDuplicates(normalizedState.settings.allowDuplicates);
           }
           updateTheme(normalizedState.settings.theme);
+          if (normalizedState.settings.colorTheme) {
+            updateColorTheme(normalizedState.settings.colorTheme);
+          }
           setSelectedCount(1);
 
           if (
@@ -366,7 +379,7 @@ export function App() {
       }
       interactionLockRef.current = false;
     };
-  }, [saveState, updateAllowDuplicates, updateAnimationEnabled, updateAnimationStyle, updateRoster, updateTheme]);
+  }, [saveState, updateAllowDuplicates, updateAnimationEnabled, updateAnimationStyle, updateColorTheme, updateRoster, updateTheme]);
 
   const handleImport = useCallback(async (): Promise<void> => {
     const api = getNamePickerApi();
@@ -399,8 +412,11 @@ export function App() {
           animationStyle: animationStyleRef.current,
           allowDuplicates: allowDuplicatesRef.current,
           theme: themeRef.current,
-          // 重新导入名单时保留已设置的自定义背景图
-          backgroundImage: backgroundImageRef.current,
+          colorTheme: colorThemeRef.current,
+          // 重新导入名单时保留已设置的自定义背景图；未设置时不写入该键
+          ...(backgroundImageRef.current
+            ? { backgroundImage: backgroundImageRef.current }
+            : {}),
         },
       };
 
@@ -870,6 +886,38 @@ export function App() {
     [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster, updateTheme],
   );
 
+  // 更新配色方案：跟随界面主题的选择模式，空名单时只改界面不落盘
+  const handleColorThemeChange = useCallback(
+    (nextColorTheme: ColorTheme): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      updateColorTheme(nextColorTheme);
+      const currentRoster = rosterRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: {
+          ...currentRoster.settings,
+          colorTheme: nextColorTheme,
+        },
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateColorTheme, updateRoster],
+  );
+
   // 保存失败后重试：重新写入当前快照，成功后解除写锁定
   const handleRetrySave = useCallback((): void => {
     setErrorMessage(null);
@@ -890,6 +938,7 @@ export function App() {
       updateAnimationStyle(DEFAULT_SETTINGS.animationStyle ?? 'slot');
       updateAllowDuplicates(DEFAULT_SETTINGS.allowDuplicates ?? false);
       updateTheme(DEFAULT_SETTINGS.theme);
+      updateColorTheme(DEFAULT_SETTINGS.colorTheme ?? 'ink');
       setSelectedCount(1);
       setResultStudents([]);
       setRollingNames([]);
@@ -985,7 +1034,9 @@ export function App() {
 
   return (
     <main
-      className={`app-shell theme-${theme}${backgroundImage ? ' app-shell--custom-bg' : ''}`}
+      className={`app-shell theme-${theme} color-${colorTheme}${
+        backgroundImage ? ' app-shell--custom-bg' : ''
+      }`}
       style={backgroundStyle}
     >
       {/* 自绘标题栏：主进程使用 frame: false，这里固定在最上方按主题绘制标题与窗口按钮 */}
@@ -1102,6 +1153,8 @@ export function App() {
           onFullscreenDisplayChange={handleFullscreenDurationChange}
           theme={theme}
           onThemeChange={handleThemeChange}
+          colorTheme={colorTheme}
+          onColorThemeChange={handleColorThemeChange}
           onClearLocalData={handleClearLocalData}
           onImport={handleImport}
           isImporting={isImporting}

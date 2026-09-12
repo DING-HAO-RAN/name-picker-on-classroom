@@ -35,6 +35,11 @@ export type AnimationStyle = 'slot' | 'marquee' | 'spotlight';
 // 界面主题：light 明亮模式 | dark 深色模式
 export type Theme = 'light' | 'dark';
 
+// 颜色主题（配色方案）：ink 墨青（默认）| sunset 暖阳 | meadow 青禾
+export type ColorTheme = 'ink' | 'sunset' | 'meadow';
+
+export const COLOR_THEMES: ColorTheme[] = ['ink', 'sunset', 'meadow'];
+
 export interface AppSettings {
   animationEnabled: boolean;
   animationDurationMs: number;
@@ -42,6 +47,8 @@ export interface AppSettings {
   allowDuplicates?: boolean;
   fullscreenDisplayMs?: number;
   theme: Theme;
+  /** 配色方案；缺省表示默认墨青 */
+  colorTheme?: ColorTheme;
   /** 主界面自定义背景图（dataURL）；缺省表示使用主题默认背景 */
   backgroundImage?: string;
 }

@@ -7,6 +7,7 @@ export const IPC_CHANNELS = {
   clearState: 'name-picker:clear-state',
   windowControl: 'name-picker:window-control',
   windowMaximizedChanged: 'name-picker:window-maximized-changed',
+  floatingControl: 'name-picker:floating-control',
 } as const;
 
 export interface ImportResult {
@@ -16,6 +17,13 @@ export interface ImportResult {
 
 /** 自绘标题栏可以请求的窗口操作，主进程只接受这组固定取值 */
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close' | 'get-maximized';
+
+/** 悬浮球可以请求的操作：恢复主界面、弹出右键菜单、真正退出程序 */
+export type FloatingControlAction = 'restore' | 'menu' | 'quit';
+
+export interface FloatingControlsApi {
+  control(action: FloatingControlAction): Promise<void>;
+}
 
 export interface WindowControlsApi {
   minimize(): Promise<void>;
@@ -51,4 +59,6 @@ export interface NamePickerApi {
   clearState(): Promise<void>;
   /** 自绘标题栏窗口控制；仅在 Electron 宿主中存在 */
   windowControls?: WindowControlsApi;
+  /** 悬浮球控制；仅在悬浮球窗口（?window=floating）中存在 */
+  floatingControls?: FloatingControlsApi;
 }
