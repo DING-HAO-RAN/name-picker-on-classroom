@@ -1,26 +1,31 @@
 import { useRef } from 'react';
 
-/** 指针按下时的拖动状态：用于区分「点击」与「拖动」 */
+/** 指针按下时的拖动状态：用于区分「点击」与「拖动」并做 rAF 节流 */
 interface DragState {
   pointerId: number;
   startX: number;
   startY: number;
   moved: boolean;
+  moveScheduled: boolean;
 }
 
 /** 拖动死区（像素）：移动超过该距离才视为拖动，避免触控轻微抖动误触发 */
 const DRAG_THRESHOLD_PX = 4;
 
+/** 悬浮球可请求的操作（与 preload 暴露的能力保持一致） */
+type FloatingAction = 'restore' | 'menu' | 'quit' | 'drag-start' | 'drag-move' | 'drag-end';
+
 /**
  * 悬浮球：主界面缩到后台时显示的置顶圆形图标。
  * - 整个圆形区域（64x64）任何位置都可点击与拖动，无额外边框或拖动区
  * - 单击：恢复主界面；拖动：移动位置；右键：系统菜单（打开主界面 / 退出）
- * - 使用 Pointer Events 统一鼠标与触控，配合 touch-action: none 优化触控手感
+ * - 拖动坐标全部由主进程光标点提供（DIP），天然兼容 DPI 缩放与触控；
+ *   渲染器只负责用 Pointer Events 发出 drag-start / drag-move / drag-end 信号
  */
 export function FloatingBall() {
   const dragRef = useRef<DragState | null>(null);
 
-  function control(action: 'restore' | 'menu'): void {
+  function control(action: FloatingAction): void {
     void window.namePicker?.floatingControls?.control(action);
   }
 
@@ -32,10 +37,12 @@ export function FloatingBall() {
     event.currentTarget.setPointerCapture(event.pointerId);
     dragRef.current = {
       pointerId: event.pointerId,
-      startX: event.screenX,
-      startY: event.screenY,
+      startX: event.clientX,
+      startY: event.clientY,
       moved: false,
+      moveScheduled: false,
     };
+    control('drag-start');
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
@@ -44,17 +51,26 @@ export function FloatingBall() {
       return;
     }
 
-    const dx = event.screenX - state.startX;
-    const dy = event.screenY - state.startY;
-    if (!state.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) {
-      return;
+    // 死区判定用窗口内相对位移（clientX/Y），无需换算屏幕坐标系
+    if (!state.moved) {
+      const dx = event.clientX - state.startX;
+      const dy = event.clientY - state.startY;
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) {
+        return;
+      }
+      state.moved = true;
     }
-    state.moved = true;
-    // 直接上报屏幕坐标，主进程把球心对准该点
-    void window.namePicker?.floatingControls?.control('move', {
-      x: event.screenX,
-      y: event.screenY,
-    });
+
+    // rAF 节流：一帧最多发一次拖动信号，避免 IPC 风暴
+    if (!state.moveScheduled) {
+      state.moveScheduled = true;
+      requestAnimationFrame(() => {
+        if (dragRef.current === state) {
+          state.moveScheduled = false;
+          control('drag-move');
+        }
+      });
+    }
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>): void {
@@ -63,9 +79,11 @@ export function FloatingBall() {
     if (!state || state.pointerId !== event.pointerId) {
       return;
     }
-    // 没有超出死区 = 一次点击，恢复主界面
+    // 没有超出死区 = 一次点击，恢复主界面；否则结束拖动
     if (!state.moved) {
       control('restore');
+    } else {
+      control('drag-end');
     }
   }
 
@@ -85,6 +103,7 @@ export function FloatingBall() {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => {
         dragRef.current = null;
+        control('drag-end');
       }}
       onContextMenu={handleContextMenu}
     >

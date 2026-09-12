@@ -10,11 +10,24 @@ import { IPC_CHANNELS } from '../shared/ipcTypes';
 /** 悬浮球窗口在 URL 上携带的窗口标识（与 preload 的判断保持一致） */
 const FLOATING_WINDOW_QUERY = 'window=floating';
 
+// 悬浮球为透明窗口：禁用硬件加速，避免 Windows 下拖动移动时
+// DWM 不重绘透明区域而留下残影（模糊文字/色块残留的根因）
+app.disableHardwareAcceleration();
+
 /** 是否处于真正退出流程：退出时窗口 close 不再被拦截为隐藏到后台 */
 let isQuitting = false;
 
 /** 悬浮球窗口：主界面隐藏到后台时显示，点击即可一键切回 */
 let floatingWindow: BrowserWindow | null = null;
+
+/** 拖动中光标相对球心的偏移：拖动全程保持按下时的相对位置不跳变 */
+let dragOffset: { x: number; y: number } | null = null;
+
+/** 指针当前位置的光标点（DIP），与 setPosition 的坐标系一致 */
+function getCursorPoint(): { x: number; y: number } {
+  const point = screen.getCursorScreenPoint();
+  return { x: point.x, y: point.y };
+}
 
 /** 主窗口引用：close 拦截、悬浮球恢复时使用 */
 let mainWindowRef: BrowserWindow | null = null;
@@ -245,13 +258,36 @@ const floatingControls = {
     isQuitting = true;
     app.quit();
   },
-  /** 拖动移动：把悬浮球中心对准屏幕坐标，渲染器在指针移动时持续上报 */
-  move(x: number, y: number) {
+  /** 指针按下：记录光标相对球心的偏移，之后拖动保持该相对位置 */
+  dragStart() {
     if (!floatingWindow || floatingWindow.isDestroyed()) {
+      dragOffset = null;
       return;
     }
-    const [width] = floatingWindow.getSize();
-    floatingWindow.setPosition(Math.round(x - width / 2), Math.round(y - width / 2));
+    const [x, y] = floatingWindow.getPosition();
+    const [width, height] = floatingWindow.getSize();
+    const cursor = getCursorPoint();
+    dragOffset = {
+      x: x + width / 2 - cursor.x,
+      y: y + height / 2 - cursor.y,
+    };
+  },
+  /** 指针拖动中：窗口中心 = 光标点 + 记录的偏移；移动后强制重绘防止残影 */
+  dragMove() {
+    if (!floatingWindow || floatingWindow.isDestroyed() || !dragOffset) {
+      return;
+    }
+    const [width, height] = floatingWindow.getSize();
+    const cursor = getCursorPoint();
+    floatingWindow.setPosition(
+      Math.round(cursor.x + dragOffset.x - width / 2),
+      Math.round(cursor.y + dragOffset.y - height / 2),
+    );
+    floatingWindow.webContents.invalidate();
+  },
+  /** 指针抬起：结束拖动 */
+  dragEnd() {
+    dragOffset = null;
   },
 };
 

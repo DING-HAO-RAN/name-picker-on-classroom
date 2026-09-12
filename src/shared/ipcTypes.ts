@@ -19,12 +19,22 @@ export interface ImportResult {
 /** 自绘标题栏可以请求的窗口操作，主进程只接受这组固定取值 */
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close' | 'get-maximized';
 
-/** 悬浮球可以请求的操作：恢复主界面、弹出右键菜单、真正退出、拖动移动位置 */
-export type FloatingControlAction = 'restore' | 'menu' | 'quit' | 'move';
+/**
+ * 悬浮球可以请求的操作：
+ * - restore 恢复主界面 / menu 右键菜单 / quit 退出
+ * - drag-start / drag-move / drag-end：指针拖动三段式，
+ *   坐标全部由主进程 getCursorScreenPoint 提供（DIP，兼容 DPI 缩放与触控）
+ */
+export type FloatingControlAction =
+  | 'restore'
+  | 'menu'
+  | 'quit'
+  | 'drag-start'
+  | 'drag-move'
+  | 'drag-end';
 
 export interface FloatingControlsApi {
-  /** move 时 payload 为 { x, y }（屏幕坐标，球心对准该点） */
-  control(action: FloatingControlAction, payload?: { x?: number; y?: number }): Promise<void>;
+  control(action: FloatingControlAction): Promise<void>;
 }
 
 /** 开机自启设置：读取/写入系统登录启动项 */

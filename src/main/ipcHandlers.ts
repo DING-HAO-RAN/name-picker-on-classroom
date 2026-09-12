@@ -43,8 +43,12 @@ export interface IpcFloatingControls {
   menu(): void;
   /** 真正退出程序（放行窗口关闭） */
   quit(): void;
-  /** 拖动移动：把悬浮球中心对准屏幕坐标 (x, y) */
-  move(x: number, y: number): void;
+  /** 指针按下：记录光标相对球心的偏移，后续拖动保持该偏移 */
+  dragStart(): void;
+  /** 指针拖动中：按记录的偏移移动窗口（坐标取自主进程光标点，天然兼容 DPI 与触控） */
+  dragMove(): void;
+  /** 指针抬起：结束拖动 */
+  dragEnd(): void;
 }
 
 /** 开机自启能力：由 main 进程绑定到 app 登录项 */
@@ -73,8 +77,8 @@ export interface IpcHandlers {
   clearState(): Promise<void>;
   /** 执行窗口操作并返回操作后的最大化状态 */
   windowControl(action: unknown): Promise<boolean>;
-  /** 执行悬浮球操作；move 时 payload 为 { x, y } 屏幕坐标 */
-  floatingControl(action: unknown, payload?: unknown): Promise<void>;
+  /** 执行悬浮球操作（restore/menu/quit/drag-start/drag-move/drag-end） */
+  floatingControl(action: unknown): Promise<void>;
   /** 读取/设置开机自启；set 时 payload 为 { enabled } */
   launchSettings(action: unknown, payload?: unknown): Promise<boolean>;
 }
@@ -177,20 +181,10 @@ const FLOATING_CONTROL_ACTIONS = new Set<FloatingControlAction>([
   'restore',
   'menu',
   'quit',
-  'move',
+  'drag-start',
+  'drag-move',
+  'drag-end',
 ]);
-
-/** 校验 move 操作的坐标 payload：{ x, y } 均为有限数字 */
-function normalizeMovePosition(payload: unknown): { x: number; y: number } | undefined {
-  if (!isRecord(payload)) {
-    return undefined;
-  }
-  const { x, y } = payload;
-  if (typeof x !== 'number' || !Number.isFinite(x) || typeof y !== 'number' || !Number.isFinite(y)) {
-    return undefined;
-  }
-  return { x, y };
-}
 
 function isWindowControlAction(value: unknown): value is WindowControlAction {
   return typeof value === 'string' && WINDOW_CONTROL_ACTIONS.has(value as WindowControlAction);
@@ -541,7 +535,7 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
       return windowControls.isMaximized();
     },
 
-    async floatingControl(action: unknown, payload?: unknown): Promise<void> {
+    async floatingControl(action: unknown): Promise<void> {
       if (!isFloatingControlAction(action)) {
         throw invalidWindowActionError();
       }
@@ -557,11 +551,12 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
         floatingControls.menu();
       } else if (action === 'quit') {
         floatingControls.quit();
-      } else if (action === 'move') {
-        const position = normalizeMovePosition(payload);
-        if (position) {
-          floatingControls.move(position.x, position.y);
-        }
+      } else if (action === 'drag-start') {
+        floatingControls.dragStart();
+      } else if (action === 'drag-move') {
+        floatingControls.dragMove();
+      } else if (action === 'drag-end') {
+        floatingControls.dragEnd();
       }
     },
 
@@ -650,8 +645,8 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   ipcMain.handle(IPC_CHANNELS.windowControl, (event, action) =>
     handleTrustedRequest(event, () => handlers.windowControl(action)),
   );
-  ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action, payload) =>
-    handleTrustedRequest(event, () => handlers.floatingControl(action, payload)),
+  ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action) =>
+    handleTrustedRequest(event, () => handlers.floatingControl(action)),
   );
   ipcMain.handle(IPC_CHANNELS.launchSettings, (event, action, payload) =>
     handleTrustedRequest(event, () => handlers.launchSettings(action, payload)),
