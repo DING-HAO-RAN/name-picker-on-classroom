@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "author": "NamePicker",
-  "description": "离线课堂名字抽取器桌面应用",
+  "description": "离线课堂随机点名桌面应用：名单、权重与抽取记录只存本机，无网络、无遥测。",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DING-HAO-RAN/classroom-name-picker.git"
+  },
+  "homepage": "https://github.com/DING-HAO-RAN/classroom-name-picker",
+  "bugs": "https://github.com/DING-HAO-RAN/classroom-name-picker/issues",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
