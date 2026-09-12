@@ -8,6 +8,7 @@ import {
 import type {
   AnimationStyle,
   AppSettings,
+  CloseAction,
   ColorTheme,
   DrawHistoryItem,
   RosterState,
@@ -121,6 +122,15 @@ export function App() {
   const [colorTheme, setColorTheme] = useState<ColorTheme>(
     DEFAULT_SETTINGS.colorTheme ?? 'ink',
   );
+  const [closeAction, setCloseAction] = useState<CloseAction>(
+    DEFAULT_SETTINGS.closeAction ?? 'background',
+  );
+  const [showFloatingBall, setShowFloatingBall] = useState<boolean>(
+    DEFAULT_SETTINGS.showFloatingBall ?? true,
+  );
+  // 开机自启：状态以系统登录项为准（Electron 宿主中可用），不参与 saveState
+  const [launchAtStartup, setLaunchAtStartup] = useState<boolean>(false);
+  const [canToggleLaunchAtStartup, setCanToggleLaunchAtStartup] = useState<boolean>(false);
   const [resultStudents, setResultStudents] = useState<StudentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
@@ -145,6 +155,8 @@ export function App() {
   const allowDuplicatesRef = useRef(allowDuplicates);
   const themeRef = useRef(theme);
   const colorThemeRef = useRef(colorTheme);
+  const closeActionRef = useRef(closeAction);
+  const showFloatingBallRef = useRef(showFloatingBall);
   // 当前自定义背景图（dataURL）：从设置读取，导入名单时也需要原样保留
   const backgroundImage = roster.settings.backgroundImage;
   const backgroundImageRef = useRef(backgroundImage);
@@ -184,6 +196,16 @@ export function App() {
   const updateColorTheme = useCallback((nextColorTheme: ColorTheme): void => {
     colorThemeRef.current = nextColorTheme;
     setColorTheme(nextColorTheme);
+  }, []);
+
+  const updateCloseAction = useCallback((nextCloseAction: CloseAction): void => {
+    closeActionRef.current = nextCloseAction;
+    setCloseAction(nextCloseAction);
+  }, []);
+
+  const updateShowFloatingBall = useCallback((show: boolean): void => {
+    showFloatingBallRef.current = show;
+    setShowFloatingBall(show);
   }, []);
 
   const saveState = useCallback(async (nextState: RosterState): Promise<boolean> => {
@@ -345,7 +367,22 @@ export function App() {
           if (normalizedState.settings.colorTheme) {
             updateColorTheme(normalizedState.settings.colorTheme);
           }
+          if (normalizedState.settings.closeAction) {
+            updateCloseAction(normalizedState.settings.closeAction);
+          }
+          if (typeof normalizedState.settings.showFloatingBall === 'boolean') {
+            updateShowFloatingBall(normalizedState.settings.showFloatingBall);
+          }
           setSelectedCount(1);
+
+          // 开机自启：读取系统登录项当前状态用于开关回显
+          const launchSettings = window.namePicker?.launchSettings;
+          if (launchSettings) {
+            setCanToggleLaunchAtStartup(true);
+            void launchSettings
+              .getCurrent()
+              .then((enabled) => setLaunchAtStartup(enabled), () => undefined);
+          }
 
           if (
             hasValidRoster(normalizedState) &&
@@ -918,6 +955,89 @@ export function App() {
     [isAnimating, isImporting, isLoading, isSaving, saveState, updateColorTheme, updateRoster],
   );
 
+  // 更新点击关闭时的默认行为
+  const handleCloseActionChange = useCallback(
+    (nextCloseAction: CloseAction): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      updateCloseAction(nextCloseAction);
+      const currentRoster = rosterRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: {
+          ...currentRoster.settings,
+          closeAction: nextCloseAction,
+        },
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateCloseAction, updateRoster],
+  );
+
+  // 更新后台运行时是否显示悬浮球
+  const handleShowFloatingBallChange = useCallback(
+    (show: boolean): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      updateShowFloatingBall(show);
+      const currentRoster = rosterRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: {
+          ...currentRoster.settings,
+          showFloatingBall: show,
+        },
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster, updateShowFloatingBall],
+  );
+
+  // 开机自启：直接写系统登录项，失败时回滚开关状态
+  const handleLaunchAtStartupChange = useCallback(
+    (enabled: boolean): void => {
+      const launchSettings = window.namePicker?.launchSettings;
+      if (!launchSettings) {
+        return;
+      }
+
+      const previous = launchAtStartup;
+      setLaunchAtStartup(enabled);
+      launchSettings
+        .setEnabled(enabled)
+        .then(() => launchSettings.getCurrent())
+        .then((actual) => setLaunchAtStartup(actual))
+        .catch(() => setLaunchAtStartup(previous));
+    },
+    [launchAtStartup],
+  );
+
   // 保存失败后重试：重新写入当前快照，成功后解除写锁定
   const handleRetrySave = useCallback((): void => {
     setErrorMessage(null);
@@ -939,6 +1059,8 @@ export function App() {
       updateAllowDuplicates(DEFAULT_SETTINGS.allowDuplicates ?? false);
       updateTheme(DEFAULT_SETTINGS.theme);
       updateColorTheme(DEFAULT_SETTINGS.colorTheme ?? 'ink');
+      updateCloseAction(DEFAULT_SETTINGS.closeAction ?? 'background');
+      updateShowFloatingBall(DEFAULT_SETTINGS.showFloatingBall ?? true);
       setSelectedCount(1);
       setResultStudents([]);
       setRollingNames([]);
@@ -1152,6 +1274,13 @@ export function App() {
           onThemeChange={handleThemeChange}
           colorTheme={colorTheme}
           onColorThemeChange={handleColorThemeChange}
+          closeAction={closeAction}
+          onCloseActionChange={handleCloseActionChange}
+          showFloatingBall={showFloatingBall}
+          onShowFloatingBallChange={handleShowFloatingBallChange}
+          canToggleLaunchAtStartup={canToggleLaunchAtStartup}
+          launchAtStartup={launchAtStartup}
+          onLaunchAtStartupChange={handleLaunchAtStartupChange}
           onClearLocalData={handleClearLocalData}
           onImport={handleImport}
           isImporting={isImporting}

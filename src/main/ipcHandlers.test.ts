@@ -470,6 +470,7 @@ describe('主进程 IPC 业务 handler', () => {
       IPC_CHANNELS.clearState,
       IPC_CHANNELS.windowControl,
       IPC_CHANNELS.floatingControl,
+      IPC_CHANNELS.launchSettings,
     ]);
     expect([...registered.keys()]).not.toContain('namePicker.chooseRosterFile');
 

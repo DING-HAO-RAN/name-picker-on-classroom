@@ -112,6 +112,12 @@ const namePicker: NamePickerApi = Object.freeze({
             invoke<void>(IPC_CHANNELS.floatingControl, action, payload),
         })
       : undefined,
+  // 开机自启设置：主界面窗口可用
+  launchSettings: Object.freeze({
+    getCurrent: () => invoke<boolean>(IPC_CHANNELS.launchSettings, 'get'),
+    setEnabled: (enabled: boolean) =>
+      invoke<void>(IPC_CHANNELS.launchSettings, 'set', { enabled }),
+  }),
 });
 
 contextBridge.exposeInMainWorld('namePicker', namePicker);

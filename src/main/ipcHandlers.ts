@@ -10,6 +10,7 @@ import {
   type WindowControlAction,
 } from '../shared/ipcTypes';
 import {
+  CLOSE_ACTIONS,
   COLOR_THEMES,
   MAX_ANIMATION_DURATION_MS,
   MAX_BACKGROUND_IMAGE_LENGTH,
@@ -46,6 +47,12 @@ export interface IpcFloatingControls {
   move(x: number, y: number): void;
 }
 
+/** 开机自启能力：由 main 进程绑定到 app 登录项 */
+export interface IpcLaunchControls {
+  getCurrent(): boolean;
+  setEnabled(enabled: boolean): void;
+}
+
 export interface IpcHandlerDependencies {
   showOpenDialog: ShowOpenDialog;
   importRoster: (filePath: string) => Promise<ImportResult>;
@@ -56,6 +63,7 @@ export interface IpcHandlerDependencies {
   };
   windowControls?: IpcWindowControls;
   floatingControls?: IpcFloatingControls;
+  launchControls?: IpcLaunchControls;
 }
 
 export interface IpcHandlers {
@@ -67,6 +75,8 @@ export interface IpcHandlers {
   windowControl(action: unknown): Promise<boolean>;
   /** 执行悬浮球操作；move 时 payload 为 { x, y } 屏幕坐标 */
   floatingControl(action: unknown, payload?: unknown): Promise<void>;
+  /** 读取/设置开机自启；set 时 payload 为 { enabled } */
+  launchSettings(action: unknown, payload?: unknown): Promise<boolean>;
 }
 
 export interface IpcMainLike {
@@ -336,6 +346,24 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     normalizedSettings.colorTheme = value.colorTheme as RosterState['settings']['colorTheme'];
   }
 
+  // 关闭行为：只接受后台运行 / 直接退出，其他取值丢弃回到默认后台
+  if (
+    typeof value.closeAction === 'string' &&
+    (CLOSE_ACTIONS as string[]).includes(value.closeAction)
+  ) {
+    normalizedSettings.closeAction = value.closeAction as RosterState['settings']['closeAction'];
+  }
+
+  // 后台运行时是否显示悬浮球：只接受布尔值
+  if (typeof value.showFloatingBall === 'boolean') {
+    normalizedSettings.showFloatingBall = value.showFloatingBall;
+  }
+
+  // 开机自启（UI 回显用）：只接受布尔值，实际生效由主进程登录项管理
+  if (typeof value.launchAtStartup === 'boolean') {
+    normalizedSettings.launchAtStartup = value.launchAtStartup;
+  }
+
   return normalizedSettings;
 }
 
@@ -536,6 +564,28 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
         }
       }
     },
+
+    async launchSettings(action: unknown, payload?: unknown): Promise<boolean> {
+      const launchControls = dependencies.launchControls;
+      if (!launchControls) {
+        return false;
+      }
+
+      if (action === 'get') {
+        return launchControls.getCurrent();
+      }
+
+      if (action === 'set') {
+        const enabled = isRecord(payload) ? payload.enabled : undefined;
+        if (typeof enabled !== 'boolean') {
+          throw invalidWindowActionError();
+        }
+        launchControls.setEnabled(enabled);
+        return launchControls.getCurrent();
+      }
+
+      throw invalidWindowActionError();
+    },
   };
 }
 
@@ -602,5 +652,8 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   );
   ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action, payload) =>
     handleTrustedRequest(event, () => handlers.floatingControl(action, payload)),
+  );
+  ipcMain.handle(IPC_CHANNELS.launchSettings, (event, action, payload) =>
+    handleTrustedRequest(event, () => handlers.launchSettings(action, payload)),
   );
 }

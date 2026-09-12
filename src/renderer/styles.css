@@ -14,16 +14,23 @@
   --c-accent: #b45309;
   --c-focus: #d97706;
   /* 界面纸色：页面底、卡片、次级底、边线、标题栏渐变、背景纱罩 */
-  --paper: var(--paper);
-  --card: var(--card);
-  --card-warm: var(--card-warm);
-  --card-cool: var(--card-cool);
-  --line: var(--line);
-  --line-soft: var(--line-soft);
-  --line-faint: var(--line-faint);
+  --paper: #f6f4ee;
+  --card: #fffdf8;
+  --card-warm: #faf8f1;
+  --card-cool: #f7f4ec;
+  --line: #ded9cb;
+  --line-soft: #e7e2d6;
+  --line-faint: #e0dacc;
   --titlebar-from: #f1ede2;
   --titlebar-to: #fdfcf9;
   --veil: rgba(248, 246, 240, 0.82);
+  /* 深色模式界面底色（墨青默认）：随颜色主题一起替换，保证主题覆盖全局 */
+  --dark-shell: #0c1715;
+  --dark-panel: #11221f;
+  --dark-deep: #0f1d1a;
+  --dark-soft: #142823;
+  --dark-hover: #1c332e;
+  --dark-line: #2a463f;
   color: var(--c-ink);
   background: var(--paper);
   font-synthesis: none;
@@ -1091,12 +1098,16 @@ h2 {
   padding: clamp(32px, 6vw, 64px) clamp(24px, 5vw, 48px);
   border: 2px solid var(--c-primary-muted);
   border-radius: 22px;
-  background: linear-gradient(145deg, #0c2b28 0%, #134640 100%);
+  /* 容器底色随颜色主题的主色生成深色渐变，保持各主题一致的深色投影感 */
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--c-primary) 34%, #060d0b) 0%,
+    color-mix(in srgb, var(--c-primary) 62%, #0b1a17) 100%
+  );
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(var(--c-primary-rgb), 0.25);
   text-align: center;
   cursor: default;
-  transform: scale(1);
-  transition: transform 0.2s ease;
+  /* 不保留静态 transform：避免整卡进入合成层导致大字渲染模糊 */
 }
 
 .fullscreen-result-container.is-settled {
@@ -1129,13 +1140,16 @@ h2 {
   min-width: 180px;
   padding: 16px 36px;
   border-radius: 24px;
+  /* 固定纯白：与固定近黑文字形成最高对比，不受主题影响 */
   background: #ffffff;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
   animation: cardBounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .fullscreen-name-text {
-  color: var(--c-ink);
+  /* 全屏结果卡固定高对比配色：纯白卡 + 近黑文字，不随主题变化，
+     保证任何颜色主题与深色背景下名字都清晰可辨 */
+  color: #1f2937;
   font-size: clamp(2.4rem, 6vw, 4.2rem);
   font-weight: 900;
   line-height: 1.15;
@@ -1454,7 +1468,7 @@ h2 {
    ========================================================================== */
 .app-shell.theme-dark {
   color-scheme: dark;
-  background: #0c1715;
+  background: var(--dark-shell);
   color: #e2e8f0;
   /* 深色模式下的墨青变量覆盖：主色提亮以保持对比度 */
   --c-primary: #2a9d8f;
@@ -1470,8 +1484,8 @@ h2 {
 }
 
 .app-shell.theme-dark .app-titlebar {
-  border-bottom-color: #2a463f;
-  background: linear-gradient(90deg, #11221f 0%, #0f1d1a 58%);
+  border-bottom-color: var(--dark-line);
+  background: linear-gradient(90deg, var(--dark-panel) 0%, var(--dark-deep) 58%);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
@@ -1484,7 +1498,7 @@ h2 {
 }
 
 .app-shell.theme-dark .app-titlebar__button:hover:not(:disabled) {
-  background: #1c332e;
+  background: var(--dark-hover);
 }
 
 .app-shell.theme-dark .app-titlebar__button--close:hover:not(:disabled) {
@@ -1514,8 +1528,8 @@ h2 {
 }
 
 .app-shell.theme-dark .classroom-summary {
-  border-color: #2a463f;
-  background: #11221f;
+  border-color: var(--dark-line);
+  background: var(--dark-panel);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
 }
 
@@ -1530,14 +1544,14 @@ h2 {
 .app-shell.theme-dark .roster-section,
 .app-shell.theme-dark .draw-controls,
 .app-shell.theme-dark .import-dropzone {
-  border-color: #2a463f;
-  background: #11221f;
+  border-color: var(--dark-line);
+  background: var(--dark-panel);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
 }
 
 .app-shell.theme-dark .result-section {
   border-color: var(--c-primary);
-  background: linear-gradient(135deg, #11221f 0%, #0c2b28 100%);
+  background: linear-gradient(135deg, var(--dark-panel) 0%, #0c2b28 100%);
 }
 
 .app-shell.theme-dark .result-waiting {
@@ -1545,7 +1559,7 @@ h2 {
 }
 
 .app-shell.theme-dark .import-dropzone--compact {
-  background: #0f1d1a;
+  background: var(--dark-deep);
 }
 
 .app-shell.theme-dark .import-dropzone p:not(.section-kicker),
@@ -1556,13 +1570,13 @@ h2 {
 .app-shell.theme-dark .roster-count,
 .app-shell.theme-dark .result-count,
 .app-shell.theme-dark .control-status {
-  background: #1c332e;
+  background: var(--dark-hover);
   color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .student-list-item {
-  border-color: #2a463f;
-  background: #142823;
+  border-color: var(--dark-line);
+  background: var(--dark-soft);
   color: #e2e8f0;
 }
 
@@ -1572,7 +1586,7 @@ h2 {
 
 .app-shell.theme-dark .result-card {
   border-color: var(--c-primary);
-  background: #142823;
+  background: var(--dark-soft);
 }
 
 .app-shell.theme-dark .result-card-name {
@@ -1596,7 +1610,7 @@ h2 {
 
 .app-shell.theme-dark .step-button {
   border-color: var(--c-primary-strong);
-  background: #1c332e;
+  background: var(--dark-hover);
   color: var(--c-primary-soft);
 }
 
@@ -1605,16 +1619,16 @@ h2 {
 .app-shell.theme-dark .settings-select,
 .app-shell.theme-dark .settings-search-input,
 .app-shell.theme-dark .student-weight-input {
-  border-color: #2a463f;
-  background: #142823;
+  border-color: var(--dark-line);
+  background: var(--dark-soft);
   color: #e2e8f0;
 }
 
 .app-shell.theme-dark .switch-row,
 .app-shell.theme-dark .student-weight-item,
 .app-shell.theme-dark .history-item {
-  border-color: #2a463f;
-  background: #142823;
+  border-color: var(--dark-line);
+  background: var(--dark-soft);
 }
 
 .app-shell.theme-dark .switch-row strong,
@@ -1634,39 +1648,39 @@ h2 {
 }
 
 .app-shell.theme-dark .history-panel {
-  border-top-color: #2a463f;
+  border-top-color: var(--dark-line);
 }
 
 .app-shell.theme-dark .settings-group {
-  border-bottom-color: #2a463f;
+  border-bottom-color: var(--dark-line);
 }
 
 .app-shell.theme-dark .secondary-button {
-  background: #142823;
+  background: var(--dark-soft);
   color: var(--c-primary-soft);
 }
 
 .app-shell.theme-dark .secondary-button:disabled,
 .app-shell.theme-dark .step-button:disabled {
-  background: #1c332e;
+  background: var(--dark-hover);
   color: #64748b;
 }
 
 .app-shell.theme-dark .empty-search-message,
 .app-shell.theme-dark .empty-history-message {
-  border-color: #2a463f;
+  border-color: var(--dark-line);
   color: #94a3b8;
 }
 
 .app-shell.theme-dark .settings-drawer__panel,
 .app-shell.theme-dark .settings-drawer__header {
-  border-color: #2a463f;
-  background: #0f1d1a;
+  border-color: var(--dark-line);
+  background: var(--dark-deep);
 }
 
 .app-shell.theme-dark .confirm-dialog {
   border-color: #7f1d1d;
-  background: #142823;
+  background: var(--dark-soft);
 }
 
 .app-shell.theme-dark .confirm-dialog__title {
@@ -1713,6 +1727,12 @@ h2 {
   --c-primary-strong: #8a4a1f;
   --c-primary-rgb: 224, 139, 76;
   --c-primary-soft: #f0c9a8;
+  --dark-shell: #17110d;
+  --dark-panel: #241a12;
+  --dark-deep: #1e150e;
+  --dark-soft: #2b2016;
+  --dark-hover: #34281c;
+  --dark-line: #453424;
 }
 
 .app-shell.color-meadow {
@@ -1742,6 +1762,12 @@ h2 {
   --c-primary-strong: #4d7c0f;
   --c-primary-rgb: 134, 184, 62;
   --c-primary-soft: #d3ecb2;
+  --dark-shell: #0f150a;
+  --dark-panel: #1a2410;
+  --dark-deep: #151d0d;
+  --dark-soft: #212d16;
+  --dark-hover: #28351c;
+  --dark-line: #37472a;
 }
 
 .app-shell.color-dusk {
@@ -1771,6 +1797,12 @@ h2 {
   --c-primary-strong: #2d5f97;
   --c-primary-rgb: 91, 155, 213;
   --c-primary-soft: #bcd8f0;
+  --dark-shell: #0c1016;
+  --dark-panel: #141c26;
+  --dark-deep: #10161e;
+  --dark-soft: #1b2531;
+  --dark-hover: #212d3b;
+  --dark-line: #2e3f52;
 }
 
 .app-shell.color-plum {
@@ -1800,11 +1832,21 @@ h2 {
   --c-primary-strong: #8c2e46;
   --c-primary-rgb: 217, 111, 136;
   --c-primary-soft: #f2c4d1;
+  --dark-shell: #150c11;
+  --dark-panel: #211319;
+  --dark-deep: #1b0f14;
+  --dark-soft: #291a20;
+  --dark-hover: #311f27;
+  --dark-line: #422c35;
 }
 
-/* 悬浮球窗口：去掉页面底色，保持透明窗口只露出圆形图标 */
+/* 悬浮球窗口：去掉页面底色，重置全局最小尺寸并禁用溢出，
+   否则 html/body 的 320px 最小宽度会在 64px 小窗里撑出滚动条 */
 html.is-floating-window,
 body.is-floating-window {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: transparent;
 }
 

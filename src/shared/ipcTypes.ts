@@ -8,6 +8,7 @@ export const IPC_CHANNELS = {
   windowControl: 'name-picker:window-control',
   windowMaximizedChanged: 'name-picker:window-maximized-changed',
   floatingControl: 'name-picker:floating-control',
+  launchSettings: 'name-picker:launch-settings',
 } as const;
 
 export interface ImportResult {
@@ -24,6 +25,12 @@ export type FloatingControlAction = 'restore' | 'menu' | 'quit' | 'move';
 export interface FloatingControlsApi {
   /** move 时 payload 为 { x, y }（屏幕坐标，球心对准该点） */
   control(action: FloatingControlAction, payload?: { x?: number; y?: number }): Promise<void>;
+}
+
+/** 开机自启设置：读取/写入系统登录启动项 */
+export interface LaunchSettingsApi {
+  getCurrent(): Promise<boolean>;
+  setEnabled(enabled: boolean): Promise<void>;
 }
 
 export interface WindowControlsApi {
@@ -62,4 +69,6 @@ export interface NamePickerApi {
   windowControls?: WindowControlsApi;
   /** 悬浮球控制；仅在悬浮球窗口（?window=floating）中存在 */
   floatingControls?: FloatingControlsApi;
+  /** 开机自启设置；仅在 Electron 宿主中存在 */
+  launchSettings?: LaunchSettingsApi;
 }

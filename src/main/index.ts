@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, screen } from 'electron';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createIpcHandlers, registerIpcHandlers, type IpcWindowControls } from './ipcHandlers';
 import { importRoster } from './importers/importRoster';
 import { getDevelopmentRendererUrl } from './renderer-url';
@@ -14,6 +15,41 @@ let isQuitting = false;
 
 /** 悬浮球窗口：主界面隐藏到后台时显示，点击即可一键切回 */
 let floatingWindow: BrowserWindow | null = null;
+
+/** 主窗口引用：close 拦截、悬浮球恢复时使用 */
+let mainWindowRef: BrowserWindow | null = null;
+
+/** 本地存储引用：close 拦截时读取最新的关闭行为设置 */
+let appStore: LocalStore | null = null;
+
+/** 从存储读取关闭行为与悬浮球显示设置；读取失败按默认值处理 */
+function loadWindowBehaviorSettings(store: LocalStore): {
+  closeAction: 'background' | 'quit';
+  showFloatingBall: boolean;
+} {
+  const defaults = { closeAction: 'background' as const, showFloatingBall: true };
+  try {
+    const raw = store.load();
+    if (!raw || typeof raw !== 'object') {
+      return defaults;
+    }
+    const settings = (raw as { settings?: Record<string, unknown> }).settings;
+    if (!settings || typeof settings !== 'object') {
+      return defaults;
+    }
+    const closeAction =
+      settings.closeAction === 'quit' || settings.closeAction === 'background'
+        ? settings.closeAction
+        : defaults.closeAction;
+    const showFloatingBall =
+      typeof settings.showFloatingBall === 'boolean'
+        ? settings.showFloatingBall
+        : defaults.showFloatingBall;
+    return { closeAction, showFloatingBall };
+  } catch {
+    return defaults;
+  }
+}
 
 /**
  * 取当前应用窗口。窗口可能被销毁或在 macOS 上重新创建，
@@ -79,12 +115,20 @@ function createMainWindow(): BrowserWindow {
   mainWindow.on('maximize', notifyMaximizedChanged);
   mainWindow.on('unmaximize', notifyMaximizedChanged);
 
-  // 点击关闭 = 缩到后台并弹出悬浮球，而不是退出程序；真正退出走悬浮球菜单的 quit
+  // 点击关闭 = 按设置执行：默认缩到后台（显示悬浮球）；也可直接退出
   mainWindow.on('close', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      hideMainWindowToFloating(mainWindow);
+    if (isQuitting) {
+      return;
     }
+    const behavior = appStore
+      ? loadWindowBehaviorSettings(appStore)
+      : { closeAction: 'background' as const, showFloatingBall: true };
+    if (behavior.closeAction === 'quit') {
+      // 用户选择「直接退出」：放行关闭，window-all-closed 会退出应用
+      return;
+    }
+    event.preventDefault();
+    hideMainWindowToFloating(mainWindow, behavior.showFloatingBall);
   });
 
   const rendererUrl = getDevelopmentRendererUrl(
@@ -100,9 +144,13 @@ function createMainWindow(): BrowserWindow {
   return mainWindow;
 }
 
-/** 把主界面藏到后台，并确保悬浮球在屏幕右上角待命 */
-function hideMainWindowToFloating(mainWindow: BrowserWindow): void {
+/** 把主界面藏到后台；按设置决定是否显示悬浮球 */
+function hideMainWindowToFloating(mainWindow: BrowserWindow, showFloatingBall: boolean): void {
   mainWindow.hide();
+  if (!showFloatingBall) {
+    // 不显示悬浮球：可通过再次启动应用（单实例锁）唤起主界面
+    return;
+  }
   if (floatingWindow && !floatingWindow.isDestroyed()) {
     floatingWindow.show();
     return;
@@ -151,9 +199,11 @@ function createFloatingWindow(): BrowserWindow {
   if (rendererUrl) {
     void floating.loadURL(`${rendererUrl}?${FLOATING_WINDOW_QUERY}`);
   } else {
-    void floating.loadFile(join(__dirname, '../renderer/index.html'), {
-      search: FLOATING_WINDOW_QUERY,
-    });
+    // 显式拼接查询参数：loadFile 的 search 选项在部分版本不可靠，
+    // 查询串丢失会让悬浮球窗口错误渲染完整主界面（出现滚动条与标题栏）
+    const floatingUrl = new URL(pathToFileURL(join(__dirname, '../renderer/index.html')).href);
+    floatingUrl.search = FLOATING_WINDOW_QUERY;
+    void floating.loadURL(floatingUrl.href);
   }
 
   floating.on('closed', () => {
@@ -209,16 +259,28 @@ void app.whenReady().then(() => {
   // 全局移除默认菜单栏
   Menu.setApplicationMenu(null);
 
+  const store = new LocalStore(app.getPath('userData'));
+  appStore = store;
+
   const handlers = createIpcHandlers({
     showOpenDialog: (options) => dialog.showOpenDialog(options),
     importRoster,
-    store: new LocalStore(app.getPath('userData')),
+    store,
     windowControls,
     floatingControls,
+    // 开机自启：绑定系统登录启动项
+    launchControls: {
+      getCurrent() {
+        return app.getLoginItemSettings({ path: process.execPath }).openAtLogin;
+      },
+      setEnabled(enabled: boolean) {
+        app.setLoginItemSettings({ openAtLogin: enabled, path: process.execPath, args: [] });
+      },
+    },
   });
   registerIpcHandlers(ipcMain, handlers);
 
-  createMainWindow();
+  mainWindowRef = createMainWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -226,6 +288,22 @@ void app.whenReady().then(() => {
     }
   });
 });
+
+// 单实例：后台运行（尤其未显示悬浮球）时再次启动应用，唤起主界面而不是开第二个进程
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const mainWindow = mainWindowRef;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
 
 // 任何退出路径（悬浮球退出、系统关机等）都先放行窗口关闭
 app.on('before-quit', () => {
