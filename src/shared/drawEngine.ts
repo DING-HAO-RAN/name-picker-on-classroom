@@ -15,6 +15,10 @@ export function drawStudents(
   count: number,
   random: () => number = Math.random,
 ): DrawResult {
+  if (!Number.isInteger(count) || count <= 0) {
+    throw new RangeError('抽取人数必须是正整数。');
+  }
+
   const candidates = students
     .map((student, index) => ({ student, index }))
     .filter(

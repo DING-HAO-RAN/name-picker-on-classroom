@@ -32,12 +32,17 @@ export async function readCsvNames(filePath: string): Promise<string[]> {
       throw new RosterImportError('PARSE_FAILED', 'CSV 文件解析失败。');
     }
 
-    const names = parsed.data
-      .map((row) => String(row[0] ?? '').trim())
+    const firstNonEmptyRowIndex = parsed.data.findIndex((row) =>
+      row.some((cell) => String(cell ?? '').trim().length > 0),
+    );
+    const headerRow = parsed.data[firstNonEmptyRowIndex];
+    const nameColumnIndex =
+      headerRow?.findIndex((cell) => String(cell ?? '').trim() === '姓名') ?? -1;
+    const dataRows =
+      nameColumnIndex >= 0 ? parsed.data.slice(firstNonEmptyRowIndex + 1) : parsed.data;
+    const names = dataRows
+      .map((row) => String(row[nameColumnIndex >= 0 ? nameColumnIndex : 0] ?? '').trim())
       .filter((name) => name.length > 0);
-    if (names[0] === '姓名') {
-      names.shift();
-    }
     return names;
   } catch (error) {
     if (error instanceof RosterImportError) {

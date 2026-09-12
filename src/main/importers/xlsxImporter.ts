@@ -23,9 +23,13 @@ export async function readXlsxNames(filePath: string): Promise<string[]> {
       header: 1,
       raw: false,
     });
-    return rows
+    const names = rows
       .map((row) => String(row[0] ?? '').trim())
       .filter((name) => name.length > 0);
+    if (names[0] === '姓名') {
+      names.shift();
+    }
+    return names;
   } catch {
     throw new RosterImportError('PARSE_FAILED', 'XLSX 文件解析失败。');
   }

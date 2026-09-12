@@ -96,15 +96,12 @@ describe('加权无放回抽取核心', () => {
     ]);
   });
 
-  it('请求人数为零时不抽取且不报告 shortage', () => {
-    const students = [student('a')];
-
-    const result = drawStudents(students, 0, () => 0);
-
-    expect(result.selected).toEqual([]);
-    expect(result.updatedStudents).toEqual(students);
-    expect(result.shortage).toBe(false);
-  });
+  it.each([Number.NaN, 0, -1, 1.5, Number.POSITIVE_INFINITY])(
+    '拒绝非法抽取人数 %s',
+    (count) => {
+      expect(() => drawStudents([student('a')], count, () => 0)).toThrowError(RangeError);
+    },
+  );
 
   it('多个 Number.MAX_VALUE 权重相加时 random 为零仍选择首项', () => {
     const students = [
