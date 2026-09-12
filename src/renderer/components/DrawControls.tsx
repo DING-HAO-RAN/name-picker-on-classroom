@@ -7,11 +7,14 @@ export interface DrawControlsProps {
   disabled?: boolean;
   isAnimating?: boolean;
   isSaving?: boolean;
+  /** 上一次保存是否失败；失败时锁定写操作并提供重试入口 */
+  saveFailed?: boolean;
   onCountChange: (count: number) => void;
   onAnimationChange: (enabled: boolean) => void;
   onAllowDuplicatesChange?: (allowDuplicates: boolean) => void;
   onDraw: (count: number, animate: boolean) => void;
   onResetRound: () => void;
+  onRetrySave?: () => void;
 }
 
 export function DrawControls({
@@ -23,16 +26,19 @@ export function DrawControls({
   disabled = false,
   isAnimating = false,
   isSaving = false,
+  saveFailed = false,
   onCountChange,
   onAnimationChange,
   onAllowDuplicatesChange,
   onDraw,
   onResetRound,
+  onRetrySave,
 }: DrawControlsProps) {
   const hasCandidates = maxCount > 0;
   const upperBound = Math.max(1, maxCount);
   const safeCount = Math.min(Math.max(1, count), upperBound);
-  const controlsDisabled = disabled || isAnimating || isSaving;
+  // 保存失败时一并锁定所有会改变名单的控件，避免继续写入不一致状态
+  const controlsDisabled = disabled || isAnimating || isSaving || saveFailed;
 
   function changeCount(nextCount: number): void {
     if (!hasCandidates || controlsDisabled) {
@@ -50,6 +56,14 @@ export function DrawControls({
     }
   }
 
+  const saveStatusText = isSaving
+    ? '正在保存…'
+    : saveFailed
+      ? '尚未保存'
+      : isAnimating
+        ? '结果准备中'
+        : '已保存';
+
   return (
     <section className="draw-controls" aria-labelledby="draw-controls-title">
       <div className="section-heading">
@@ -64,7 +78,7 @@ export function DrawControls({
           aria-atomic="true"
           aria-label="名单保存状态"
         >
-          {isSaving ? '正在保存…' : isAnimating ? '结果准备中' : '已保存'}
+          {saveStatusText}
         </span>
       </div>
 
@@ -156,6 +170,16 @@ export function DrawControls({
         >
           重置本轮
         </button>
+        {saveFailed ? (
+          // 保存失败后唯一可用的写操作：重试保存当前快照
+          <button
+            className="secondary-button retry-save-button"
+            type="button"
+            onClick={() => onRetrySave?.()}
+          >
+            重试保存
+          </button>
+        ) : null}
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { RosterState } from '../../shared/types';
+import { MAX_ANIMATION_DURATION_MS, type RosterState } from '../../shared/types';
 
 export type LocalStoreErrorCode =
   | 'STORAGE_READ_FAILED'
@@ -62,7 +62,9 @@ function isAppSettings(value: unknown): boolean {
     typeof value.animationEnabled === 'boolean' &&
     typeof value.animationDurationMs === 'number' &&
     Number.isFinite(value.animationDurationMs) &&
-    value.theme === 'light'
+    value.animationDurationMs >= 0 &&
+    value.animationDurationMs <= MAX_ANIMATION_DURATION_MS &&
+    (value.theme === 'light' || value.theme === 'dark')
   );
 }
 

@@ -178,6 +178,23 @@ describe('主进程 IPC 业务 handler', () => {
     expect(store.clear).toHaveBeenCalledTimes(1);
   });
 
+  it('接受深色主题和 0 到 5000 毫秒的合法设置', async () => {
+    const store = createStore();
+    store.save.mockResolvedValue(undefined);
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store,
+    });
+    const darkState: RosterState = {
+      ...savedState,
+      settings: { ...savedState.settings, animationDurationMs: 5000, theme: 'dark' },
+    };
+
+    await expect(handlers.saveState(darkState)).resolves.toBeUndefined();
+    expect(store.save).toHaveBeenCalledWith(darkState);
+  });
+
   it.each([
     ['null', null],
     ['缺少 sourceName', { students: [], history: [], settings: savedState.settings }],
@@ -223,11 +240,17 @@ describe('主进程 IPC 业务 handler', () => {
       history: [],
       settings: { ...savedState.settings, animationDurationMs: -1 },
     }],
+    ['animationDurationMs 超出上限', {
+      sourceName: 'roster.csv',
+      students: [],
+      history: [],
+      settings: { ...savedState.settings, animationDurationMs: 5001 },
+    }],
     ['theme 类型错误', {
       sourceName: 'roster.csv',
       students: [],
       history: [],
-      settings: { ...savedState.settings, theme: 'dark' },
+      settings: { ...savedState.settings, theme: 'neon' },
     }],
   ] as const)('saveState 拒绝非法状态（%s）并不写入存储', async (_description, state) => {
     const store = createStore();

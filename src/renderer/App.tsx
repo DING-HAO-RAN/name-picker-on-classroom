@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { drawStudents, resetRound, validateWeight } from '../shared/drawEngine';
 import { MAX_HISTORY_ITEMS } from '../shared/types';
-import type { AnimationStyle, AppSettings, DrawHistoryItem, RosterState, StudentRecord } from '../shared/types';
+import type {
+  AnimationStyle,
+  AppSettings,
+  DrawHistoryItem,
+  RosterState,
+  StudentRecord,
+  Theme,
+} from '../shared/types';
 import { ClassroomHeader } from './components/ClassroomHeader';
 import { DrawControls } from './components/DrawControls';
 import { FullscreenResultOverlay } from './components/FullscreenResultOverlay';
@@ -81,12 +88,17 @@ export function App() {
   const [roster, setRoster] = useState<RosterState>(createEmptyState);
   const [selectedCount, setSelectedCount] = useState(1);
   const [animationEnabled, setAnimationEnabled] = useState(DEFAULT_SETTINGS.animationEnabled);
-  const [animationStyle, setAnimationStyle] = useState<AnimationStyle>(DEFAULT_SETTINGS.animationStyle);
+  const [animationStyle, setAnimationStyle] = useState<AnimationStyle>(
+    DEFAULT_SETTINGS.animationStyle ?? 'slot',
+  );
   const [allowDuplicates, setAllowDuplicates] = useState(DEFAULT_SETTINGS.allowDuplicates);
+  const [theme, setTheme] = useState<Theme>(DEFAULT_SETTINGS.theme);
   const [resultStudents, setResultStudents] = useState<StudentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // 上一次保存是否失败：失败后锁定写操作，直到重试成功
+  const [saveFailed, setSaveFailed] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
@@ -101,6 +113,7 @@ export function App() {
   const animationEnabledRef = useRef(animationEnabled);
   const animationStyleRef = useRef(animationStyle);
   const allowDuplicatesRef = useRef(allowDuplicates);
+  const themeRef = useRef(theme);
   const saveQueueRef = useRef<Promise<void> | null>(null);
   const pendingSaveCountRef = useRef(0);
   const interactionLockRef = useRef(false);
@@ -128,6 +141,11 @@ export function App() {
     setAllowDuplicates(allowed);
   }, []);
 
+  const updateTheme = useCallback((nextTheme: Theme): void => {
+    themeRef.current = nextTheme;
+    setTheme(nextTheme);
+  }, []);
+
   const saveState = useCallback(async (nextState: RosterState): Promise<boolean> => {
     const api = getNamePickerApi();
     if (!api) {
@@ -149,9 +167,13 @@ export function App() {
     const performSave = async (): Promise<boolean> => {
       try {
         await api.saveState(nextState);
+        if (!disposedRef.current) {
+          setSaveFailed(false);
+        }
         return true;
       } catch {
         if (!disposedRef.current) {
+          setSaveFailed(true);
           setErrorMessage('名单状态保存失败，请重试。');
         }
         return false;
@@ -277,6 +299,7 @@ export function App() {
           if (typeof normalizedState.settings.allowDuplicates === 'boolean') {
             updateAllowDuplicates(normalizedState.settings.allowDuplicates);
           }
+          updateTheme(normalizedState.settings.theme);
           setSelectedCount(1);
 
           if (
@@ -310,7 +333,7 @@ export function App() {
       }
       interactionLockRef.current = false;
     };
-  }, [saveState, updateAllowDuplicates, updateAnimationEnabled, updateAnimationStyle, updateRoster]);
+  }, [saveState, updateAllowDuplicates, updateAnimationEnabled, updateAnimationStyle, updateRoster, updateTheme]);
 
   const handleImport = useCallback(async (): Promise<void> => {
     const api = getNamePickerApi();
@@ -319,6 +342,7 @@ export function App() {
       isLoading ||
       isImporting ||
       isSaving ||
+      saveFailed ||
       isAnimating ||
       interactionLockRef.current
     ) {
@@ -341,7 +365,7 @@ export function App() {
           animationEnabled: animationEnabledRef.current,
           animationStyle: animationStyleRef.current,
           allowDuplicates: allowDuplicatesRef.current,
-          theme: 'light',
+          theme: themeRef.current,
         },
       };
 
@@ -363,7 +387,7 @@ export function App() {
       interactionLockRef.current = false;
       setIsImporting(false);
     }
-  }, [isAnimating, isImporting, isLoading, isSaving, saveState, updateAnimationEnabled, updateRoster]);
+  }, [isAnimating, isImporting, isLoading, isSaving, saveFailed, saveState, updateAnimationEnabled, updateRoster]);
 
   const handleAnimationChange = useCallback(
     (enabled: boolean): void => {
@@ -496,6 +520,7 @@ export function App() {
         isLoading ||
         isImporting ||
         isSaving ||
+        saveFailed ||
         isAnimating ||
         interactionLockRef.current ||
         currentRoster.students.length === 0
@@ -653,7 +678,7 @@ export function App() {
         releaseInteractionLock();
       }, duration);
     },
-    [isAnimating, isImporting, isLoading, isSaving, saveState, updateAnimationEnabled, updateRoster],
+    [isAnimating, isImporting, isLoading, isSaving, saveFailed, saveState, updateAnimationEnabled, updateRoster],
   );
 
   const handleResetRound = useCallback((): void => {
@@ -662,6 +687,7 @@ export function App() {
       isLoading ||
       isImporting ||
       isSaving ||
+      saveFailed ||
       isAnimating ||
       interactionLockRef.current ||
       currentRoster.students.length === 0
@@ -689,13 +715,142 @@ export function App() {
         interactionLockRef.current = false;
       },
     );
-  }, [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster]);
+  }, [isAnimating, isImporting, isLoading, isSaving, saveFailed, saveState, updateRoster]);
+
+  const handleThemeChange = useCallback(
+    (nextTheme: Theme): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      updateTheme(nextTheme);
+      const currentRoster = rosterRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: {
+          ...currentRoster.settings,
+          theme: nextTheme,
+        },
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster, updateTheme],
+  );
+
+  // 保存失败后重试：重新写入当前快照，成功后解除写锁定
+  const handleRetrySave = useCallback((): void => {
+    setErrorMessage(null);
+    void saveState(rosterRef.current);
+  }, [saveState]);
+
+  // 清除本机数据：成功后恢复初始名单与默认设置，并关闭设置抽屉
+  const handleClearLocalData = useCallback(async (): Promise<void> => {
+    const api = getNamePickerApi();
+    if (!api) {
+      return;
+    }
+
+    try {
+      await api.clearState();
+      updateRoster(createEmptyState());
+      updateAnimationEnabled(DEFAULT_SETTINGS.animationEnabled);
+      updateAnimationStyle(DEFAULT_SETTINGS.animationStyle ?? 'slot');
+      updateAllowDuplicates(DEFAULT_SETTINGS.allowDuplicates ?? false);
+      updateTheme(DEFAULT_SETTINGS.theme);
+      setSelectedCount(1);
+      setResultStudents([]);
+      setRollingNames([]);
+      setMarqueeStudentId(null);
+      setIsFullscreenOpen(false);
+      setIsRollingFullscreen(false);
+      setSaveFailed(false);
+      setErrorMessage(null);
+      setIsSettingsDrawerOpen(false);
+    } catch {
+      // 只暴露固定文案，不透出底层错误细节
+      setErrorMessage('清除本机数据失败，请重试。');
+    }
+  }, [updateAllowDuplicates, updateAnimationEnabled, updateAnimationStyle, updateRoster, updateTheme]);
+
+  // 键盘快捷键：Ctrl/Cmd+O 导入、空格抽取、R 重置；输入框内或设置抽屉打开时不响应
+  useEffect(() => {
+    function isEditableTarget(target: EventTarget | null): boolean {
+      return (
+        target instanceof HTMLElement &&
+        target.closest('input, textarea, select, [contenteditable="true"]') !== null
+      );
+    }
+
+    function handleShortcutKeyDown(event: KeyboardEvent): void {
+      if (isLoading || isImporting || isSaving || saveFailed || isAnimating || isSettingsDrawerOpen) {
+        return;
+      }
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      const isModifierPressed = event.ctrlKey || event.metaKey;
+      if (isModifierPressed && event.key.toLowerCase() === 'o') {
+        event.preventDefault();
+        void handleImport();
+        return;
+      }
+      if (isModifierPressed || event.altKey) {
+        return;
+      }
+
+      if (event.code === 'Space' || event.key === ' ') {
+        event.preventDefault();
+        handleDraw(selectedCount, animationEnabledRef.current);
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        handleResetRound();
+      }
+    }
+
+    document.addEventListener('keydown', handleShortcutKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleShortcutKeyDown);
+    };
+  }, [
+    handleDraw,
+    handleImport,
+    handleResetRound,
+    isAnimating,
+    isImporting,
+    isLoading,
+    isSaving,
+    isSettingsDrawerOpen,
+    saveFailed,
+    selectedCount,
+  ]);
 
   const hasRoster = roster.students.length > 0;
   const availableStudentCount = getAvailableStudentCount(roster.students, allowDuplicates);
 
+  // 同名（重名）学生集合：用于在名单中标注，方便教师区分
+  const duplicateNameSet = new Set(
+    roster.students
+      .map((student) => student.name)
+      .filter((name, index, allNames) => allNames.indexOf(name) !== index),
+  );
+
   return (
-    <main className="app-shell">
+    <main className={`app-shell theme-${theme}`}>
       <ClassroomHeader
         sourceName={roster.sourceName}
         studentCount={roster.students.length}
@@ -711,11 +866,12 @@ export function App() {
 
       <div className="classroom-layout">
         <section className="classroom-main" aria-label="课堂名单和抽取结果">
-          {!hasRoster ? (
+          {/* 加载中只展示加载提示：避免先闪出「名单为空」再切换成已有名单 */}
+          {isLoading ? null : !hasRoster ? (
             <ImportDropzone
               onImport={handleImport}
-              isImporting={isImporting || isLoading}
-              disabled={isSaving}
+              isImporting={isImporting}
+              disabled={isSaving || saveFailed}
             />
           ) : (
             <>
@@ -739,15 +895,27 @@ export function App() {
                 <ul className="student-list" aria-label="学生名单">
                   {roster.students.map((student) => {
                     const isMarqueeActive = marqueeStudentId === student.id;
+                    const isDuplicateName = duplicateNameSet.has(student.name);
+                    const canBeDrawn = Number.isFinite(student.weight) && student.weight > 0;
+                    const statusText = student.drawnThisRound
+                      ? '本轮已抽取'
+                      : canBeDrawn
+                        ? '等待抽取'
+                        : '暂不参与抽取';
                     return (
                       <li
                         className={`student-list-item ${isMarqueeActive ? 'student-list-item--marquee' : ''}`}
                         key={student.id}
                       >
-                        <span>{student.name}</span>
-                        <span className="student-status">
-                          {student.drawnThisRound ? '本轮已抽取' : '等待抽取'}
+                        <span className="student-name">
+                          {student.name}
+                          {isDuplicateName ? (
+                            <span className="student-name-badge" aria-label="同名学生">
+                              同名
+                            </span>
+                          ) : null}
                         </span>
+                        <span className="student-status">{statusText}</span>
                       </li>
                     );
                   })}
@@ -767,11 +935,13 @@ export function App() {
             disabled={isLoading || isImporting}
             isAnimating={isAnimating}
             isSaving={isSaving}
+            saveFailed={saveFailed}
             onCountChange={setSelectedCount}
             onAnimationChange={handleAnimationChange}
             onAllowDuplicatesChange={handleAllowDuplicatesChange}
             onDraw={handleDraw}
             onResetRound={handleResetRound}
+            onRetrySave={handleRetrySave}
           />
           {hasRoster ? (
             <ImportDropzone
@@ -779,7 +949,7 @@ export function App() {
               hasRoster
               onImport={handleImport}
               isImporting={isImporting || isAnimating || isLoading}
-              disabled={isSaving}
+              disabled={isSaving || saveFailed}
             />
           ) : null}
         </aside>
@@ -789,11 +959,14 @@ export function App() {
         <SettingsDrawer
           students={roster.students}
           history={roster.history}
-          disabled={isLoading || isImporting || isAnimating || isSaving}
+          disabled={isLoading || isImporting || isAnimating || isSaving || saveFailed}
           animationStyle={animationStyle}
           onAnimationStyleChange={handleAnimationStyleChange}
           animationDurationMs={roster.settings.animationDurationMs}
           onAnimationDurationChange={handleAnimationDurationChange}
+          theme={theme}
+          onThemeChange={handleThemeChange}
+          onClearLocalData={handleClearLocalData}
           onWeightChange={handleWeightChange}
           onResetWeights={handleResetWeights}
           onClearHistory={handleClearHistory}

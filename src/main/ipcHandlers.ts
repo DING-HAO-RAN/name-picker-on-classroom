@@ -7,7 +7,7 @@ import {
   type IpcResponse,
   type SerializedIpcError,
 } from '../shared/ipcTypes';
-import type { RosterState, StudentRecord } from '../shared/types';
+import { MAX_ANIMATION_DURATION_MS, type RosterState, type StudentRecord } from '../shared/types';
 
 export interface OpenDialogResult {
   canceled: boolean;
@@ -206,20 +206,23 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     return undefined;
   }
 
+  const { animationEnabled, animationDurationMs, theme } = value;
+
   if (
-    typeof value.animationEnabled !== 'boolean' ||
-    typeof value.animationDurationMs !== 'number' ||
-    !Number.isFinite(value.animationDurationMs) ||
-    value.animationDurationMs < 0 ||
-    value.theme !== 'light'
+    typeof animationEnabled !== 'boolean' ||
+    typeof animationDurationMs !== 'number' ||
+    !Number.isFinite(animationDurationMs) ||
+    animationDurationMs < 0 ||
+    animationDurationMs > MAX_ANIMATION_DURATION_MS ||
+    (theme !== 'light' && theme !== 'dark')
   ) {
     return undefined;
   }
 
-  const normalizedSettings: AppSettings = {
-    animationEnabled: value.animationEnabled,
-    animationDurationMs: value.animationDurationMs,
-    theme: 'light',
+  const normalizedSettings: RosterState['settings'] = {
+    animationEnabled,
+    animationDurationMs,
+    theme,
   };
 
   if (

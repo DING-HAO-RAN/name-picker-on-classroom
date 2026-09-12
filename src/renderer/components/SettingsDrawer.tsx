@@ -1,5 +1,11 @@
-import { useEffect, useRef } from 'react';
-import type { AnimationStyle, DrawHistoryItem, StudentRecord } from '../../shared/types';
+import { useEffect, useRef, useState } from 'react';
+import {
+  MAX_ANIMATION_DURATION_MS,
+  type AnimationStyle,
+  type DrawHistoryItem,
+  type StudentRecord,
+  type Theme,
+} from '../../shared/types';
 import { HistoryPanel } from './HistoryPanel';
 import { StudentWeightList } from './StudentWeightList';
 
@@ -15,6 +21,10 @@ export interface SettingsDrawerProps {
   onAnimationStyleChange?: (style: AnimationStyle) => void;
   animationDurationMs?: number;
   onAnimationDurationChange?: (duration: number) => void;
+  theme?: Theme;
+  onThemeChange?: (theme: Theme) => void;
+  /** 清除本机保存的名单、权重与历史；由上层负责调用主进程并更新界面 */
+  onClearLocalData?: () => void | Promise<void>;
 }
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -23,6 +33,16 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
       'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
     ),
   ).filter((element) => !element.hasAttribute('aria-hidden'));
+}
+
+/** 把任意输入收敛到 0 - MAX_ANIMATION_DURATION_MS 的整数毫秒 */
+function clampAnimationDuration(rawValue: string): number {
+  const parsedValue = Number(rawValue);
+  if (!Number.isFinite(parsedValue)) {
+    return 0;
+  }
+
+  return Math.min(Math.max(0, Math.round(parsedValue)), MAX_ANIMATION_DURATION_MS);
 }
 
 export function SettingsDrawer({
@@ -37,15 +57,32 @@ export function SettingsDrawer({
   onAnimationStyleChange,
   animationDurationMs = 1800,
   onAnimationDurationChange,
+  theme = 'light',
+  onThemeChange,
+  onClearLocalData,
 }: SettingsDrawerProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const cancelClearButtonRef = useRef<HTMLButtonElement>(null);
+  const isClearConfirmOpenRef = useRef(false);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
 
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  useEffect(() => {
+    isClearConfirmOpenRef.current = isClearConfirmOpen;
+  }, [isClearConfirmOpen]);
+
+  // 二次确认弹出后，把焦点交给“取消”，避免误触破坏性操作
+  useEffect(() => {
+    if (isClearConfirmOpen) {
+      cancelClearButtonRef.current?.focus();
+    }
+  }, [isClearConfirmOpen]);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -57,6 +94,11 @@ export function SettingsDrawer({
     function handleDocumentKeyDown(event: KeyboardEvent): void {
       if (event.key === 'Escape') {
         event.preventDefault();
+        // 确认框打开时优先关闭确认框，而不是整个设置抽屉
+        if (isClearConfirmOpenRef.current) {
+          setIsClearConfirmOpen(false);
+          return;
+        }
         onCloseRef.current();
       }
     }
@@ -91,6 +133,11 @@ export function SettingsDrawer({
       event.preventDefault();
       firstElement.focus();
     }
+  }
+
+  async function handleConfirmClear(): Promise<void> {
+    setIsClearConfirmOpen(false);
+    await onClearLocalData?.();
   }
 
   return (
@@ -152,18 +199,40 @@ export function SettingsDrawer({
             </div>
 
             <div className="settings-field">
-              <label htmlFor="animation-duration-select">动画时长</label>
-              <select
-                id="animation-duration-select"
-                className="settings-select"
+              <label htmlFor="animation-duration-input">动画时长（毫秒）</label>
+              <input
+                id="animation-duration-input"
+                className="settings-input"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={MAX_ANIMATION_DURATION_MS}
+                step={100}
                 value={animationDurationMs}
                 disabled={disabled}
-                onChange={(e) => onAnimationDurationChange?.(Number(e.target.value))}
+                onChange={(e) => onAnimationDurationChange?.(clampAnimationDuration(e.target.value))}
+              />
+              <small className="settings-field-hint">
+                支持 0 - {MAX_ANIMATION_DURATION_MS} 毫秒，数值越大悬念越强。
+              </small>
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="theme-select">界面主题</label>
+              <select
+                id="theme-select"
+                className="settings-select"
+                value={theme}
+                disabled={disabled}
+                onChange={(e) => onThemeChange?.(e.target.value as Theme)}
               >
-                <option value={1200}>快速（1.2 秒）</option>
-                <option value={1800}>标准（1.8 秒）</option>
-                <option value={2800}>悬念（2.8 秒）</option>
+                <option value="light">明亮模式</option>
+                <option value="dark">深色模式</option>
               </select>
+              <small className="settings-field-hint">
+                {theme === 'light' && '明亮的课堂投影配色，适合白天与常规教室。'}
+                {theme === 'dark' && '深色低眩光配色，适合暗光教室与长时间投屏。'}
+              </small>
             </div>
           </section>
 
@@ -185,8 +254,59 @@ export function SettingsDrawer({
             disabled={disabled}
             onClearHistory={onClearHistory}
           />
+
+          {/* 本机数据管理区域 */}
+          <section className="settings-group settings-group--danger" aria-labelledby="local-data-title">
+            <h3 id="local-data-title" className="settings-group-title">
+              本机数据
+            </h3>
+            <p className="settings-group-hint">
+              名单、权重和抽取历史只保存在本机，清除后无法恢复。
+            </p>
+            <button
+              type="button"
+              className="danger-button settings-clear-button"
+              disabled={disabled}
+              onClick={() => setIsClearConfirmOpen(true)}
+            >
+              清除本机数据
+            </button>
+          </section>
         </div>
       </aside>
+
+      {isClearConfirmOpen ? (
+        <div className="confirm-overlay">
+          <div
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="确认清除本机数据"
+          >
+            <h4 className="confirm-dialog__title">确认清除本机数据</h4>
+            <p className="confirm-dialog__description">
+              将删除本机保存的名单、权重和抽取历史，操作无法撤销。
+            </p>
+            <div className="confirm-dialog__actions">
+              <button
+                ref={cancelClearButtonRef}
+                type="button"
+                className="secondary-button"
+                onClick={() => setIsClearConfirmOpen(false)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                onClick={() => void handleConfirmClear()}
+              >
+                确认清除本机数据
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

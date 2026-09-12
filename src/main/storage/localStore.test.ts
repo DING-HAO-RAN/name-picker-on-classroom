@@ -40,6 +40,18 @@ describe('本地名单存储', () => {
     await expect(store.load()).resolves.toEqual(savedState);
   });
 
+  it('保存后可以恢复深色主题和最大动画时长', async () => {
+    const store = new LocalStore(fixtureDirectory);
+    const darkState: RosterState = {
+      ...savedState,
+      settings: { ...savedState.settings, animationDurationMs: 5000, theme: 'dark' },
+    };
+
+    await store.save(darkState);
+
+    await expect(store.load()).resolves.toEqual(darkState);
+  });
+
   it('没有存储文件时返回空值', async () => {
     const store = new LocalStore(fixtureDirectory);
 
@@ -79,6 +91,15 @@ describe('本地名单存储', () => {
         students: [],
         history: [],
         settings: { ...savedState.settings, animationEnabled: 'false' },
+      }),
+    ],
+    [
+      'animationDurationMs 超出上限',
+      JSON.stringify({
+        sourceName: 'roster.csv',
+        students: [],
+        history: [],
+        settings: { ...savedState.settings, animationDurationMs: 5001 },
       }),
     ],
     [

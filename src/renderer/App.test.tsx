@@ -425,6 +425,7 @@ describe('课堂主界面', () => {
     render(<App />);
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
     expect(screen.getByText('最多可抽取 1 人')).toBeInTheDocument();
+    expect(screen.getByText('暂不参与抽取')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
@@ -530,7 +531,7 @@ describe('课堂主界面', () => {
     await waitFor(() => expect(persistedState).toEqual(pendingSaves[1].state));
   });
 
-  it('保存失败不会阻塞后续快照写入', async () => {
+  it('保存失败后锁定写操作并可通过重试继续', async () => {
     const pendingSaves: Array<{
       deferred: ReturnType<typeof createDeferred<void>>;
     }> = [];
@@ -547,8 +548,10 @@ describe('课堂主界面', () => {
 
     render(<App />);
     expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
-    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+    const startButton = screen.getByRole('button', { name: '开始抽取' });
+    const resetButton = screen.getByRole('button', { name: '重置本轮' });
+    const animationToggle = screen.getByRole('checkbox', { name: '显示抽取动画' });
+    fireEvent.click(startButton);
 
     expect(api.saveState).toHaveBeenCalledTimes(1);
     pendingSaves[0].deferred.reject(new Error('写入失败'));
@@ -556,13 +559,29 @@ describe('课堂主界面', () => {
       await flushPromises();
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
     });
-    expect(await screen.findByRole('alert')).toHaveTextContent('名单状态保存失败，请重试。');
 
-    fireEvent.click(screen.getByRole('button', { name: '重置本轮' }));
+    const saveStatus = screen.getByRole('status', { name: '名单保存状态' });
+    expect(saveStatus).toHaveTextContent('尚未保存');
+    expect(saveStatus).not.toHaveTextContent('已保存');
+    expect(await screen.findByRole('alert')).toHaveTextContent('名单状态保存失败，请重试。');
+    expect(startButton).toBeDisabled();
+    expect(resetButton).toBeDisabled();
+    expect(animationToggle).toBeDisabled();
+    expect(screen.getByRole('button', { name: '导入名单' })).toBeDisabled();
+
+    const retryButton = screen.getByRole('button', { name: '重试保存' });
+    expect(retryButton).toBeEnabled();
+    fireEvent.click(retryButton);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    expect(saveStatus).toHaveTextContent('正在保存…');
 
     pendingSaves[1].deferred.resolve();
-    await waitFor(() => expect(pendingSaves).toHaveLength(2));
+    await waitFor(() => expect(saveStatus).toHaveTextContent('已保存'));
+    expect(startButton).toBeEnabled();
+
+    fireEvent.click(resetButton);
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(3));
+    pendingSaves[2].deferred.resolve();
   });
 
   it('同一事件批次的快速抽取只执行一次', async () => {
@@ -663,5 +682,167 @@ describe('课堂主界面', () => {
     expect(resultHeading.compareDocumentPosition(rosterHeading)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
+  });
+
+  it('主名单为重复姓名显示同名标记和无障碍提示', async () => {
+    const duplicateStudents: StudentRecord[] = [
+      students[0],
+      { ...students[0], id: 'duplicate-1' },
+      students[1],
+    ];
+    installApi({
+      loadState: vi.fn().mockResolvedValue(createState({ students: duplicateStudents })),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    expect(screen.getAllByLabelText('同名学生')).toHaveLength(2);
+    expect(screen.getAllByText('同名')).toHaveLength(2);
+  });
+
+  it('加载并保存动画时长和主题，同时应用主题 class', async () => {
+    const loadedSettings = {
+      ...savedSettings,
+      animationDurationMs: 1200,
+      theme: 'dark' as const,
+    };
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(createState({ settings: loadedSettings })),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveClass('theme-dark');
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    const durationInput = within(dialog).getByRole('spinbutton', { name: '动画时长（毫秒）' });
+    const themeSelect = within(dialog).getByRole('combobox', { name: '界面主题' });
+    expect(durationInput).toHaveValue(1200);
+    expect(themeSelect).toHaveValue('dark');
+
+    fireEvent.change(durationInput, { target: { value: '1600' } });
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(api.saveState).mock.calls[0][0].settings.animationDurationMs).toBe(1600);
+
+    fireEvent.change(themeSelect, { target: { value: 'light' } });
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('main')).toHaveClass('theme-light');
+    expect(vi.mocked(api.saveState).mock.calls[1][0].settings.theme).toBe('light');
+  });
+
+  it('确认清除本机数据后清空课堂状态、恢复默认设置并关闭抽屉', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    fireEvent.click(within(dialog).getByRole('button', { name: '清除本机数据' }));
+
+    const confirmation = screen.getByRole('alertdialog', { name: '确认清除本机数据' });
+    const cancelButton = within(confirmation).getByRole('button', { name: '取消' });
+    await waitFor(() => expect(cancelButton).toHaveFocus());
+    fireEvent.click(within(confirmation).getByRole('button', { name: '确认清除本机数据' }));
+
+    await waitFor(() => expect(api.clearState).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '本次抽取结果' })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '显示抽取动画' })).toBeChecked();
+    expect(screen.queryByRole('dialog', { name: '设置' })).not.toBeInTheDocument();
+  });
+
+  it('清除本机数据失败时保留名单并显示固定错误', async () => {
+    const api = installApi({
+      // 需要先载入一份已有名单，才能验证「清除失败后名单仍在」
+      loadState: vi.fn().mockResolvedValue(createState()),
+      clearState: vi.fn().mockRejectedValue(new Error('C:\\private\\state.json')),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    fireEvent.click(within(dialog).getByRole('button', { name: '清除本机数据' }));
+    const confirmation = screen.getByRole('alertdialog', { name: '确认清除本机数据' });
+    fireEvent.click(within(confirmation).getByRole('button', { name: '确认清除本机数据' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('清除本机数据失败，请重试。');
+    expect(alert).not.toHaveTextContent('private');
+    expect(screen.getByText('共 3 名学生')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: '设置' })).toBeInTheDocument();
+  });
+
+  it('Ctrl/Cmd+O 快捷键触发导入名单', async () => {
+    const api = installApi();
+
+    render(<App />);
+    expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'o', ctrlKey: true });
+
+    await waitFor(() => expect(api.importRoster).toHaveBeenCalledTimes(1));
+  });
+
+  it('快捷键可导入、抽取和重置，且不会抢占输入框', async () => {
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    const countInput = screen.getByRole('spinbutton', { name: '抽取人数' });
+
+    fireEvent.keyDown(countInput, { key: ' ', code: 'Space' });
+    fireEvent.keyDown(countInput, { key: 'r' });
+    expect(api.saveState).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(document, { key: ' ', code: 'Space' });
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    // 等待保存状态落定（isSaving 归零）后再按 R，否则会命中「保存中忽略快捷键」的保护
+    await act(async () => {
+      await flushPromises();
+    });
+    fireEvent.keyDown(document, { key: 'r' });
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+  });
+
+  it('抽屉打开或保存忙碌时快捷键不触发操作', async () => {
+    const saveDeferred = createDeferred<void>();
+    const api = installApi({
+      loadState: vi.fn().mockResolvedValue(
+        createState({ settings: { ...savedSettings, animationEnabled: false } }),
+      ),
+      saveState: vi.fn(() => saveDeferred.promise),
+    });
+
+    render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    fireEvent.keyDown(document, { key: ' ', code: 'Space' });
+    fireEvent.keyDown(document, { key: 'r' });
+    expect(api.saveState).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '关闭设置' }));
+    fireEvent.click(screen.getByRole('button', { name: '开始抽取' }));
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(document, { key: ' ', code: 'Space' });
+    fireEvent.keyDown(document, { key: 'r' });
+    fireEvent.keyDown(document, { key: 'o', ctrlKey: true });
+    expect(api.saveState).toHaveBeenCalledTimes(1);
+    expect(api.importRoster).not.toHaveBeenCalled();
+
+    saveDeferred.resolve();
   });
 });

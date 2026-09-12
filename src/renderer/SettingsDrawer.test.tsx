@@ -245,7 +245,8 @@ describe('设置抽屉', () => {
 
     expect(
       within(dialog)
-        .getAllByRole('spinbutton')
+        // 只取学生权重输入框：设置面板里还有「动画时长」等其他数字输入
+        .getAllByRole('spinbutton', { name: /权重$/ })
         .map((input) => (input as HTMLInputElement).value),
     ).toEqual(['1', '1', '1']);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));

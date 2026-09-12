@@ -1099,3 +1099,304 @@ h2 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================================
+   同名标记、数字输入、数据清除与保存重试
+   ========================================================================== */
+.student-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.student-name-badge {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.settings-input {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.settings-group--danger {
+  border-bottom: 0;
+}
+
+.settings-group-hint {
+  margin-bottom: 14px;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.danger-button {
+  border: 2px solid #dc2626;
+  border-radius: 16px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.danger-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.settings-clear-button {
+  width: 100%;
+}
+
+.retry-save-button {
+  border-color: #dc2626;
+  color: #b91c1c;
+}
+
+/* 清除本机数据的二次确认框：盖在设置抽屉之上 */
+.confirm-overlay {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  padding: 24px;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.confirm-dialog {
+  width: min(460px, 100%);
+  padding: 26px clamp(20px, 4vw, 32px);
+  border: 1px solid #fecaca;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.3);
+}
+
+.confirm-dialog__title {
+  margin: 0 0 12px;
+  color: #991b1b;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.confirm-dialog__description {
+  margin-bottom: 22px;
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   深色主题：只覆盖表层配色，排版、尺寸与交互与明亮主题保持一致
+   ========================================================================== */
+.app-shell.theme-dark {
+  color-scheme: dark;
+  background: #0b1120;
+  color: #e2e8f0;
+}
+
+.app-shell.theme-dark h1,
+.app-shell.theme-dark h2 {
+  color: #f1f5f9;
+}
+
+.app-shell.theme-dark .app-kicker,
+.app-shell.theme-dark .section-kicker {
+  color: #a5b4fc;
+}
+
+.app-shell.theme-dark .app-description,
+.app-shell.theme-dark .loading-message,
+.app-shell.theme-dark .control-hint,
+.app-shell.theme-dark .settings-search-summary,
+.app-shell.theme-dark .settings-field-hint,
+.app-shell.theme-dark .settings-group-hint {
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .classroom-summary {
+  border-color: #334155;
+  background: #111c33;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.app-shell.theme-dark .summary-count {
+  color: #e0e7ff;
+}
+
+.app-shell.theme-dark .summary-source {
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .roster-section,
+.app-shell.theme-dark .draw-controls,
+.app-shell.theme-dark .import-dropzone {
+  border-color: #334155;
+  background: #111c33;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.app-shell.theme-dark .result-section {
+  border-color: #4f46e5;
+  background: linear-gradient(135deg, #111c33 0%, #1e1b4b 100%);
+}
+
+.app-shell.theme-dark .result-waiting {
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .import-dropzone--compact {
+  background: #0f1a2e;
+}
+
+.app-shell.theme-dark .import-dropzone p:not(.section-kicker),
+.app-shell.theme-dark .import-dropzone small {
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .roster-count,
+.app-shell.theme-dark .result-count,
+.app-shell.theme-dark .control-status {
+  background: #1e293b;
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .student-list-item {
+  border-color: #334155;
+  background: #16223a;
+  color: #e2e8f0;
+}
+
+.app-shell.theme-dark .student-status {
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .result-card {
+  border-color: #4f46e5;
+  background: #16223a;
+}
+
+.app-shell.theme-dark .result-card-name {
+  color: #f1f5f9;
+}
+
+.app-shell.theme-dark .result-card--rolling {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+}
+
+.app-shell.theme-dark .slot-roll-text {
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .count-control label,
+.app-shell.theme-dark .settings-field label,
+.app-shell.theme-dark .settings-search-label {
+  color: #cbd5e1;
+}
+
+.app-shell.theme-dark .step-button {
+  border-color: #4338ca;
+  background: #1e293b;
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .stepper input,
+.app-shell.theme-dark .settings-input,
+.app-shell.theme-dark .settings-select,
+.app-shell.theme-dark .settings-search-input,
+.app-shell.theme-dark .student-weight-input {
+  border-color: #334155;
+  background: #16223a;
+  color: #e2e8f0;
+}
+
+.app-shell.theme-dark .switch-row,
+.app-shell.theme-dark .student-weight-item,
+.app-shell.theme-dark .history-item {
+  border-color: #334155;
+  background: #16223a;
+}
+
+.app-shell.theme-dark .switch-row strong,
+.app-shell.theme-dark .settings-group-title,
+.app-shell.theme-dark .student-weight-name,
+.app-shell.theme-dark .history-item p {
+  color: #e2e8f0;
+}
+
+.app-shell.theme-dark .switch-row small,
+.app-shell.theme-dark .history-item-heading {
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .history-item-heading span {
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .history-panel {
+  border-top-color: #334155;
+}
+
+.app-shell.theme-dark .settings-group {
+  border-bottom-color: #334155;
+}
+
+.app-shell.theme-dark .secondary-button {
+  background: #16223a;
+  color: #c7d2fe;
+}
+
+.app-shell.theme-dark .secondary-button:disabled,
+.app-shell.theme-dark .step-button:disabled {
+  background: #1e293b;
+  color: #64748b;
+}
+
+.app-shell.theme-dark .empty-search-message,
+.app-shell.theme-dark .empty-history-message {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .settings-drawer__panel,
+.app-shell.theme-dark .settings-drawer__header {
+  border-color: #334155;
+  background: #0f1a2e;
+}
+
+.app-shell.theme-dark .confirm-dialog {
+  border-color: #7f1d1d;
+  background: #16223a;
+}
+
+.app-shell.theme-dark .confirm-dialog__title {
+  color: #fca5a5;
+}
+
+.app-shell.theme-dark .confirm-dialog__description {
+  color: #94a3b8;
+}
+
+.app-shell.theme-dark .retry-save-button {
+  border-color: #f87171;
+  color: #fca5a5;
+}
