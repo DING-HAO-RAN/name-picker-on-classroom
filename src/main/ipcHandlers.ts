@@ -43,10 +43,10 @@ export interface IpcFloatingControls {
   menu(): void;
   /** 真正退出程序（放行窗口关闭） */
   quit(): void;
-  /** 指针按下：记录光标相对球心的偏移，后续拖动保持该偏移 */
-  dragStart(): void;
-  /** 指针拖动中：按记录的偏移移动窗口（坐标取自主进程光标点，天然兼容 DPI 与触控） */
-  dragMove(): void;
+  /** 指针按下：记录渲染器屏幕缩放比（dpr）用于增量换算 */
+  dragStart(dpr: number): void;
+  /** 指针拖动中：按物理像素增量移动窗口（主进程换算 DIP），兼容鼠标与触控 */
+  dragMove(dxPx: number, dyPx: number): void;
   /** 指针抬起：结束拖动 */
   dragEnd(): void;
 }
@@ -77,8 +77,8 @@ export interface IpcHandlers {
   clearState(): Promise<void>;
   /** 执行窗口操作并返回操作后的最大化状态 */
   windowControl(action: unknown): Promise<boolean>;
-  /** 执行悬浮球操作（restore/menu/quit/drag-start/drag-move/drag-end） */
-  floatingControl(action: unknown): Promise<void>;
+  /** 执行悬浮球操作；drag-start 带 { dpr }，drag-move 带 { dx, dy } 物理像素增量 */
+  floatingControl(action: unknown, payload?: unknown): Promise<void>;
   /** 读取/设置开机自启；set 时 payload 为 { enabled } */
   launchSettings(action: unknown, payload?: unknown): Promise<boolean>;
 }
@@ -535,7 +535,7 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
       return windowControls.isMaximized();
     },
 
-    async floatingControl(action: unknown): Promise<void> {
+    async floatingControl(action: unknown, payload?: unknown): Promise<void> {
       if (!isFloatingControlAction(action)) {
         throw invalidWindowActionError();
       }
@@ -552,9 +552,15 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
       } else if (action === 'quit') {
         floatingControls.quit();
       } else if (action === 'drag-start') {
-        floatingControls.dragStart();
+        const dpr = isRecord(payload) ? payload.dpr : undefined;
+        floatingControls.dragStart(typeof dpr === 'number' ? dpr : 1);
       } else if (action === 'drag-move') {
-        floatingControls.dragMove();
+        const dx = isRecord(payload) ? payload.dx : undefined;
+        const dy = isRecord(payload) ? payload.dy : undefined;
+        // 增量必须是有限数字，否则忽略本次移动
+        if (typeof dx === 'number' && Number.isFinite(dx) && typeof dy === 'number' && Number.isFinite(dy)) {
+          floatingControls.dragMove(dx, dy);
+        }
       } else if (action === 'drag-end') {
         floatingControls.dragEnd();
       }

@@ -591,15 +591,19 @@ describe('主进程 IPC 业务 handler', () => {
     await expect(handlers.floatingControl('restore')).resolves.toBeUndefined();
     await expect(handlers.floatingControl('menu')).resolves.toBeUndefined();
     await expect(handlers.floatingControl('quit')).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('drag-start')).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('drag-move')).resolves.toBeUndefined();
+    await expect(handlers.floatingControl('drag-start', { dpr: 1.5 })).resolves.toBeUndefined();
+    await expect(handlers.floatingControl('drag-move', { dx: 30, dy: -12 })).resolves.toBeUndefined();
     await expect(handlers.floatingControl('drag-end')).resolves.toBeUndefined();
     expect(floatingControls.restore).toHaveBeenCalledTimes(1);
     expect(floatingControls.menu).toHaveBeenCalledTimes(1);
     expect(floatingControls.quit).toHaveBeenCalledTimes(1);
-    expect(floatingControls.dragStart).toHaveBeenCalledTimes(1);
-    expect(floatingControls.dragMove).toHaveBeenCalledTimes(1);
+    expect(floatingControls.dragStart).toHaveBeenCalledWith(1.5);
+    expect(floatingControls.dragMove).toHaveBeenCalledWith(30, -12);
     expect(floatingControls.dragEnd).toHaveBeenCalledTimes(1);
+
+    // 非法增量不触发移动
+    await expect(handlers.floatingControl('drag-move', { dx: 'x', dy: 0 })).resolves.toBeUndefined();
+    expect(floatingControls.dragMove).toHaveBeenCalledTimes(1);
 
     // 白名单外的悬浮球操作被拒绝
     await expect(handlers.floatingControl('minimize')).rejects.toEqual({

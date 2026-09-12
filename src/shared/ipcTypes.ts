@@ -22,8 +22,10 @@ export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close' | 'ge
 /**
  * 悬浮球可以请求的操作：
  * - restore 恢复主界面 / menu 右键菜单 / quit 退出
- * - drag-start / drag-move / drag-end：指针拖动三段式，
- *   坐标全部由主进程 getCursorScreenPoint 提供（DIP，兼容 DPI 缩放与触控）
+ * - drag-start：payload { dpr }（渲染器屏幕缩放比）
+ * - drag-move：payload { dx, dy }（自上次上报以来指针移动的物理像素）
+ * - drag-end：拖动结束
+ * 坐标换算在主进程完成（物理像素 ÷ dpr = DIP），鼠标与触控统一
  */
 export type FloatingControlAction =
   | 'restore'
@@ -33,8 +35,14 @@ export type FloatingControlAction =
   | 'drag-move'
   | 'drag-end';
 
+export interface FloatingDragPayload {
+  dpr?: number;
+  dx?: number;
+  dy?: number;
+}
+
 export interface FloatingControlsApi {
-  control(action: FloatingControlAction): Promise<void>;
+  control(action: FloatingControlAction, payload?: FloatingDragPayload): Promise<void>;
 }
 
 /** 开机自启设置：读取/写入系统登录启动项 */

@@ -5,8 +5,13 @@ interface DragState {
   pointerId: number;
   startX: number;
   startY: number;
+  lastX: number;
+  lastY: number;
   moved: boolean;
   moveScheduled: boolean;
+  /** 自上次上报以来累积的物理像素增量（rAF 节流期间持续累加） */
+  pendingDx: number;
+  pendingDy: number;
 }
 
 /** 拖动死区（像素）：移动超过该距离才视为拖动，避免触控轻微抖动误触发 */
@@ -19,14 +24,17 @@ type FloatingAction = 'restore' | 'menu' | 'quit' | 'drag-start' | 'drag-move' |
  * 悬浮球：主界面缩到后台时显示的置顶圆形图标。
  * - 整个圆形区域（64x64）任何位置都可点击与拖动，无额外边框或拖动区
  * - 单击：恢复主界面；拖动：移动位置；右键：系统菜单（打开主界面 / 退出）
- * - 拖动坐标全部由主进程光标点提供（DIP），天然兼容 DPI 缩放与触控；
- *   渲染器只负责用 Pointer Events 发出 drag-start / drag-move / drag-end 信号
+ * - 拖动按「增量」上报：每次移动报出指针自上一次以来的物理像素位移（screenX 差），
+ *   主进程按 devicePixelRatio 换算 DIP 后移动窗口——鼠标与触控统一，不依赖系统光标
  */
 export function FloatingBall() {
   const dragRef = useRef<DragState | null>(null);
 
-  function control(action: FloatingAction): void {
-    void window.namePicker?.floatingControls?.control(action);
+  function control(
+    action: FloatingAction,
+    payload?: { dpr?: number; dx?: number; dy?: number },
+  ): void {
+    void window.namePicker?.floatingControls?.control(action, payload);
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>): void {
@@ -39,10 +47,14 @@ export function FloatingBall() {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
+      lastX: event.screenX,
+      lastY: event.screenY,
       moved: false,
       moveScheduled: false,
+      pendingDx: 0,
+      pendingDy: 0,
     };
-    control('drag-start');
+    control('drag-start', { dpr: window.devicePixelRatio || 1 });
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
@@ -56,18 +68,33 @@ export function FloatingBall() {
       const dx = event.clientX - state.startX;
       const dy = event.clientY - state.startY;
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) {
+        // 未超死区也要同步参考点，避免首次上报把之前的微小位移一次性带上
+        state.lastX = event.screenX;
+        state.lastY = event.screenY;
         return;
       }
       state.moved = true;
     }
 
-    // rAF 节流：一帧最多发一次拖动信号，避免 IPC 风暴
+    // 累积物理像素增量（screenX 差值即指针在屏幕上的实际位移）
+    state.pendingDx += event.screenX - state.lastX;
+    state.pendingDy += event.screenY - state.lastY;
+    state.lastX = event.screenX;
+    state.lastY = event.screenY;
+
+    // rAF 节流：一帧最多发一次拖动信号，发送时携带累积增量
     if (!state.moveScheduled) {
       state.moveScheduled = true;
       requestAnimationFrame(() => {
         if (dragRef.current === state) {
           state.moveScheduled = false;
-          control('drag-move');
+          const dx = state.pendingDx;
+          const dy = state.pendingDy;
+          state.pendingDx = 0;
+          state.pendingDy = 0;
+          if (dx !== 0 || dy !== 0) {
+            control('drag-move', { dx, dy });
+          }
         }
       });
     }
