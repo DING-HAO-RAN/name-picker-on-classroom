@@ -337,6 +337,73 @@ describe('设置抽屉', () => {
     fireEvent.click(screen.getByTestId('settings-drawer-backdrop'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('选择合法图片后读取为 dataURL 并上报背景变更', async () => {
+    const onBackgroundImageChange = vi.fn();
+    const { container } = render(
+      <SettingsDrawer
+        students={students}
+        onWeightChange={vi.fn()}
+        onResetWeights={vi.fn()}
+        onClose={vi.fn()}
+        onBackgroundImageChange={onBackgroundImageChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '选择背景图片' }));
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const pngFile = new File(['fake-png-bytes'], '背景.png', { type: 'image/png' });
+    fireEvent.change(fileInput, { target: { files: [pngFile] } });
+
+    await waitFor(() =>
+      expect(onBackgroundImageChange).toHaveBeenCalledWith(
+        expect.stringMatching(/^data:image\/png;base64,/),
+      ),
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('拒绝不支持的图片格式并给出提示', () => {
+    const onBackgroundImageChange = vi.fn();
+    const { container } = render(
+      <SettingsDrawer
+        students={students}
+        onWeightChange={vi.fn()}
+        onResetWeights={vi.fn()}
+        onClose={vi.fn()}
+        onBackgroundImageChange={onBackgroundImageChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '选择背景图片' }));
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['x'], '文档.pdf', { type: 'application/pdf' })] },
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('暂不支持该格式');
+    expect(onBackgroundImageChange).not.toHaveBeenCalled();
+  });
+
+  it('已有自定义背景时展示预览，恢复默认会清除背景', () => {
+    const onBackgroundImageChange = vi.fn();
+    render(
+      <SettingsDrawer
+        students={students}
+        onWeightChange={vi.fn()}
+        onResetWeights={vi.fn()}
+        onClose={vi.fn()}
+        backgroundImage="data:image/png;base64,iVBORw0KGgo="
+        onBackgroundImageChange={onBackgroundImageChange}
+      />,
+    );
+
+    expect(screen.getByAltText('当前背景图预览')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '更换背景图片' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '恢复默认背景' }));
+    expect(onBackgroundImageChange).toHaveBeenCalledWith(null);
+  });
 });
 
 describe('抽取历史', () => {
@@ -360,6 +427,29 @@ describe('抽取历史', () => {
 });
 
 describe('设置与 App 保存接线', () => {
+  it('设置背景图后写入保存状态并应用到主界面', async () => {
+    const api = installApi();
+    const { container } = render(<App />);
+    expect(await screen.findByText('共 3 名学生')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '打开设置' }));
+    const dialog = screen.getByRole('dialog', { name: '设置' });
+    fireEvent.click(within(dialog).getByRole('button', { name: '选择背景图片' }));
+    const fileInput = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['fake'], 'bg.png', { type: 'image/png' })] },
+    });
+
+    // 保存状态里带上 dataURL 背景，主界面挂上自定义背景类
+    await waitFor(() => expect(api.saveState).toHaveBeenCalled());
+    expect(vi.mocked(api.saveState).mock.calls.at(-1)?.[0].settings.backgroundImage).toMatch(
+      /^data:image\/png;base64,/,
+    );
+    await waitFor(() =>
+      expect(container.querySelector('.app-shell--custom-bg')).not.toBeNull(),
+    );
+  });
+
   it('合法权重修改通过 App 保存状态', async () => {
     const api = installApi();
     render(<App />);

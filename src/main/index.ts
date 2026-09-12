@@ -58,6 +58,9 @@ function createMainWindow(): BrowserWindow {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.removeMenu();
 
+  // 课堂投影场景：启动即最大化，保证大屏可用面积
+  mainWindow.maximize();
+
   // 最大化状态变化（含系统双击标题栏）时同步给渲染器，保证自绘按钮图标正确
   const notifyMaximizedChanged = (): void => {
     if (!mainWindow.isDestroyed()) {

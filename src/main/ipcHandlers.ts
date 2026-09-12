@@ -10,6 +10,7 @@ import {
 } from '../shared/ipcTypes';
 import {
   MAX_ANIMATION_DURATION_MS,
+  MAX_BACKGROUND_IMAGE_LENGTH,
   MAX_FULLSCREEN_DISPLAY_MS,
   MIN_FULLSCREEN_DISPLAY_MS,
   type RosterState,
@@ -278,6 +279,16 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     value.fullscreenDisplayMs <= MAX_FULLSCREEN_DISPLAY_MS
   ) {
     normalizedSettings.fullscreenDisplayMs = value.fullscreenDisplayMs;
+  }
+
+  // 自定义背景图：只接受受限大小内的 base64 dataURL，其他取值一律丢弃回到默认背景
+  if (
+    typeof value.backgroundImage === 'string' &&
+    value.backgroundImage.length > 0 &&
+    value.backgroundImage.length <= MAX_BACKGROUND_IMAGE_LENGTH &&
+    /^data:image\/(?:png|jpe?g|webp|bmp|gif);base64,[A-Za-z0-9+/=]+$/.test(value.backgroundImage)
+  ) {
+    normalizedSettings.backgroundImage = value.backgroundImage;
   }
 
   return normalizedSettings;

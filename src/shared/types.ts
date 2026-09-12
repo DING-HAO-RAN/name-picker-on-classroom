@@ -12,6 +12,10 @@ export const MAX_FULLSCREEN_DISPLAY_MS = 10000;
 // 因此 1000 只可能来自历史存档，不会和用户主动选择的值冲突，可安全迁移。
 export const LEGACY_FULLSCREEN_DISPLAY_MS = 1000;
 
+// 自定义背景图（dataURL）的字符长度上限：约对应 6MB 原图，
+// 避免单张超大图片把本机状态文件无限撑大
+export const MAX_BACKGROUND_IMAGE_LENGTH = 8_000_000;
+
 export interface StudentRecord {
   id: string;
   name: string;
@@ -38,6 +42,8 @@ export interface AppSettings {
   allowDuplicates?: boolean;
   fullscreenDisplayMs?: number;
   theme: Theme;
+  /** 主界面自定义背景图（dataURL）；缺省表示使用主题默认背景 */
+  backgroundImage?: string;
 }
 
 export interface RosterState {

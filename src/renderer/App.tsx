@@ -140,6 +140,10 @@ export function App() {
   const animationStyleRef = useRef(animationStyle);
   const allowDuplicatesRef = useRef(allowDuplicates);
   const themeRef = useRef(theme);
+  // 当前自定义背景图（dataURL）：从设置读取，导入名单时也需要原样保留
+  const backgroundImage = roster.settings.backgroundImage;
+  const backgroundImageRef = useRef(backgroundImage);
+  backgroundImageRef.current = backgroundImage;
   const saveQueueRef = useRef<Promise<void> | null>(null);
   const pendingSaveCountRef = useRef(0);
   const interactionLockRef = useRef(false);
@@ -395,6 +399,8 @@ export function App() {
           animationStyle: animationStyleRef.current,
           allowDuplicates: allowDuplicatesRef.current,
           theme: themeRef.current,
+          // 重新导入名单时保留已设置的自定义背景图
+          backgroundImage: backgroundImageRef.current,
         },
       };
 
@@ -511,6 +517,40 @@ export function App() {
       });
     },
     [isAnimating, isImporting, isLoading, isSaving, saveState, updateAnimationStyle, updateRoster],
+  );
+
+  // 更新自定义背景图：dataUrl 为 null 表示恢复默认背景
+  const handleBackgroundImageChange = useCallback(
+    (dataUrl: string | null): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const currentRoster = rosterRef.current;
+      const nextSettings: AppSettings = { ...currentRoster.settings };
+      if (dataUrl) {
+        nextSettings.backgroundImage = dataUrl;
+      } else {
+        delete nextSettings.backgroundImage;
+      }
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: nextSettings,
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
   );
 
   const handleAnimationDurationChange = useCallback(
@@ -931,8 +971,23 @@ export function App() {
       .filter((name, index, allNames) => allNames.indexOf(name) !== index),
   );
 
+  // 自定义背景：图片上叠一层与主题同色的半透明纱，保证前景文字可读
+  const backgroundStyle =
+    backgroundImage !== undefined
+      ? {
+          backgroundImage: `linear-gradient(${
+            theme === 'dark' ? 'rgba(11, 20, 19, 0.78)' : 'rgba(248, 246, 240, 0.82)'
+          }, ${
+            theme === 'dark' ? 'rgba(11, 20, 19, 0.78)' : 'rgba(248, 246, 240, 0.82)'
+          }), url("${backgroundImage}")`,
+        }
+      : undefined;
+
   return (
-    <main className={`app-shell theme-${theme}`}>
+    <main
+      className={`app-shell theme-${theme}${backgroundImage ? ' app-shell--custom-bg' : ''}`}
+      style={backgroundStyle}
+    >
       {/* 自绘标题栏：主进程使用 frame: false，这里固定在最上方按主题绘制标题与窗口按钮 */}
       <AppTitleBar />
 
@@ -1050,6 +1105,8 @@ export function App() {
           onClearLocalData={handleClearLocalData}
           onImport={handleImport}
           isImporting={isImporting}
+          backgroundImage={backgroundImage}
+          onBackgroundImageChange={handleBackgroundImageChange}
           onWeightChange={handleWeightChange}
           onResetWeights={handleResetWeights}
           onClearHistory={handleClearHistory}

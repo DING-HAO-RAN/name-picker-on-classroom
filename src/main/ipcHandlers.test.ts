@@ -313,6 +313,58 @@ describe('主进程 IPC 业务 handler', () => {
     });
   });
 
+  it('saveState 保留合法的自定义背景图 dataURL，丢弃非法取值', async () => {
+    const store = createStore();
+    store.save.mockResolvedValue(undefined);
+    const handlers = createIpcHandlers({
+      showOpenDialog: vi.fn(),
+      importRoster: vi.fn(),
+      store,
+    });
+    const validBackground = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==';
+    const state: RosterState = {
+      sourceName: 'roster.csv',
+      students: [],
+      history: [],
+      settings: {
+        ...savedState.settings,
+        backgroundImage: validBackground,
+      },
+    };
+
+    await handlers.saveState(state);
+    expect(store.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({ backgroundImage: validBackground }),
+      }),
+    );
+
+    await handlers.saveState({
+      ...state,
+      settings: { ...state.settings, backgroundImage: 'not-a-data-url' },
+    });
+    // 非法取值被投影层丢弃，存储里不含该字段
+    expect(store.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        settings: expect.not.objectContaining({ backgroundImage: expect.anything() }),
+      }),
+    );
+
+    // 超出长度上限的背景图同样被丢弃，状态本身仍然合法
+    await handlers.saveState({
+      ...state,
+      settings: {
+        ...state.settings,
+        backgroundImage: `data:image/png;base64,${'A'.repeat(8_000_001)}`,
+      },
+    });
+    expect(store.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        settings: expect.not.objectContaining({ backgroundImage: expect.anything() }),
+      }),
+    );
+  });
+
   it('loadState 校验并投影存储结果，移除路径和多余字段', async () => {
     const store = createStore();
     store.load.mockResolvedValue({

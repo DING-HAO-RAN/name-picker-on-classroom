@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_FULLSCREEN_DISPLAY_MS,
   MAX_ANIMATION_DURATION_MS,
+  MAX_BACKGROUND_IMAGE_LENGTH,
   MAX_FULLSCREEN_DISPLAY_MS,
   MIN_FULLSCREEN_DISPLAY_MS,
   type AnimationStyle,
@@ -11,6 +12,18 @@ import {
 } from '../../shared/types';
 import { HistoryPanel } from './HistoryPanel';
 import { StudentWeightList } from './StudentWeightList';
+
+/** 允许作为背景的图片 MIME 类型 */
+const ACCEPTED_IMAGE_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/bmp',
+  'image/gif',
+]);
+
+/** 原始图片文件大小上限（字节），约对应 dataURL 上限 MAX_BACKGROUND_IMAGE_LENGTH */
+const MAX_BACKGROUND_FILE_BYTES = 6 * 1024 * 1024;
 
 export interface SettingsDrawerProps {
   students: StudentRecord[];
@@ -35,6 +48,10 @@ export interface SettingsDrawerProps {
   onImport?: () => void | Promise<void>;
   /** 是否正在导入名单 */
   isImporting?: boolean;
+  /** 当前自定义背景图（dataURL）；为空表示使用主题默认背景 */
+  backgroundImage?: string;
+  /** 选择/清除背景图：传 null 表示恢复默认背景 */
+  onBackgroundImageChange?: (dataUrl: string | null) => void;
 }
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -87,14 +104,19 @@ export function SettingsDrawer({
   onClearLocalData,
   onImport,
   isImporting = false,
+  backgroundImage,
+  onBackgroundImageChange,
 }: SettingsDrawerProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const backgroundFileInputRef = useRef<HTMLInputElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   const cancelClearButtonRef = useRef<HTMLButtonElement>(null);
   const isClearConfirmOpenRef = useRef(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  // 背景图片选择的错误提示：格式不支持 / 文件过大 / 读取失败
+  const [backgroundError, setBackgroundError] = useState<string | null>(null);
   // 数字输入的草稿态：输入过程中保留原文，避免每次按键都被收敛成一个数字
   const [animationDurationDraft, setAnimationDurationDraft] = useState<string | null>(null);
   const [fullscreenDurationDraft, setFullscreenDurationDraft] = useState<string | null>(null);
@@ -168,6 +190,39 @@ export function SettingsDrawer({
   async function handleConfirmClear(): Promise<void> {
     setIsClearConfirmOpen(false);
     await onClearLocalData?.();
+  }
+
+  /** 处理背景图选择：校验类型与大小后读成 dataURL 交给上层保存 */
+  function handleBackgroundFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    // 重置 input.value，允许下次重复选择同一张图片
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      setBackgroundError('暂不支持该格式，请选择 PNG、JPG、WebP、BMP 或 GIF 图片。');
+      return;
+    }
+    if (file.size > MAX_BACKGROUND_FILE_BYTES) {
+      setBackgroundError('图片超过 6MB，请压缩后再选择。');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string' && reader.result.length <= MAX_BACKGROUND_IMAGE_LENGTH) {
+        setBackgroundError(null);
+        onBackgroundImageChange?.(reader.result);
+      } else {
+        setBackgroundError('图片超过 6MB，请压缩后再选择。');
+      }
+    };
+    reader.onerror = () => {
+      setBackgroundError('图片读取失败，请重试。');
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
@@ -301,6 +356,54 @@ export function SettingsDrawer({
                 {theme === 'dark' && '深色低眩光配色，适合暗光教室与长时间投屏。'}
               </small>
             </div>
+          </section>
+
+          {/* 背景图片设置区域：导入本机图片替换主界面背景 */}
+          <section className="settings-group" aria-labelledby="background-settings-title">
+            <h3 id="background-settings-title" className="settings-group-title">
+              背景图片
+            </h3>
+            <p className="settings-group-hint">
+              选择一张本机图片作为主界面背景，替换默认底色。
+            </p>
+            {backgroundImage ? (
+              <div className="settings-bg-preview">
+                <img src={backgroundImage} alt="当前背景图预览" />
+                <button
+                  type="button"
+                  className="secondary-button settings-bg-reset"
+                  disabled={disabled}
+                  onClick={() => {
+                    setBackgroundError(null);
+                    onBackgroundImageChange?.(null);
+                  }}
+                >
+                  恢复默认背景
+                </button>
+              </div>
+            ) : null}
+            <input
+              ref={backgroundFileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/bmp,image/gif"
+              className="visually-hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleBackgroundFileChange}
+            />
+            <button
+              type="button"
+              className="secondary-button settings-bg-button"
+              disabled={disabled}
+              onClick={() => backgroundFileInputRef.current?.click()}
+            >
+              {backgroundImage ? '更换背景图片' : '选择背景图片'}
+            </button>
+            {backgroundError ? (
+              <p className="settings-bg-error" role="alert">
+                {backgroundError}
+              </p>
+            ) : null}
           </section>
 
           <StudentWeightList
