@@ -17,11 +17,10 @@ let isQuitting = false;
 let floatingWindow: BrowserWindow | null = null;
 
 /**
- * 拖动状态：渲染器每次上报「自上次上报以来指针移动的物理像素增量」，
- * 主进程按渲染器所在屏幕的 devicePixelRatio 换算成 DIP 再移动窗口——
- * 这样鼠标与触控统一处理，也不依赖系统光标是否跟随触摸
+ * 拖动状态标记：拖动进行中才接受增量移动
+ * （渲染器上报的增量基于 screenX/Y，与 setPosition 同为 DIP，直接相加即可）
  */
-let dragState: { dpr: number } | null = null;
+let dragActive = false;
 
 /** 强制重绘悬浮球：清除 Windows 透明窗口在失焦/移动后的 DWM 残影 */
 function invalidateFloating(): void {
@@ -196,6 +195,8 @@ function createFloatingWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // 透明小窗常被 Chromium 误判为遮挡/后台而节流渲染，关闭节流保证拖动信号实时
+      backgroundThrottling: false,
     },
   });
   // 置顶级别拉满，保证投影或全屏应用之上仍然可见
@@ -265,28 +266,22 @@ const floatingControls = {
     isQuitting = true;
     app.quit();
   },
-  /** 指针按下：记录渲染器屏幕缩放比，用于把物理像素增量换算成 DIP */
-  dragStart(dpr: number) {
-    dragState = { dpr: Number.isFinite(dpr) && dpr > 0 ? dpr : 1 };
+  /** 指针按下：标记拖动开始 */
+  dragStart() {
+    dragActive = true;
   },
-  /** 指针拖动中：按物理像素增量换算 DIP 移动窗口；移动后强制重绘防残影 */
-  dragMove(dxPx: number, dyPx: number) {
-    if (!floatingWindow || floatingWindow.isDestroyed() || !dragState) {
-      return;
-    }
-    if (!Number.isFinite(dxPx) || !Number.isFinite(dyPx)) {
+  /** 指针拖动中：按增量直接移动窗口（DIP 对 DIP）；移动后强制重绘防残影 */
+  dragMove(dx: number, dy: number) {
+    if (!floatingWindow || floatingWindow.isDestroyed() || !dragActive) {
       return;
     }
     const [x, y] = floatingWindow.getPosition();
-    floatingWindow.setPosition(
-      Math.round(x + dxPx / dragState.dpr),
-      Math.round(y + dyPx / dragState.dpr),
-    );
+    floatingWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
     floatingWindow.webContents.invalidate();
   },
   /** 指针抬起：结束拖动 */
   dragEnd() {
-    dragState = null;
+    dragActive = false;
   },
 };
 

@@ -43,10 +43,10 @@ export interface IpcFloatingControls {
   menu(): void;
   /** 真正退出程序（放行窗口关闭） */
   quit(): void;
-  /** 指针按下：记录渲染器屏幕缩放比（dpr）用于增量换算 */
-  dragStart(dpr: number): void;
-  /** 指针拖动中：按物理像素增量移动窗口（主进程换算 DIP），兼容鼠标与触控 */
-  dragMove(dxPx: number, dyPx: number): void;
+  /** 指针按下：标记拖动开始 */
+  dragStart(): void;
+  /** 指针拖动中：按 DIP 增量移动窗口（screenX/Y 与 setPosition 同单位），兼容鼠标与触控 */
+  dragMove(dx: number, dy: number): void;
   /** 指针抬起：结束拖动 */
   dragEnd(): void;
 }
@@ -552,8 +552,7 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
       } else if (action === 'quit') {
         floatingControls.quit();
       } else if (action === 'drag-start') {
-        const dpr = isRecord(payload) ? payload.dpr : undefined;
-        floatingControls.dragStart(typeof dpr === 'number' ? dpr : 1);
+        floatingControls.dragStart();
       } else if (action === 'drag-move') {
         const dx = isRecord(payload) ? payload.dx : undefined;
         const dy = isRecord(payload) ? payload.dy : undefined;

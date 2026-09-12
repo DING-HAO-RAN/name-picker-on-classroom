@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-/** 指针按下时的拖动状态：用于区分「点击」与「拖动」并做 rAF 节流 */
+/** 指针按下时的拖动状态：用于区分「点击」与「拖动」 */
 interface DragState {
   pointerId: number;
   startX: number;
@@ -8,10 +8,6 @@ interface DragState {
   lastX: number;
   lastY: number;
   moved: boolean;
-  moveScheduled: boolean;
-  /** 自上次上报以来累积的物理像素增量（rAF 节流期间持续累加） */
-  pendingDx: number;
-  pendingDy: number;
 }
 
 /** 拖动死区（像素）：移动超过该距离才视为拖动，避免触控轻微抖动误触发 */
@@ -24,16 +20,15 @@ type FloatingAction = 'restore' | 'menu' | 'quit' | 'drag-start' | 'drag-move' |
  * 悬浮球：主界面缩到后台时显示的置顶圆形图标。
  * - 整个圆形区域（64x64）任何位置都可点击与拖动，无额外边框或拖动区
  * - 单击：恢复主界面；拖动：移动位置；右键：系统菜单（打开主界面 / 退出）
- * - 拖动按「增量」上报：每次移动报出指针自上一次以来的物理像素位移（screenX 差），
- *   主进程按 devicePixelRatio 换算 DIP 后移动窗口——鼠标与触控统一，不依赖系统光标
+ * - 拖动按「增量」上报：每次移动立即报出指针自上一次以来的位移（screenX/Y 差值）。
+ *   Chromium 的 screenX/Y 与主进程 setPosition 同为 DIP 逻辑像素，直接相加即可；
+ *   注意不要用 requestAnimationFrame 节流——透明窗口可能被 Chromium 误判为
+ *   遮挡/后台而暂停 rAF，导致拖动信号永远发不出去
  */
 export function FloatingBall() {
   const dragRef = useRef<DragState | null>(null);
 
-  function control(
-    action: FloatingAction,
-    payload?: { dpr?: number; dx?: number; dy?: number },
-  ): void {
+  function control(action: FloatingAction, payload?: { dx?: number; dy?: number }): void {
     void window.namePicker?.floatingControls?.control(action, payload);
   }
 
@@ -50,11 +45,8 @@ export function FloatingBall() {
       lastX: event.screenX,
       lastY: event.screenY,
       moved: false,
-      moveScheduled: false,
-      pendingDx: 0,
-      pendingDy: 0,
     };
-    control('drag-start', { dpr: window.devicePixelRatio || 1 });
+    control('drag-start');
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
@@ -76,27 +68,13 @@ export function FloatingBall() {
       state.moved = true;
     }
 
-    // 累积物理像素增量（screenX 差值即指针在屏幕上的实际位移）
-    state.pendingDx += event.screenX - state.lastX;
-    state.pendingDy += event.screenY - state.lastY;
+    // 立即上报自上次以来的增量（screenX/Y 差值即指针在屏幕上的位移）
+    const dx = event.screenX - state.lastX;
+    const dy = event.screenY - state.lastY;
     state.lastX = event.screenX;
     state.lastY = event.screenY;
-
-    // rAF 节流：一帧最多发一次拖动信号，发送时携带累积增量
-    if (!state.moveScheduled) {
-      state.moveScheduled = true;
-      requestAnimationFrame(() => {
-        if (dragRef.current === state) {
-          state.moveScheduled = false;
-          const dx = state.pendingDx;
-          const dy = state.pendingDy;
-          state.pendingDx = 0;
-          state.pendingDy = 0;
-          if (dx !== 0 || dy !== 0) {
-            control('drag-move', { dx, dy });
-          }
-        }
-      });
+    if (dx !== 0 || dy !== 0) {
+      control('drag-move', { dx, dy });
     }
   }
 

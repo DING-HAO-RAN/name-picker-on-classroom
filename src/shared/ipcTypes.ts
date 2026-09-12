@@ -22,10 +22,9 @@ export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close' | 'ge
 /**
  * 悬浮球可以请求的操作：
  * - restore 恢复主界面 / menu 右键菜单 / quit 退出
- * - drag-start：payload { dpr }（渲染器屏幕缩放比）
- * - drag-move：payload { dx, dy }（自上次上报以来指针移动的物理像素）
- * - drag-end：拖动结束
- * 坐标换算在主进程完成（物理像素 ÷ dpr = DIP），鼠标与触控统一
+ * - drag-move：payload { dx, dy }（自上次上报以来指针移动的增量）。
+ *   Chromium 的 screenX/Y 与 setPosition 同为 DIP 逻辑像素，增量直接使用，
+ *   鼠标与触控统一；不走 rAF（透明窗口可能被 Chromium 误判遮挡而暂停 rAF）
  */
 export type FloatingControlAction =
   | 'restore'
@@ -36,7 +35,6 @@ export type FloatingControlAction =
   | 'drag-end';
 
 export interface FloatingDragPayload {
-  dpr?: number;
   dx?: number;
   dy?: number;
 }

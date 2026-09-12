@@ -1083,7 +1083,8 @@ h2 {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.85);
+  /* 遮罩底色随颜色主题的主色调深，保持深色投影氛围的同时跟随主题 */
+  background: color-mix(in srgb, var(--c-primary) 30%, rgba(5, 12, 10, 0.9));
   backdrop-filter: blur(10px);
   animation: overlayFadeIn 0.25s ease-out;
   cursor: pointer;
@@ -1119,8 +1120,9 @@ h2 {
   margin-bottom: 24px;
   padding: 8px 24px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fde047;
+  /* 徽章随颜色主题：主色半透明底 + 主题浅色文字 */
+  background: rgba(var(--c-primary-rgb), 0.32);
+  color: var(--c-primary-soft);
   font-size: clamp(1.1rem, 2vw, 1.5rem);
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1140,7 +1142,8 @@ h2 {
   min-width: 180px;
   padding: 16px 36px;
   border-radius: 24px;
-  /* 固定纯白：与固定近黑文字形成最高对比，不受主题影响 */
+  /* 固定纯白 + 近黑文字保证最高对比；描边用主题主色增强主题氛围 */
+  border: 2px solid var(--c-primary-muted);
   background: #ffffff;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
   animation: cardBounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1173,7 +1176,12 @@ h2 {
    ========================================================================== */
 .result-section--rolling {
   border-color: var(--c-primary);
-  background: linear-gradient(135deg, var(--c-wash) 0%, #d3e6de 100%);
+  /* 滚动中底色随主题主色淡出渐变 */
+  background: linear-gradient(
+    135deg,
+    var(--c-wash) 0%,
+    color-mix(in srgb, var(--c-primary) 18%, #ffffff) 100%
+  );
 }
 
 .result-card--rolling {
@@ -1183,7 +1191,7 @@ h2 {
 }
 
 .result-card-mark--rolling {
-  background: #f59e0b;
+  background: var(--c-accent);
   animation: diceSpin 1.5s infinite linear;
 }
 
@@ -1195,12 +1203,13 @@ h2 {
 }
 
 .student-list-item--marquee {
-  border-color: #eab308 !important;
-  background: linear-gradient(90deg, #fef08a 0%, #fde047 100%) !important;
-  color: #713f12 !important;
+  /* 跑马灯高亮随主题：主色淡底 + 主题深色文字 */
+  border-color: var(--c-primary) !important;
+  background: linear-gradient(90deg, var(--c-hover) 0%, var(--c-wash) 100%) !important;
+  color: var(--c-ink) !important;
   font-weight: 800;
   transform: scale(1.02);
-  box-shadow: 0 0 16px rgba(234, 179, 8, 0.55);
+  box-shadow: 0 0 16px rgba(var(--c-primary-rgb), 0.45);
   transition: all 0.18s ease;
 }
 
@@ -1551,7 +1560,12 @@ h2 {
 
 .app-shell.theme-dark .result-section {
   border-color: var(--c-primary);
-  background: linear-gradient(135deg, var(--dark-panel) 0%, #0c2b28 100%);
+  /* 深色下结果区渐变尾色随主题主色 */
+  background: linear-gradient(
+    135deg,
+    var(--dark-panel) 0%,
+    color-mix(in srgb, var(--c-primary) 30%, #071210) 100%
+  );
 }
 
 .app-shell.theme-dark .result-waiting {
@@ -1595,7 +1609,12 @@ h2 {
 
 .app-shell.theme-dark .result-card--rolling {
   border-color: var(--c-primary);
-  background: linear-gradient(135deg, #0c2b28 0%, #134640 100%);
+  /* 深色滚动卡片渐变随主题主色 */
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--c-primary) 26%, #0a1614) 0%,
+    color-mix(in srgb, var(--c-primary) 48%, #0d1f1b) 100%
+  );
 }
 
 .app-shell.theme-dark .slot-roll-text {
