@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PillSwitch } from './PillSwitch';
 
 export interface DrawControlsProps {
   count: number;
@@ -148,33 +149,22 @@ export function DrawControls({
       </div>
 
       <div className="controls-switches">
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            aria-label="允许重复抽取"
-            checked={allowDuplicates}
-            disabled={controlsDisabled}
-            onChange={(event) => onAllowDuplicatesChange?.(event.target.checked)}
-          />
-          <span>
-            <strong>允许重复抽取</strong>
-            <small>已抽中的同学仍可再次被抽中（单次抽取多人时互不重复）。</small>
-          </span>
-        </label>
-
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            aria-label="显示抽取动画"
-            checked={animationEnabled}
-            disabled={controlsDisabled}
-            onChange={(event) => onAnimationChange(event.target.checked)}
-          />
-          <span>
-            <strong>显示抽取动画</strong>
-            <small>快速滚动翻转人名，更具课堂悬念与期待感。</small>
-          </span>
-        </label>
+        <PillSwitch
+          checked={allowDuplicates}
+          disabled={controlsDisabled}
+          label="允许重复抽取"
+          ariaLabel="允许重复抽取"
+          description="已抽中的同学仍可再次被抽中（单次抽取多人时互不重复）。"
+          onChange={onAllowDuplicatesChange}
+        />
+        <PillSwitch
+          checked={animationEnabled}
+          disabled={controlsDisabled}
+          label="显示抽取动画"
+          ariaLabel="显示抽取动画"
+          description="快速滚动翻转人名，更具课堂悬念与期待感。"
+          onChange={onAnimationChange}
+        />
       </div>
 
       <div className="draw-actions">

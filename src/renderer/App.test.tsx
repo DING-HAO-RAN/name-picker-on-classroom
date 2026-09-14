@@ -7,9 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
 const students: StudentRecord[] = [
-  { id: '1', name: '林小雨', weight: 1, drawnThisRound: false },
-  { id: '2', name: '周明', weight: 1, drawnThisRound: false },
-  { id: '3', name: '陈果', weight: 1, drawnThisRound: false },
+  { id: '1', name: '林小雨', weight: 1, drawnThisRound: false, star: 1, drawCount: 0 },
+  { id: '2', name: '周明', weight: 1, drawnThisRound: false, star: 2, drawCount: 0 },
+  { id: '3', name: '陈果', weight: 1, drawnThisRound: false, star: 3, drawCount: 0 },
 ];
 
 const savedSettings = {
@@ -449,6 +449,7 @@ describe('课堂主界面', () => {
         index === 0 ? selectedStudent : student,
       ),
       shortage: true,
+      hitPity: false,
     });
     installApi({ loadState: vi.fn().mockResolvedValue(loadedState) });
 

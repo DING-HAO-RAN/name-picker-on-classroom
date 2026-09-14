@@ -118,6 +118,11 @@ const namePicker: NamePickerApi = Object.freeze({
     setEnabled: (enabled: boolean) =>
       invoke<void>(IPC_CHANNELS.launchSettings, 'set', { enabled }),
   }),
+  // 品牌自定义：窗口标题与图标实时应用
+  brandingControls: Object.freeze({
+    apply: (branding: { windowTitle?: string; iconData?: string }) =>
+      invoke<void>(IPC_CHANNELS.branding, 'apply', branding),
+  }),
 });
 
 contextBridge.exposeInMainWorld('namePicker', namePicker);

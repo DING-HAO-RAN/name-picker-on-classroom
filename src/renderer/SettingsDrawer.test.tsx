@@ -9,9 +9,9 @@ import { HistoryPanel } from './components/HistoryPanel';
 import { SettingsDrawer } from './components/SettingsDrawer';
 
 const students: StudentRecord[] = [
-  { id: '1', name: '林小雨', weight: 1, drawnThisRound: false },
-  { id: '2', name: '周明', weight: 1, drawnThisRound: false },
-  { id: '3', name: '林小雨', weight: 0.5, drawnThisRound: false },
+  { id: '1', name: '林小雨', weight: 1, drawnThisRound: false, star: 1, drawCount: 0 },
+  { id: '2', name: '周明', weight: 1, drawnThisRound: false, star: 1, drawCount: 0 },
+  { id: '3', name: '林小雨', weight: 0.5, drawnThisRound: false, star: 1, drawCount: 0 },
 ];
 
 const settings = {
@@ -188,14 +188,16 @@ describe('设置抽屉', () => {
     const searchInput = screen.getByRole('searchbox', { name: '搜索学生姓名' });
     fireEvent.change(searchInput, { target: { value: '周' } });
     expect(screen.getByText('周明')).toBeInTheDocument();
-    expect(screen.queryAllByRole('textbox', { name: '林小雨权重' })).toHaveLength(0);
+    expect(screen.queryAllByRole('textbox', { name: '林小雨权重百分比' })).toHaveLength(0);
 
     fireEvent.change(searchInput, { target: { value: '' } });
-    const weightInputs = screen.getAllByRole('textbox', { name: '林小雨权重' });
+    const weightInputs = screen.getAllByRole('textbox', { name: '林小雨权重百分比' });
     fireEvent.change(weightInputs[0], { target: { value: '0' } });
+    // 输入 0 的过程中实时提示暂不参与
+    expect(screen.getAllByText('暂不参与抽取')).toHaveLength(1);
+    fireEvent.blur(weightInputs[0]);
 
     expect(onWeightChange).toHaveBeenCalledWith('1', 0);
-    expect(screen.getAllByText('暂不参与抽取')).toHaveLength(1);
   });
 
   it('非法权重显示中文提示且不调用保存回调', () => {
@@ -212,14 +214,17 @@ describe('设置抽屉', () => {
     );
 
     expandSection('学生权重');
-    const input = screen.getAllByRole('textbox', { name: '林小雨权重' })[0];
+    const input = screen.getAllByRole('textbox', { name: '林小雨权重百分比' })[0];
     fireEvent.change(input, { target: { value: '-1' } });
+    fireEvent.blur(input);
 
-    expect(screen.getByText('权重格式无效：请输入非负数字，支持小数，例如 1.5。')).toBeInTheDocument();
+    expect(
+      screen.getByText('权重格式无效：请输入 0-100 的数字，支持一位小数，例如 35 或 12.5。'),
+    ).toBeInTheDocument();
     expect(onWeightChange).not.toHaveBeenCalled();
   });
 
-  it('权重支持小数并提交数值', () => {
+  it('权重按百分比输入并在失焦后提交数值', () => {
     const onWeightChange = vi.fn();
     render(
       <SettingsDrawer
@@ -233,14 +238,16 @@ describe('设置抽屉', () => {
     );
 
     expandSection('学生权重');
-    const input = screen.getAllByRole('textbox', { name: '林小雨权重' })[0];
-    fireEvent.change(input, { target: { value: '1.5' } });
+    const input = screen.getAllByRole('textbox', { name: '林小雨权重百分比' })[0];
+    fireEvent.change(input, { target: { value: '35' } });
+    fireEvent.blur(input);
 
-    expect(onWeightChange).toHaveBeenCalledWith('1', 1.5);
+    expect(onWeightChange).toHaveBeenCalledWith('1', 0.35);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     // 负数和多个小数点都属于格式错误
     fireEvent.change(input, { target: { value: '1.2.3' } });
+    fireEvent.blur(input);
     expect(screen.getByRole('alert')).toHaveTextContent('权重格式无效');
     expect(onWeightChange).toHaveBeenCalledTimes(1);
   });
@@ -262,7 +269,7 @@ describe('设置抽屉', () => {
     expect(weightToggle).toHaveAttribute('aria-expanded', 'false');
     expect(historyToggle).toHaveAttribute('aria-expanded', 'false');
     // 折叠时内部控件不渲染，避免焦点落到不可见元素上
-    expect(screen.queryByRole('textbox', { name: '林小雨权重' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: '林小雨权重百分比' })).not.toBeInTheDocument();
     expect(screen.queryByText('学生0')).not.toBeInTheDocument();
     // 数量徽标仍随标题可见
     expect(screen.getByText('3 人')).toBeInTheDocument();
@@ -270,7 +277,7 @@ describe('设置抽屉', () => {
 
     fireEvent.click(weightToggle);
     expect(weightToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('textbox', { name: '林小雨权重' })).toHaveLength(2);
+    expect(screen.getAllByRole('textbox', { name: '林小雨权重百分比' })).toHaveLength(2);
 
     fireEvent.click(historyToggle);
     expect(historyToggle).toHaveAttribute('aria-expanded', 'true');
@@ -313,9 +320,9 @@ describe('设置抽屉', () => {
     expect(
       within(dialog)
         // 只取学生权重输入框：设置面板里还有「动画时长」等其他数字输入
-        .getAllByRole('textbox', { name: /权重$/ })
+        .getAllByRole('textbox', { name: /权重百分比$/ })
         .map((input) => (input as HTMLInputElement).value),
-    ).toEqual(['1', '1', '1']);
+    ).toEqual(['100', '100', '100']);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
     const savedStudents = vi.mocked(api.saveState).mock.calls[0][0].students;
     expect(savedStudents.map((student) => student.weight)).toEqual([1, 1, 1]);
@@ -459,9 +466,10 @@ describe('设置与 App 保存接线', () => {
     expandSection('学生权重');
     const weightInput = within(screen.getByRole('dialog', { name: '设置' })).getAllByRole(
       'textbox',
-      { name: '林小雨权重' },
+      { name: '林小雨权重百分比' },
     )[0];
     fireEvent.change(weightInput, { target: { value: '0' } });
+    fireEvent.blur(weightInput);
 
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
     expect(vi.mocked(api.saveState).mock.calls[0][0].students[0].weight).toBe(0);
@@ -503,10 +511,9 @@ describe('设置与 App 保存接线', () => {
     expect(within(dialog).queryByText('学生50')).not.toBeInTheDocument();
 
     expandSection('学生权重');
-    fireEvent.change(
-      within(dialog).getAllByRole('textbox', { name: '林小雨权重' })[0],
-      { target: { value: '0' } },
-    );
+    const weightInput = within(dialog).getAllByRole('textbox', { name: '林小雨权重百分比' })[0];
+    fireEvent.change(weightInput, { target: { value: '0' } });
+    fireEvent.blur(weightInput);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
     const settingState = vi.mocked(api.saveState).mock.calls[1][0];
     expect(settingState.history).toHaveLength(50);

@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { TextDecoder } from 'node:util';
 import * as Papa from 'papaparse';
 import { RosterImportError } from './importErrors';
+import type { ImportedRosterEntry } from './rosterEntry';
+import { parseStarCell } from './rosterEntry';
 
 function decodeCsvContent(content: Buffer): string {
   try {
@@ -15,7 +17,8 @@ function decodeCsvContent(content: Buffer): string {
   }
 }
 
-export async function readCsvNames(filePath: string): Promise<string[]> {
+/** CSV 第一列是姓名，第二列是可选的星级（1-5） */
+export async function readCsvNames(filePath: string): Promise<ImportedRosterEntry[]> {
   let content: Buffer;
   try {
     content = await readFile(filePath);
@@ -38,12 +41,16 @@ export async function readCsvNames(filePath: string): Promise<string[]> {
     const headerRow = parsed.data[firstNonEmptyRowIndex];
     const nameColumnIndex =
       headerRow?.findIndex((cell) => String(cell ?? '').trim() === '姓名') ?? -1;
+    const starColumnIndex = nameColumnIndex >= 0 ? nameColumnIndex + 1 : 1;
     const dataRows =
       nameColumnIndex >= 0 ? parsed.data.slice(firstNonEmptyRowIndex + 1) : parsed.data;
-    const names = dataRows
-      .map((row) => String(row[nameColumnIndex >= 0 ? nameColumnIndex : 0] ?? '').trim())
-      .filter((name) => name.length > 0);
-    return names;
+    const entries = dataRows
+      .map((row) => ({
+        name: String(row[nameColumnIndex >= 0 ? nameColumnIndex : 0] ?? '').trim(),
+        star: parseStarCell(row[starColumnIndex]),
+      }))
+      .filter((entry) => entry.name.length > 0);
+    return entries;
   } catch (error) {
     if (error instanceof RosterImportError) {
       throw error;

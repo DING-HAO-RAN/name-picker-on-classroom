@@ -56,9 +56,11 @@ describe('preload namePicker bridge', () => {
       'windowControls',
       'floatingControls',
       'launchSettings',
+      'brandingControls',
     ]);
     expect(exposedApi.floatingControls).toBeUndefined();
     expect(Object.keys(exposedApi.launchSettings ?? {})).toEqual(['getCurrent', 'setEnabled']);
+    expect(Object.keys(exposedApi.brandingControls ?? {})).toEqual(['apply']);
     expect(Object.keys(exposedApi.windowControls ?? {})).toEqual([
       'minimize',
       'toggleMaximize',

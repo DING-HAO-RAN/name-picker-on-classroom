@@ -8,8 +8,64 @@ function student(id: string, weight = 1, drawnThisRound = false): StudentRecord 
     name: `测试学生-${id}`,
     weight,
     drawnThisRound,
+    star: 1,
+    drawCount: 0,
   };
 }
+
+describe('保底池', () => {
+  const students = [student('a'), student('b'), student('pity'), student('pity2')];
+
+  it('未达到保底阈值时按普通逻辑抽取，hitPity 随结果反馈', () => {
+    // random=0.99 命中累计权重末端，保底池成员权重为 0 不参与，普通成员被抽中
+    const roster = [student('a'), student('b'), student('pity', 0)];
+    const result = drawStudents(roster, 1, () => 0.99, {
+      pityStudentIds: ['pity'],
+      pityThreshold: 3,
+      pityCounter: 1,
+    });
+    expect(result.hitPity).toBe(false);
+    expect(result.selected.map((item) => item.id)).toEqual(['b']);
+  });
+
+  it('达到保底阈值后下一次抽取必中保底池成员', () => {
+    // 即使随机数偏向其他成员，也必须先抽中保底池
+    const result = drawStudents(students, 1, () => 0.99, {
+      pityStudentIds: ['pity'],
+      pityThreshold: 3,
+      pityCounter: 3,
+    });
+    expect(result.hitPity).toBe(true);
+    expect(result.selected.map((item) => item.id)).toEqual(['pity']);
+  });
+
+  it('保底命中后剩余名额按普通规则补足', () => {
+    const result = drawStudents(students, 2, () => 0.1, {
+      pityStudentIds: ['pity', 'pity2'],
+      pityThreshold: 2,
+      pityCounter: 5,
+    });
+    expect(result.hitPity).toBe(true);
+    expect(result.selected).toHaveLength(2);
+    expect(result.selected[0]?.id).toBe('pity');
+  });
+
+  it('保底池成员都不在候选中时不触发保底，正常返回 hitPity=false', () => {
+    const roster = [student('a', 1, true), student('b')];
+    // a 已抽中（无放回不可再选），pity 成员不在名单里
+    const result = drawStudents(roster, 1, () => 0.5, {
+      pityStudentIds: ['pity'],
+      pityThreshold: 1,
+      pityCounter: 9,
+    });
+    expect(result.hitPity).toBe(false);
+  });
+
+  it('未启用保底（无 pity 参数）时 hitPity 恒为 false', () => {
+    const result = drawStudents(students, 1, () => 0.9);
+    expect(result.hitPity).toBe(false);
+  });
+});
 
 describe('加权无放回抽取核心', () => {
   it('使用注入的随机函数按累计权重抽取，并标记本轮状态', () => {

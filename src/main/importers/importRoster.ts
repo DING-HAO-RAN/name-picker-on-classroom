@@ -8,11 +8,13 @@ import { readXlsxNames } from './xlsxImporter';
 
 export { RosterImportError } from './importErrors';
 
-const importers = new Map<string, (filePath: string) => Promise<string[]>>([
-  ['.txt', readTextNames],
-  ['.csv', readCsvNames],
-  ['.xlsx', readXlsxNames],
-]);
+const importers = new Map<string, (filePath: string) => Promise<{ name: string; star: number }[]>>(
+  [
+    ['.txt', readTextNames],
+    ['.csv', readCsvNames],
+    ['.xlsx', readXlsxNames],
+  ],
+);
 
 export async function importRoster(
   filePath: string,
@@ -22,9 +24,9 @@ export async function importRoster(
     throw new RosterImportError('UNSUPPORTED_FORMAT', '不支持的名单文件格式。');
   }
 
-  let names: string[];
+  let entries: { name: string; star: number }[];
   try {
-    names = await importer(filePath);
+    entries = await importer(filePath);
   } catch (error) {
     if (error instanceof RosterImportError) {
       throw error;
@@ -32,18 +34,23 @@ export async function importRoster(
     throw new RosterImportError('PARSE_FAILED', '名单文件解析失败。');
   }
 
-  const normalizedNames = names.map((name) => name.trim()).filter((name) => name.length > 0);
-  if (normalizedNames.length === 0) {
+  const normalizedEntries = entries
+    .map((entry) => ({ ...entry, name: entry.name.trim() }))
+    .filter((entry) => entry.name.length > 0);
+  if (normalizedEntries.length === 0) {
     throw new RosterImportError('EMPTY_FILE', '名单文件为空。');
   }
 
   return {
     sourceName: basename(filePath),
-    students: normalizedNames.map((name) => ({
+    students: normalizedEntries.map((entry) => ({
       id: randomUUID(),
-      name,
+      name: entry.name,
       weight: 1,
+      // 星级来自名单文件（txt 空格分隔 / 表格第二列），缺省 1 星
+      star: entry.star,
       drawnThisRound: false,
+      drawCount: 0,
     })),
   };
 }

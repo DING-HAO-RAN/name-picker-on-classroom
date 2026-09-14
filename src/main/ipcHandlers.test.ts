@@ -22,6 +22,8 @@ const importedRoster: ImportResult = {
       name: '甲同学',
       weight: 1,
       drawnThisRound: false,
+      star: 1,
+      drawCount: 0,
     },
   ],
 };
@@ -303,7 +305,14 @@ describe('主进程 IPC 业务 handler', () => {
 
     expect(store.save).toHaveBeenCalledWith({
       sourceName: 'roster.csv',
-      students: [{ id: 'student-1', name: '甲同学', weight: 1, drawnThisRound: false }],
+      students: [{
+        id: 'student-1',
+        name: '甲同学',
+        weight: 1,
+        drawnThisRound: false,
+        star: 1,
+        drawCount: 0,
+      }],
       history: [{
         id: 'draw-1',
         drawnAt: '2025-01-01T00:00:00.000Z',
@@ -388,7 +397,14 @@ describe('主进程 IPC 业务 handler', () => {
 
     await expect(handlers.loadState()).resolves.toEqual({
       sourceName: 'roster.csv',
-      students: [{ id: 'student-1', name: '甲同学', weight: 1, drawnThisRound: false }],
+      students: [{
+        id: 'student-1',
+        name: '甲同学',
+        weight: 1,
+        drawnThisRound: false,
+        star: 1,
+        drawCount: 0,
+      }],
       history: [],
       settings: { animationEnabled: true, animationDurationMs: 500, theme: 'light' },
     });
@@ -471,6 +487,7 @@ describe('主进程 IPC 业务 handler', () => {
       IPC_CHANNELS.windowControl,
       IPC_CHANNELS.floatingControl,
       IPC_CHANNELS.launchSettings,
+      IPC_CHANNELS.branding,
     ]);
     expect([...registered.keys()]).not.toContain('namePicker.chooseRosterFile');
 

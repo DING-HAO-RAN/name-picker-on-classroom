@@ -1,8 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import * as XLSX from 'xlsx';
 import { RosterImportError } from './importErrors';
+import type { ImportedRosterEntry } from './rosterEntry';
+import { parseStarCell } from './rosterEntry';
 
-export async function readXlsxNames(filePath: string): Promise<string[]> {
+/** XLSX 第一列是姓名，第二列是可选的星级（1-5） */
+export async function readXlsxNames(filePath: string): Promise<ImportedRosterEntry[]> {
   let content: Buffer;
   try {
     content = await readFile(filePath);
@@ -23,13 +26,16 @@ export async function readXlsxNames(filePath: string): Promise<string[]> {
       header: 1,
       raw: false,
     });
-    const names = rows
-      .map((row) => String(row[0] ?? '').trim())
-      .filter((name) => name.length > 0);
-    if (names[0] === '姓名') {
-      names.shift();
+    const entries = rows
+      .map((row) => ({
+        name: String(row[0] ?? '').trim(),
+        star: parseStarCell(row[1]),
+      }))
+      .filter((entry) => entry.name.length > 0);
+    if (entries[0]?.name === '姓名') {
+      entries.shift();
     }
-    return names;
+    return entries;
   } catch {
     throw new RosterImportError('PARSE_FAILED', 'XLSX 文件解析失败。');
   }

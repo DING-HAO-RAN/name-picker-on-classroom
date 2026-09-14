@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { WindowControlsApi } from '../../shared/ipcTypes';
+import { DEFAULT_BRANDING } from '../../shared/types';
 
 /**
  * 读取自绘标题栏所需的窗口控制能力。
@@ -16,8 +17,9 @@ function getWindowControls(): WindowControlsApi | null {
 /**
  * 自绘标题栏：配合主进程的 `frame: false` 使用，替换 Windows 原生标题栏。
  * 顶部区域整体可拖拽窗口，右侧按钮按应用主题配色自绘。
+ * 标题文字支持品牌自定义（settings.branding.menuTitle）。
  */
-export function AppTitleBar() {
+export function AppTitleBar({ menuTitle }: { menuTitle?: string }) {
   const [controls, setControls] = useState<WindowControlsApi | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
 
@@ -52,7 +54,7 @@ export function AppTitleBar() {
         <span className="app-titlebar__mark" aria-hidden="true">
           🎲
         </span>
-        <span className="app-titlebar__title">名字抽取器</span>
+        <span className="app-titlebar__title">{menuTitle ?? DEFAULT_BRANDING.menuTitle}</span>
       </div>
 
       <div className="app-titlebar__actions">

@@ -10,8 +10,8 @@ let fixtureDirectory: string;
 const savedState: RosterState = {
   sourceName: 'roster.csv',
   students: [
-    { id: 'student-1', name: '甲同学', weight: 2, drawnThisRound: true },
-    { id: 'student-2', name: '乙同学', weight: 1, drawnThisRound: false },
+    { id: 'student-1', name: '甲同学', weight: 2, drawnThisRound: true, star: 1, drawCount: 0 },
+    { id: 'student-2', name: '乙同学', weight: 1, drawnThisRound: false, star: 1, drawCount: 0 },
   ],
   history: [
     { id: 'draw-1', drawnAt: '2025-01-01T00:00:00.000Z', studentNames: ['甲同学'] },

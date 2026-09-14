@@ -125,6 +125,92 @@ h2 {
 }
 
 /* ==========================================================================
+   保底池成员选择、音效选择行、权重预设行
+   ========================================================================== */
+.pity-pool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.pity-pool-member {
+  padding: 8px 16px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--c-ink-soft);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.pity-pool-member--on {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+  color: #ffffff;
+}
+
+.pity-pool-member:hover {
+  border-color: var(--c-primary-strong);
+}
+
+.sound-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.sound-picker-label {
+  min-width: 72px;
+  color: var(--c-ink);
+  font-weight: 700;
+}
+
+.sound-picker-button {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 0.92rem;
+}
+
+.sound-picker-status {
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.weight-preset-row {
+  display: flex;
+  gap: 10px;
+}
+
+.weight-preset-row .settings-select,
+.weight-preset-row .settings-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.weight-preset-save,
+.weight-preset-delete {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.weight-preset-inline {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--card-cool);
+}
+
+/* ==========================================================================
    自定义背景图层：img + object-fit: fill 拉伸铺满整个窗口（完整显示、无黑边），
    上层叠与主题同色的半透明纱保证前景文字可读；标题栏改半透明毛玻璃融入背景
    ========================================================================== */
@@ -607,6 +693,103 @@ h2 {
   font-size: 0.9rem;
 }
 
+/* ==========================================================================
+   胶囊开关：替代方形对勾框，带滑块左右切换动画（iOS 风格）
+   ========================================================================== */
+.pill-switch {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-faint);
+  border-radius: 999px;
+  background: var(--card-warm);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.pill-switch--on {
+  border-color: rgba(var(--c-primary-rgb), 0.4);
+  background: var(--c-wash);
+}
+
+.pill-switch--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pill-switch__track {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  flex: 0 0 48px;
+  border-radius: 999px;
+  background: #cfd6d3;
+  transition: background 180ms ease;
+}
+
+.pill-switch--on .pill-switch__track {
+  background: var(--c-primary);
+}
+
+.pill-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.pill-switch--on .pill-switch__thumb {
+  transform: translateX(22px);
+}
+
+/* 键盘聚焦时给轨道一个可见的焦点环 */
+.pill-switch:has(input:focus-visible) .pill-switch__track {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.pill-switch__text {
+  display: grid;
+  gap: 4px;
+}
+
+.pill-switch__text strong {
+  color: var(--c-ink);
+  font-size: 1rem;
+}
+
+.pill-switch__text small {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* 深色模式下的胶囊开关配色 */
+.app-shell.theme-dark .pill-switch {
+  border-color: var(--dark-line);
+  background: var(--dark-soft);
+}
+
+.app-shell.theme-dark .pill-switch--on {
+  border-color: rgba(var(--c-primary-rgb), 0.5);
+  background: color-mix(in srgb, var(--c-primary) 18%, var(--dark-soft));
+}
+
+.app-shell.theme-dark .pill-switch__text strong {
+  color: #e2e8f0;
+}
+
+.app-shell.theme-dark .pill-switch__text small {
+  color: #94a3b8;
+}
+
 .switch-row {
   display: flex;
   min-height: 72px;
@@ -827,16 +1010,44 @@ h2 {
   font-weight: 800;
 }
 
+/* 权重编辑行：星级 + 滑动条 + 百分比输入框横向排布 */
 .student-weight-editor {
   display: grid;
-  min-width: 124px;
-  flex: 0 0 124px;
+  min-width: 300px;
+  flex: 1 1 300px;
   justify-items: stretch;
   gap: 4px;
+  grid-template-columns: auto 1fr 88px 20px;
+  align-items: center;
+}
+
+/* 星级选择：按当前星级着色 */
+.student-star-select {
+  padding: 6px 4px;
+  border: 2px solid var(--c-wash-border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--c-ink);
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.student-star-select--2 { color: #1c3f8f; }
+.student-star-select--3 { color: #4c2392; }
+.student-star-select--4 { color: #8f1c2e; }
+.student-star-select--5 { color: #9a6b00; background: #fff4d6; }
+
+.student-weight-slider {
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--c-primary);
+  cursor: pointer;
 }
 
 .student-weight-input {
-  width: 124px;
+  width: 88px;
   padding: 8px 10px;
   border: 2px solid var(--c-wash-border);
   border-radius: 10px;
@@ -845,6 +1056,11 @@ h2 {
   font-size: 1.1rem;
   font-weight: 800;
   text-align: right;
+}
+
+.student-weight-unit {
+  color: var(--c-ink-soft);
+  font-weight: 800;
 }
 
 .student-weight-input[aria-invalid="true"] {
@@ -1047,11 +1263,12 @@ h2 {
   .student-weight-editor {
     width: 100%;
     flex-basis: auto;
+    grid-template-columns: auto 1fr 84px 18px;
   }
 
   .student-weight-input {
-    width: 100%;
-    text-align: left;
+    width: 84px;
+    text-align: right;
   }
 
   .student-weight-status,
@@ -1909,4 +2126,262 @@ body.is-floating-window {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/* ==========================================================================
+   抽卡式抽取动画：全屏星穹舞台 + 3D 翻卡揭晓
+   星级配色：1 白 | 2 蓝 | 3 紫 | 4 红 | 5 金（参考二次元抽卡游戏稀有度）
+   ========================================================================== */
+.card-draw {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 40px 24px;
+  /* 星穹夜幕：主题主色晕染的深色底 + 微光星点 */
+  background:
+    radial-gradient(circle at 20% 15%, rgba(var(--c-primary-rgb), 0.22) 0%, transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(var(--c-primary-rgb), 0.18) 0%, transparent 46%),
+    linear-gradient(160deg, #0b0e1a 0%, #141024 55%, #0b1220 100%);
+  animation: overlayFadeIn 0.3s ease-out;
+  outline: none;
+}
+
+.card-draw__title {
+  margin: 0;
+  color: #f5f3ff;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 22px rgba(var(--c-primary-rgb), 0.85);
+  animation: cardDrawTitleFloat 2.6s ease-in-out infinite;
+}
+
+@keyframes cardDrawTitleFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.92; }
+  50% { transform: translateY(-4px); opacity: 1; }
+}
+
+.card-draw__stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 3vw, 34px);
+  perspective: 1200px;
+}
+
+/* 卡槽：hover 时未翻开的卡轻轻上浮提示可点 */
+.card-draw__slot {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 180ms ease;
+}
+
+.card-draw__slot:hover {
+  transform: translateY(-6px);
+}
+
+.card-draw__flipper {
+  position: relative;
+  display: block;
+  width: clamp(120px, 16vw, 176px);
+  aspect-ratio: 3 / 4.2;
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+.card-draw__slot--revealed .card-draw__flipper {
+  transform: rotateY(180deg);
+}
+
+.card-draw__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 16px;
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+/* 牌背：深邃紫黑渐变 + 中央星徽 + 呼吸流光 */
+.card-draw__face--back {
+  border: 2px solid rgba(176, 122, 255, 0.55);
+  background:
+    radial-gradient(circle at 50% 34%, rgba(176, 122, 255, 0.4) 0%, transparent 46%),
+    linear-gradient(165deg, #1d1633 0%, #241a3f 52%, #141024 100%);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 0 26px rgba(176, 122, 255, 0.18);
+}
+
+.card-draw__back-glow {
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.14) 40deg,
+    transparent 90deg,
+    transparent 240deg,
+    rgba(176, 122, 255, 0.2) 290deg,
+    transparent 340deg
+  );
+  animation: cardDrawBackGlowSpin 3.4s linear infinite;
+}
+
+@keyframes cardDrawBackGlowSpin {
+  to { transform: rotate(360deg); }
+}
+
+.card-draw__back-star {
+  position: relative;
+  color: #e6d9ff;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  text-shadow: 0 0 18px rgba(176, 122, 255, 0.95);
+  animation: cardDrawBackStarPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes cardDrawBackStarPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+.card-draw__back-text {
+  position: relative;
+  color: rgba(230, 217, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+}
+
+/* 正面通用：星级渐变底 + 内描边 */
+.card-draw__face--front {
+  transform: rotateY(180deg);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.card-draw__face--star1 {
+  background: linear-gradient(165deg, #f4f4f6 0%, #cfd3da 100%);
+}
+.card-draw__face--star2 {
+  background: linear-gradient(165deg, #3f7fe0 0%, #1c3f8f 100%);
+}
+.card-draw__face--star3 {
+  background: linear-gradient(165deg, #9a5cf0 0%, #4c2392 100%);
+}
+.card-draw__face--star4 {
+  background: linear-gradient(165deg, #f05a5a 0%, #8f1c2e 100%);
+}
+.card-draw__face--star5 {
+  background: linear-gradient(165deg, #ffd873 0%, #c98f1d 100%);
+}
+
+/* 保底命中：卡面附加金色流光环 */
+.card-draw__face--pity {
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 0 30px rgba(255, 201, 77, 0.75),
+    inset 0 0 22px rgba(255, 201, 77, 0.4);
+}
+
+.card-draw__pity-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #ffd873, #ff9d3c);
+  color: #4a2c00;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  box-shadow: 0 2px 10px rgba(255, 157, 60, 0.7);
+}
+
+.card-draw__name {
+  position: relative;
+  padding: 0 12px;
+  /* 深色系卡面统一用白字 + 投影，金色/白色卡面用深字以保持对比 */
+  color: #ffffff;
+  font-size: clamp(1.15rem, 2.4vw, 1.6rem);
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  word-break: break-all;
+}
+
+.card-draw__face--star1 .card-draw__name {
+  color: #3a3f4a;
+  text-shadow: none;
+}
+
+.card-draw__face--star5 .card-draw__name {
+  color: #5a3d00;
+  text-shadow: 0 1px 6px rgba(255, 255, 255, 0.6);
+}
+
+.card-draw__stars {
+  display: flex;
+  gap: 4px;
+}
+
+.card-draw__star {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  animation: cardDrawStarPop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes cardDrawStarPop {
+  from { transform: scale(0) rotate(-30deg); opacity: 0; }
+  to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.card-draw__rank {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.card-draw__face--star1 .card-draw__rank,
+.card-draw__face--star5 .card-draw__rank {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+/* 收下结果按钮：金色渐变 + 微光 */
+.card-draw__finish {
+  padding: 12px 44px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #ffd873 0%, #ff9d3c 100%);
+  color: #4a2c00;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(255, 157, 60, 0.45);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+  animation: overlayFadeIn 0.4s ease-out;
+}
+
+.card-draw__finish:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(255, 157, 60, 0.6);
+}
+
+.card-draw__hint {
+  margin: 0;
+  color: rgba(245, 243, 255, 0.6);
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
 }

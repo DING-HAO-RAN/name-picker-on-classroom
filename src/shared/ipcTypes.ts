@@ -9,6 +9,7 @@ export const IPC_CHANNELS = {
   windowMaximizedChanged: 'name-picker:window-maximized-changed',
   floatingControl: 'name-picker:floating-control',
   launchSettings: 'name-picker:launch-settings',
+  branding: 'name-picker:branding',
 } as const;
 
 export interface ImportResult {
@@ -49,6 +50,11 @@ export interface LaunchSettingsApi {
   setEnabled(enabled: boolean): Promise<void>;
 }
 
+/** 品牌自定义：应用到窗口标题与窗口图标 */
+export interface BrandingControlsApi {
+  apply(branding: { windowTitle?: string; iconData?: string }): Promise<void>;
+}
+
 export interface WindowControlsApi {
   minimize(): Promise<void>;
   /** 最大化与还原之间切换 */
@@ -87,4 +93,6 @@ export interface NamePickerApi {
   floatingControls?: FloatingControlsApi;
   /** 开机自启设置；仅在 Electron 宿主中存在 */
   launchSettings?: LaunchSettingsApi;
+  /** 品牌自定义；仅在 Electron 宿主中存在 */
+  brandingControls?: BrandingControlsApi;
 }

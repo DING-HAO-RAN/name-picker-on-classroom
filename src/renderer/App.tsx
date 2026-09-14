@@ -4,19 +4,25 @@ import {
   DEFAULT_FULLSCREEN_DISPLAY_MS,
   LEGACY_FULLSCREEN_DISPLAY_MS,
   MAX_HISTORY_ITEMS,
+  MAX_PITY_THRESHOLD,
+  MAX_WEIGHT_PERCENT,
 } from '../shared/types';
 import type {
   AnimationStyle,
   AppSettings,
+  BrandingSettings,
   CloseAction,
   ColorTheme,
   DrawHistoryItem,
+  PityPoolSettings,
   RosterState,
   StudentRecord,
   Theme,
+  WeightPreset,
 } from '../shared/types';
 import { getRollIntervalMs, pickRollingName } from './rollPacing';
 import { AppTitleBar } from './components/AppTitleBar';
+import { CardDrawOverlay } from './components/CardDrawOverlay';
 import { ClassroomHeader } from './components/ClassroomHeader';
 import { DrawControls } from './components/DrawControls';
 import { FullscreenResultOverlay } from './components/FullscreenResultOverlay';
@@ -24,6 +30,19 @@ import { ImportDropzone } from './components/ImportDropzone';
 import { ResultCards } from './components/ResultCards';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { ToastMessage } from './components/ToastMessage';
+
+/** 播放一段 dataURL 音效；失败静默（课堂投影不因音效问题中断流程） */
+function playSoundData(dataUrl: string | undefined): void {
+  if (!dataUrl) {
+    return;
+  }
+  try {
+    const audio = new Audio(dataUrl);
+    void audio.play().catch(() => undefined);
+  } catch {
+    // 忽略播放失败
+  }
+}
 
 const DEFAULT_SETTINGS: AppSettings = {
   animationEnabled: true,
@@ -148,6 +167,10 @@ export function App() {
   const [marqueeStudentId, setMarqueeStudentId] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [isRollingFullscreen, setIsRollingFullscreen] = useState(false);
+  // 抽卡式动画：全屏翻卡层状态
+  const [isCardDrawOpen, setIsCardDrawOpen] = useState(false);
+  const [cardDrawStudents, setCardDrawStudents] = useState<StudentRecord[]>([]);
+  const [cardDrawHitPity, setCardDrawHitPity] = useState(false);
 
   const rosterRef = useRef(roster);
   const animationEnabledRef = useRef(animationEnabled);
@@ -261,6 +284,210 @@ export function App() {
     );
     return trackedSave;
   }, []);
+
+  /** 通用设置更新：把 patch 合入当前名单设置并保存（保底池/音效/预设等共用） */
+  const updateSettingsAndSave = useCallback(
+    (patch: Partial<AppSettings>): void => {
+      if (isLoading || isImporting || isSaving || isAnimating || interactionLockRef.current) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const currentRoster = rosterRef.current;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: {
+          ...currentRoster.settings,
+          ...patch,
+        },
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
+  );
+
+  /** 更新保底池设置 */
+  const handlePityPoolChange = useCallback(
+    (pityPool: PityPoolSettings): void => {
+      updateSettingsAndSave({ pityPool, pityCounter: 0 });
+    },
+    [updateSettingsAndSave],
+  );
+
+  /** 更新音效设置 */
+  const handleSoundEnabledChange = useCallback(
+    (enabled: boolean): void => {
+      updateSettingsAndSave({ soundEnabled: enabled });
+    },
+    [updateSettingsAndSave],
+  );
+
+  const handleSoundDrawnChange = useCallback(
+    (dataUrl: string | null): void => {
+      updateSettingsAndSave({ soundDrawnData: dataUrl ?? undefined });
+    },
+    [updateSettingsAndSave],
+  );
+
+  const handleSoundPityChange = useCallback(
+    (dataUrl: string | null): void => {
+      updateSettingsAndSave({ soundPityData: dataUrl ?? undefined });
+    },
+    [updateSettingsAndSave],
+  );
+
+  /** 保存当前权重分配为预设（按学生 id 记录百分比） */
+  const handleSaveWeightPreset = useCallback(
+    (name: string): void => {
+      const currentRoster = rosterRef.current;
+      const weights = Object.fromEntries(
+        currentRoster.students.map((student) => [
+          student.id,
+          Math.round(Math.min(Math.max(student.weight, 0), 1) * MAX_WEIGHT_PERCENT * 10) / 10,
+        ]),
+      );
+      const existing = currentRoster.settings.weightPresets ?? [];
+      const nextPresets: WeightPreset[] = [
+        ...existing.filter((preset) => preset.name !== name),
+        { name, weights },
+      ].slice(-20);
+      updateSettingsAndSave({ weightPresets: nextPresets });
+    },
+    [updateSettingsAndSave],
+  );
+
+  /** 套用预设：按学生 id 恢复保存的权重百分比，名单中没有的学生跳过 */
+  const handleApplyWeightPreset = useCallback(
+    (name: string): void => {
+      const currentRoster = rosterRef.current;
+      const preset = currentRoster.settings.weightPresets?.find((item) => item.name === name);
+      if (!preset) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const nextState: RosterState = {
+        ...currentRoster,
+        students: currentRoster.students.map((student) => {
+          const percent = preset.weights[student.id];
+          return percent === undefined
+            ? student
+            : { ...student, weight: Math.min(Math.max(percent, 0), MAX_WEIGHT_PERCENT) / MAX_WEIGHT_PERCENT };
+        }),
+        history: normalizeHistory(currentRoster.history),
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [saveState, updateRoster],
+  );
+
+  /** 删除指定预设 */
+  const handleDeleteWeightPreset = useCallback(
+    (name: string): void => {
+      const currentRoster = rosterRef.current;
+      const nextPresets = (currentRoster.settings.weightPresets ?? []).filter(
+        (preset) => preset.name !== name,
+      );
+      updateSettingsAndSave({ weightPresets: nextPresets });
+    },
+    [updateSettingsAndSave],
+  );
+
+  /** 更新学生星级（1-5）：抽卡卡面颜色随之变化 */
+  const handleStarChange = useCallback(
+    (id: string, star: number): void => {
+      const currentRoster = rosterRef.current;
+      if (
+        isLoading ||
+        isImporting ||
+        isSaving ||
+        isAnimating ||
+        interactionLockRef.current ||
+        !Number.isInteger(star) ||
+        star < 1 ||
+        star > 5
+      ) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const nextState: RosterState = {
+        ...currentRoster,
+        students: currentRoster.students.map((student) =>
+          student.id === id ? { ...student, star } : student,
+        ),
+        history: normalizeHistory(currentRoster.history),
+      };
+      updateRoster(nextState);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
+  );
+
+  /** 应用品牌自定义：保存设置并把窗口标题/图标实时推给主进程 */
+  const handleBrandingChange = useCallback(
+    (branding: BrandingSettings): void => {
+      const currentRoster = rosterRef.current;
+      if (
+        isLoading ||
+        isImporting ||
+        isSaving ||
+        isAnimating ||
+        interactionLockRef.current
+      ) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const nextState: RosterState = {
+        ...currentRoster,
+        history: normalizeHistory(currentRoster.history),
+        settings: { ...currentRoster.settings, branding },
+      };
+      updateRoster(nextState);
+
+      void window.namePicker?.brandingControls
+        ?.apply({ windowTitle: branding.windowTitle, iconData: branding.iconData })
+        .catch(() => undefined);
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
+  );
 
   const handleWeightChange = useCallback(
     (id: string, weight: number): void => {
@@ -382,6 +609,14 @@ export function App() {
             void launchSettings
               .getCurrent()
               .then((enabled) => setLaunchAtStartup(enabled), () => undefined);
+          }
+
+          // 品牌持久化：加载存档后把窗口标题与图标同步到主进程
+          const branding = normalizedState.settings.branding;
+          if (branding) {
+            void window.namePicker?.brandingControls
+              ?.apply({ windowTitle: branding.windowTitle, iconData: branding.iconData })
+              .catch(() => undefined);
           }
 
           if (
@@ -691,10 +926,33 @@ export function App() {
       interactionLockRef.current = true;
       setErrorMessage(null);
 
-      // 计算加权抽签结果（传入是否允许重复参数）
+      // 计算加权抽签结果：启用保底池时传入保底参数，达到阈值则本次必中保底池
+      const pitySettings = currentRoster.settings.pityPool;
+      const pityCounterBefore = currentRoster.settings.pityCounter ?? 0;
+      const usePity =
+        pitySettings?.enabled === true &&
+        pitySettings.studentIds.length > 0 &&
+        pitySettings.threshold > 0;
       const drawResult = drawStudents(currentRoster.students, count, Math.random, {
         allowDuplicates: isAllowDup,
+        pityStudentIds: usePity ? pitySettings.studentIds : undefined,
+        pityThreshold: usePity ? Math.min(pitySettings.threshold, MAX_PITY_THRESHOLD) : undefined,
+        pityCounter: pityCounterBefore,
       });
+      // 抽中保底池成员后计数清零，否则累计未中次数
+      const pityCounterAfter = usePity ? (drawResult.hitPity ? 0 : pityCounterBefore + 1) : 0;
+
+      // 抽中计数：每满 5 次自动升 1 星（最高 4 星），用于抽卡卡面成长
+      const bumpStar = (student: StudentRecord): StudentRecord => {
+        const drawCount = student.drawCount + 1;
+        const star =
+          drawCount % 5 === 0 && drawCount > 0 ? Math.min(student.star + 1, 4) : student.star;
+        return { ...student, drawCount, star };
+      };
+      const bumpedIds = new Set(drawResult.selected.map((student) => student.id));
+      const updatedStudentsWithStars = drawResult.updatedStudents.map((student) =>
+        bumpedIds.has(student.id) ? bumpStar(student) : student,
+      );
 
       const shouldAnimate = animate === animationEnabledRef.current
         ? animate
@@ -706,13 +964,14 @@ export function App() {
 
       const nextState: RosterState = {
         ...currentRoster,
-        students: drawResult.updatedStudents,
+        students: updatedStudentsWithStars,
         history: nextHistory,
         settings: {
           ...currentRoster.settings,
           animationEnabled: shouldAnimate,
           allowDuplicates: isAllowDup,
           animationStyle: animationStyleRef.current,
+          pityCounter: pityCounterAfter,
         },
       };
       updateRoster(nextState);
@@ -769,6 +1028,20 @@ export function App() {
         rollTimerRef.current = null;
       }
 
+      // 抽卡式：不使用其它结果显示动画，直接打开全屏翻卡层，
+      // 由用户点击卡片翻面揭晓；全部翻完后由 onCardDrawFinish 收场
+      if (currentStyle === 'card') {
+        setCardDrawStudents(drawResult.selected);
+        setCardDrawHitPity(drawResult.hitPity);
+        setIsCardDrawOpen(true);
+        setIsAnimating(false);
+        setRollingNames([]);
+        setMarqueeStudentId(null);
+        resultDisplayed = true;
+        releaseInteractionLock();
+        return;
+      }
+
       // 如果不展示动画，直接呈现结果并全屏展示
       if (!shouldAnimate || duration === 0) {
         setResultStudents(drawResult.selected);
@@ -777,6 +1050,12 @@ export function App() {
         setMarqueeStudentId(null);
         setIsRollingFullscreen(false);
         setIsFullscreenOpen(true);
+        // 名字定格：按开关与保底命中播放对应音效
+        playSoundData(
+          drawResult.hitPity
+            ? (nextState.settings.soundPityData ?? nextState.settings.soundDrawnData)
+            : nextState.settings.soundDrawnData,
+        );
         resultDisplayed = true;
         releaseInteractionLock();
         return;
@@ -849,12 +1128,31 @@ export function App() {
         setIsRollingFullscreen(false);
         setIsFullscreenOpen(true);
 
+        // 名字定格：按开关与保底命中播放对应音效
+        playSoundData(
+          drawResult.hitPity
+            ? (nextState.settings.soundPityData ?? nextState.settings.soundDrawnData)
+            : nextState.settings.soundDrawnData,
+        );
+
         resultDisplayed = true;
         releaseInteractionLock();
       }, duration);
     },
     [isAnimating, isImporting, isLoading, isSaving, saveFailed, saveState, updateAnimationEnabled, updateRoster],
   );
+
+  /** 抽卡式抽取结束（全部翻面后点击收场）：关闭翻卡层并播放对应音效 */
+  const handleCardDrawFinish = useCallback((): void => {
+    setIsCardDrawOpen(false);
+    setCardDrawStudents([]);
+    const settings = rosterRef.current.settings;
+    playSoundData(
+      cardDrawHitPity
+        ? (settings.soundPityData ?? settings.soundDrawnData)
+        : settings.soundDrawnData,
+    );
+  }, [cardDrawHitPity]);
 
   const handleResetRound = useCallback((): void => {
     const currentRoster = rosterRef.current;
@@ -1159,13 +1457,14 @@ export function App() {
     >
       {backgroundLayer}
       {/* 自绘标题栏：主进程使用 frame: false，这里固定在最上方按主题绘制标题与窗口按钮 */}
-      <AppTitleBar />
+      <AppTitleBar menuTitle={roster.settings.branding?.menuTitle} />
 
       <ClassroomHeader
         sourceName={roster.sourceName}
         studentCount={roster.students.length}
         settingsDisabled={isLoading || isImporting || isAnimating || isSaving}
         onOpenSettings={() => setIsSettingsDrawerOpen(true)}
+        appTitle={roster.settings.branding?.appTitle}
       />
 
       {isLoading ? (
@@ -1281,6 +1580,19 @@ export function App() {
           canToggleLaunchAtStartup={canToggleLaunchAtStartup}
           launchAtStartup={launchAtStartup}
           onLaunchAtStartupChange={handleLaunchAtStartupChange}
+          pityPool={roster.settings.pityPool}
+          onPityPoolChange={handlePityPoolChange}
+          pityCounter={roster.settings.pityCounter ?? 0}
+          soundEnabled={roster.settings.soundEnabled ?? false}
+          onSoundEnabledChange={handleSoundEnabledChange}
+          soundDrawnData={roster.settings.soundDrawnData}
+          soundPityData={roster.settings.soundPityData}
+          onSoundDrawnChange={handleSoundDrawnChange}
+          onSoundPityChange={handleSoundPityChange}
+          weightPresets={roster.settings.weightPresets}
+          onSaveWeightPreset={handleSaveWeightPreset}
+          onApplyWeightPreset={handleApplyWeightPreset}
+          onDeleteWeightPreset={handleDeleteWeightPreset}
           onClearLocalData={handleClearLocalData}
           onImport={handleImport}
           isImporting={isImporting}
@@ -1290,6 +1602,9 @@ export function App() {
           onResetWeights={handleResetWeights}
           onClearHistory={handleClearHistory}
           onClose={() => setIsSettingsDrawerOpen(false)}
+          onStarChange={handleStarChange}
+          branding={roster.settings.branding}
+          onBrandingChange={handleBrandingChange}
         />
       ) : null}
 
@@ -1302,6 +1617,15 @@ export function App() {
         rollingNames={rollingNames}
         onClose={() => setIsFullscreenOpen(false)}
       />
+
+      {/* 抽卡式动画：全屏翻卡揭晓，不使用其它结果显示动画 */}
+      {isCardDrawOpen ? (
+        <CardDrawOverlay
+          students={cardDrawStudents}
+          hitPity={cardDrawHitPity}
+          onFinish={handleCardDrawFinish}
+        />
+      ) : null}
 
       <ToastMessage message={errorMessage} onDismiss={() => setErrorMessage(null)} />
     </main>
