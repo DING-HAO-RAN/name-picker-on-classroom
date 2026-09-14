@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 dist/
 release/
 release2/
@@ -12,19 +12,4 @@ release9/
 release10/
 release11/
 release12/
-release13/
-release13/
-release3/
-coverage/
-playwright-report/
-test-results/
-screenshots/
-**/__screenshots__/
-.superpowers/
-.worktrees/
-.env*
-*.log
-*.tsbuildinfo
-.vscode/
-.idea/
-.workbuddy/
+release14/
