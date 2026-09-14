@@ -1,0 +1,5 @@
+docs: add MIT license, open-source README and condensed release notes
+
+- 新增 MIT 协议与面向开源读者的 README：功能、快速开始、打包、数据边界、项目结构与验收边界
+- package.json 补 license、repository、homepage、bugs 字段
+- 发布清单精简为「发布说明」：只保留可复现的打包方式与必须知晓的限制，去掉本机产物哈希与重复证据

@@ -1,0 +1,25 @@
+﻿ M README.md
+ M src/main/importers/csvImporter.ts
+ M src/main/importers/importRoster.ts
+ M src/main/importers/textImporter.ts
+ M src/main/importers/xlsxImporter.ts
+ M src/main/ipcHandlers.test.ts
+ M src/main/storage/localStore.test.ts
+ M src/preload/index.test.ts
+ M src/preload/index.ts
+ M src/renderer/App.test.tsx
+ M src/renderer/App.tsx
+ M src/renderer/SettingsDrawer.test.tsx
+ M src/renderer/components/AppTitleBar.tsx
+ M src/renderer/components/ClassroomHeader.tsx
+ M src/renderer/components/DrawControls.tsx
+ M src/renderer/components/SettingsDrawer.tsx
+ M src/renderer/components/StudentWeightList.tsx
+ M src/renderer/styles.css
+ M src/shared/drawEngine.test.ts
+ M src/shared/drawEngine.ts
+ M src/shared/ipcTypes.ts
+ M src/shared/types.ts
+?? src/main/importers/rosterEntry.ts
+?? src/renderer/components/CardDrawOverlay.tsx
+?? src/renderer/components/PillSwitch.tsx

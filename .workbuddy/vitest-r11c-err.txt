@@ -1,0 +1,61 @@
+﻿
+[41m[1m FAIL [22m[49m src/renderer/SettingsDrawer.test.tsx[2m > [22m设置抽屉
+[2m > [22m支持按姓名搜索、提示同名并把权重 0 设为暂不参与
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible ele
+ment with the role "textbox" and name "林小雨权重"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "设置":
+  [36m<aside[39m
+    [33maria-labelledby[39m=[32m"settings-drawer-title"[39m
+    [33maria-modal[39m=[32m"true"[39m
+    [33mclass[39m=[32m"settings-drawer__panel"[39m
+    [33mrole[39m=[32m"dialog"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"section-kicker"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"settings-group-hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"section-kicker"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"settings-group-hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"settings-search-summary"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"settings-group-hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"section-kicker"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"settings-group-hint"[39m
+  [36m/>[39m

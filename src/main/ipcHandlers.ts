@@ -77,6 +77,9 @@ export interface IpcHandlerDependencies {
   floatingControls?: IpcFloatingControls;
   launchControls?: IpcLaunchControls;
   brandingControls?: IpcBrandingControls;
+  starSyncControls?: {
+    sync(sourcePath: string, entries: { name: string; star: number }[]): Promise<void> | void;
+  };
 }
 
 export interface IpcHandlers {
@@ -92,6 +95,8 @@ export interface IpcHandlers {
   launchSettings(action: unknown, payload?: unknown): Promise<boolean>;
   /** 应用品牌自定义：窗口标题与窗口图标 */
   applyBranding(payload: unknown): Promise<void>;
+  /** 把星级改动同步回名单源文件（失败静默） */
+  syncStars(payload: unknown): Promise<void>;
 }
 
 export interface IpcMainLike {
@@ -478,6 +483,27 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     normalizedSettings.branding = normalizedBranding;
   }
 
+  // 按星级过滤抽取：开关 + 1-5 星集合（最多 5 个）
+  const starFilter = value.starFilter;
+  if (isRecord(starFilter) && typeof starFilter.enabled === 'boolean') {
+    const stars = Array.isArray(starFilter.stars)
+      ? starFilter.stars.filter(
+          (star): star is number =>
+            typeof star === 'number' && Number.isInteger(star) && star >= 1 && star <= 5,
+        )
+      : [];
+    normalizedSettings.starFilter = {
+      enabled: starFilter.enabled,
+      stars: Array.from(new Set(stars)).sort((a, b) => a - b),
+    };
+  }
+
+  // 名单源文件路径：用于星级回写，限制长度防撑大状态文件
+  const sourcePath = value.sourcePath;
+  if (typeof sourcePath === 'string' && sourcePath.trim().length > 0 && sourcePath.length <= 500) {
+    normalizedSettings.sourcePath = sourcePath.trim();
+  }
+
   return normalizedSettings;
 }
 
@@ -564,7 +590,12 @@ function sanitizeImportResult(result: ImportResult): ImportResult {
     students.push(normalizedStudent);
   }
 
-  return { sourceName, students };
+  // 记录名单文件完整路径：之后改星级时同步回写用
+  const sourcePath =
+    typeof result.sourcePath === 'string' && result.sourcePath.trim().length > 0
+      ? result.sourcePath.trim()
+      : undefined;
+  return sourcePath === undefined ? { sourceName, students } : { sourceName, sourcePath, students };
 }
 
 function isSupportedRosterFile(filePath: unknown): filePath is string {
@@ -735,6 +766,40 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
           : undefined;
       brandingControls.apply({ windowTitle, iconData });
     },
+
+    async syncStars(payload: unknown): Promise<void> {
+      const syncControls = dependencies.starSyncControls;
+      if (!syncControls) {
+        return;
+      }
+
+      const record = isRecord(payload) ? payload : {};
+      const sourcePath = record.sourcePath;
+      const rawEntries = record.entries;
+      if (typeof sourcePath !== 'string' || sourcePath.trim().length === 0 || !Array.isArray(rawEntries)) {
+        return;
+      }
+
+      const entries: { name: string; star: number }[] = [];
+      for (const entry of rawEntries) {
+        if (!isRecord(entry)) {
+          continue;
+        }
+        const name = entry.name;
+        const star = entry.star;
+        if (
+          typeof name === 'string' &&
+          name.trim().length > 0 &&
+          typeof star === 'number' &&
+          Number.isInteger(star) &&
+          star >= 1 &&
+          star <= 5
+        ) {
+          entries.push({ name: name.trim(), star });
+        }
+      }
+      await syncControls.sync(sourcePath, entries);
+    },
   };
 }
 
@@ -807,5 +872,8 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   );
   ipcMain.handle(IPC_CHANNELS.branding, (event, payload) =>
     handleTrustedRequest(event, () => handlers.applyBranding(payload)),
+  );
+  ipcMain.handle(IPC_CHANNELS.syncStars, (event, payload) =>
+    handleTrustedRequest(event, () => handlers.syncStars(payload)),
   );
 }

@@ -62,6 +62,13 @@ export const DEFAULT_BRANDING: BrandingSettings = {
   menuTitle: '名字抽取器',
 };
 
+/** 按星级过滤抽取：开启后只抽取勾选星级的学生 */
+export interface StarFilterSettings {
+  enabled: boolean;
+  /** 允许被抽取的星级集合（1-5 的子集） */
+  stars: number[];
+}
+
 export interface StudentRecord {
   id: string;
   name: string;
@@ -127,6 +134,10 @@ export interface AppSettings {
   weightPresets?: WeightPreset[];
   /** 品牌自定义；缺省全部使用默认文案与图标 */
   branding?: BrandingSettings;
+  /** 按星级过滤抽取；缺省表示不过滤 */
+  starFilter?: StarFilterSettings;
+  /** 名单文件的完整路径（导入时记录），用于星级改动同步回写；文件移动后失效则静默忽略 */
+  sourcePath?: string;
 }
 
 export interface RosterState {

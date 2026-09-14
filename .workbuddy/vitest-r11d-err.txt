@@ -1,0 +1,51 @@
+﻿
+[41m[1m FAIL [22m[49m src/renderer/SettingsDrawer.test.tsx[2m > [22m设置抽屉
+[2m > [22m支持按姓名搜索、提示同名并把权重 0 设为暂不参与
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with t
+he text: 暂不参与抽取. This could be because the text is broken up by multiple elemen
+ts. In this case, you can provide a function for your text matcher to make your
+ matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"settings-drawer"[39m
+      [33mdata-testid[39m=[32m"settings-drawer"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"settings-drawer__backdrop"[39m
+        [33mdata-testid[39m=[32m"settings-drawer-backdrop"[39m
+      [36m/>[39m
+      [36m<aside[39m
+        [33maria-labelledby[39m=[32m"settings-drawer-title"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"settings-drawer__panel"[39m
+        [33mrole[39m=[32m"dialog"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"settings-drawer__header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"section-kicker"[39m
+            [36m>[39m
+              [0m课堂设置[0m
+            [36m</p>[39m
+            [36m<h2[39m
+              [33mid[39m=[32m"settings-drawer-title"[39m
+            [36m>[39m
+              [0m设置[0m
+            [36m</h2>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"关闭设置"[39m
+            [33mclass[39m=[32m"settings-drawer__close secondary-button"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m关闭[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"settings-drawer__content"[39m

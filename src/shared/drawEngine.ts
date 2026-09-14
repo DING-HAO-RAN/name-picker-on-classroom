@@ -16,6 +16,8 @@ export interface DrawOptions {
   pityThreshold?: number;
   /** 当前连续未抽中保底池人物的次数 */
   pityCounter?: number;
+  /** 星级过滤：只抽取这些星级的学生（开启「按星级抽取」时传入） */
+  allowedStars?: number[];
 }
 
 export function validateWeight(value: number): boolean {
@@ -38,13 +40,18 @@ export function drawStudents(
   }
 
   const allowDuplicates = options?.allowDuplicates ?? false;
+  // 星级过滤：启用时只保留所选星级的学生
+  const allowedStars = options?.allowedStars;
+  const allowedStarSet =
+    allowedStars && allowedStars.length > 0 ? new Set(allowedStars) : null;
   const candidates = students
     .map((student, index) => ({ student, index }))
     .filter(
       ({ student }) =>
         (allowDuplicates || !student.drawnThisRound) &&
         validateWeight(student.weight) &&
-        student.weight > 0,
+        student.weight > 0 &&
+        (allowedStarSet === null || allowedStarSet.has(student.star)),
     );
   const remaining = candidates.slice();
   const selected: StudentRecord[] = [];

@@ -1,0 +1,452 @@
+{
+  "sourceName": "1.txt",
+  "students": [
+    {
+      "id": "bbe1b066-94e4-4598-b4d0-05838fbc487d",
+      "name": "李润泉",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "99e31540-1e8c-4a64-9e7c-123de995a325",
+      "name": "徐博",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "785645b2-77ec-4102-8bc8-7a898f16e60b",
+      "name": "周逸轩",
+      "weight": 0.495,
+      "drawnThisRound": false
+    },
+    {
+      "id": "fad8e413-6e6e-48d4-a2f0-9bd4d73ce476",
+      "name": "宋卓阳",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "9ae45377-cd89-4346-8e66-7829bf118098",
+      "name": "厉姝含",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "2b35d173-f2c7-413f-9ea3-3b261b995bdd",
+      "name": "杨洪源",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "d25de23a-a94c-4f80-8ba8-8653296c9266",
+      "name": "李牧歌",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "8b12be86-7d67-4f1a-b73d-ab2e562d974a",
+      "name": "李想",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "9127fec0-6f62-484c-9731-f15a1d0db151",
+      "name": "申晗",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "8767039e-320f-4443-a4d3-82314e947824",
+      "name": "丁浩然",
+      "weight": 0.1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "e88ec181-ea4e-4240-9c60-3c7005344d1a",
+      "name": "贾承儒",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "0d0445b7-e6e1-4d58-a9c0-e06d85dd8554",
+      "name": "卢定鞠",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "47f9b828-5b0a-43ac-ab36-ade1ee9ed15f",
+      "name": "李贻霏",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "25c69a11-85ff-4dc8-b091-69b66f5e5c8f",
+      "name": "丁悦琳",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "04346f7a-a192-42a7-8ca6-5f87953849ab",
+      "name": "郑培昊",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "2820e737-c698-4bf1-8745-13ef70ed9848",
+      "name": "宋雨泽",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "912ca03f-e562-4945-9ef2-50b6308e7f0d",
+      "name": "宋浩宇",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "ead48dd7-9d7d-4728-a9e6-f23f919f4c1a",
+      "name": "郭政辰",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "a19a4b1d-10d4-494c-a109-7e7ff3a26971",
+      "name": "杨肖",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "dcd803b4-c7ad-455c-ab5d-49822f2f2632",
+      "name": "王若溪",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "f339ac28-b564-4b24-b40e-d099ad646913",
+      "name": "王欣悦",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "249023fb-72a5-4b7d-923e-ddd3f378c40b",
+      "name": "王熙茜",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "14780428-7809-4ead-a80f-c278eac8317c",
+      "name": "张华奕",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "aed37a42-61c9-4834-9242-36f1014f8fba",
+      "name": "徐铭泽",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "b8f7a261-e4d1-41c6-b931-2292537170a6",
+      "name": "祖志高",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "7d2d4104-78fa-4675-8730-a37f63b19ce5",
+      "name": "滕国强",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "eba5121d-40aa-445e-8dcb-49291f44720e",
+      "name": "李晨辉",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "6bf435e6-54d0-487e-9b8f-1baf6d2bd9b3",
+      "name": "腾鸿熙",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "2c0d6340-a825-4911-9d56-e1938660da54",
+      "name": "张熏戈",
+      "weight": 1,
+      "drawnThisRound": false
+    },
+    {
+      "id": "c2a20074-f20b-49da-aab3-2e616e40d1e5",
+      "name": "孟令柯",
+      "weight": 1,
+      "drawnThisRound": false
+    }
+  ],
+  "history": [
+    {
+      "id": "21f5be91-17b9-44a8-8d11-a3fffaa44af9",
+      "drawnAt": "2026-09-12T15:05:45.509Z",
+      "studentNames": [
+        "张华奕"
+      ]
+    },
+    {
+      "id": "db018a52-1110-40cc-bd81-0dcf1c3c3acb",
+      "drawnAt": "2026-09-12T15:05:44.065Z",
+      "studentNames": [
+        "李润泉"
+      ]
+    },
+    {
+      "id": "7d0c823c-bbbf-4f55-9b94-d9436d1ccbc3",
+      "drawnAt": "2026-09-12T15:05:42.589Z",
+      "studentNames": [
+        "王熙茜"
+      ]
+    },
+    {
+      "id": "ebabcf46-f22e-46ed-b5d8-27cd391ea8d8",
+      "drawnAt": "2026-09-12T15:05:34.002Z",
+      "studentNames": [
+        "李润泉"
+      ]
+    },
+    {
+      "id": "b9c75fee-9dbe-4a96-9439-c5242970c5bd",
+      "drawnAt": "2026-09-12T15:05:26.289Z",
+      "studentNames": [
+        "李润泉"
+      ]
+    },
+    {
+      "id": "09434912-29f4-483b-a6ab-c512847b2727",
+      "drawnAt": "2026-09-12T14:51:00.667Z",
+      "studentNames": [
+        "祖志高"
+      ]
+    },
+    {
+      "id": "1cceea91-be20-4c26-8102-92dd19f5126b",
+      "drawnAt": "2026-09-12T14:46:56.183Z",
+      "studentNames": [
+        "宋浩宇"
+      ]
+    },
+    {
+      "id": "130eb075-20ae-436a-9414-7bd27cebac83",
+      "drawnAt": "2026-09-12T14:46:25.262Z",
+      "studentNames": [
+        "丁悦琳"
+      ]
+    },
+    {
+      "id": "1769f848-53c7-463a-bfd5-933e69451fb5",
+      "drawnAt": "2026-09-12T14:16:51.178Z",
+      "studentNames": [
+        "郭政辰"
+      ]
+    },
+    {
+      "id": "34978705-3cd1-4c6b-b5a8-79fdaf4e59e1",
+      "drawnAt": "2026-09-12T14:16:34.401Z",
+      "studentNames": [
+        "李晨辉"
+      ]
+    },
+    {
+      "id": "813f7ef6-7685-4a52-9993-a9997562b863",
+      "drawnAt": "2026-09-12T13:46:37.746Z",
+      "studentNames": [
+        "宋卓阳"
+      ]
+    },
+    {
+      "id": "6a80ec5e-84d4-497f-9dc5-89b41ec0be54",
+      "drawnAt": "2026-09-12T13:46:28.242Z",
+      "studentNames": [
+        "滕国强"
+      ]
+    },
+    {
+      "id": "96f06316-06d7-4f51-9165-ac06899d3b12",
+      "drawnAt": "2026-09-12T13:24:09.422Z",
+      "studentNames": [
+        "李贻霏"
+      ]
+    },
+    {
+      "id": "9ea258ad-eb13-4be6-b186-59db108add5e",
+      "drawnAt": "2026-09-12T13:23:54.964Z",
+      "studentNames": [
+        "宋雨泽"
+      ]
+    },
+    {
+      "id": "c9a77c46-7428-4e81-b955-38cb84ef9776",
+      "drawnAt": "2026-09-12T13:23:12.029Z",
+      "studentNames": [
+        "李想"
+      ]
+    },
+    {
+      "id": "c6dcce7e-a908-4c00-adc2-563e8a65b2c1",
+      "drawnAt": "2026-09-12T12:17:06.443Z",
+      "studentNames": [
+        "厉姝含"
+      ]
+    },
+    {
+      "id": "3280d638-c4d1-4625-a2a7-527b9a0df80b",
+      "drawnAt": "2026-09-12T12:16:51.467Z",
+      "studentNames": [
+        "滕国强"
+      ]
+    },
+    {
+      "id": "e4d9d312-6095-4391-a76d-d179c4e34d95",
+      "drawnAt": "2026-09-12T12:16:44.832Z",
+      "studentNames": [
+        "李贻霏"
+      ]
+    },
+    {
+      "id": "9d8b9366-4b91-4b4b-944b-b3cb5a90176a",
+      "drawnAt": "2026-09-12T12:16:41.492Z",
+      "studentNames": [
+        "滕国强"
+      ]
+    },
+    {
+      "id": "94e483b0-15c7-445e-84c7-ab90f8c1d1a7",
+      "drawnAt": "2026-09-12T11:28:59.873Z",
+      "studentNames": [
+        "厉姝含",
+        "王欣悦",
+        "徐博",
+        "李润泉",
+        "孟令柯",
+        "张熏戈",
+        "丁浩然",
+        "宋浩宇",
+        "杨洪源",
+        "滕国强"
+      ]
+    },
+    {
+      "id": "3076f7a2-cbf6-4cc7-a298-85464d05de7f",
+      "drawnAt": "2026-09-12T11:28:11.481Z",
+      "studentNames": [
+        "李牧歌",
+        "张华奕",
+        "滕国强",
+        "宋浩宇",
+        "祖志高",
+        "郭政辰",
+        "丁浩然",
+        "丁悦琳",
+        "徐博",
+        "郑培昊"
+      ]
+    },
+    {
+      "id": "995616d5-8aae-4451-999b-901cefe7bcb5",
+      "drawnAt": "2026-09-12T11:28:02.802Z",
+      "studentNames": [
+        "王欣悦",
+        "宋浩宇",
+        "张熏戈",
+        "张华奕",
+        "郑培昊",
+        "李润泉",
+        "李贻霏",
+        "李想",
+        "郭政辰",
+        "丁浩然"
+      ]
+    },
+    {
+      "id": "c5ae035f-e75c-408f-9bf0-c2c1871e237c",
+      "drawnAt": "2026-09-12T11:27:56.572Z",
+      "studentNames": [
+        "周逸轩"
+      ]
+    },
+    {
+      "id": "0c48341d-0252-411b-9711-ea28851ecfd7",
+      "drawnAt": "2026-09-12T11:27:47.481Z",
+      "studentNames": [
+        "杨肖"
+      ]
+    },
+    {
+      "id": "f02b1f2c-9790-4361-865c-be49e97d7647",
+      "drawnAt": "2026-09-12T11:27:44.545Z",
+      "studentNames": [
+        "卢定鞠"
+      ]
+    },
+    {
+      "id": "ef24f02f-d596-4e7c-a91e-5e6b0dc1f047",
+      "drawnAt": "2026-09-12T11:27:41.143Z",
+      "studentNames": [
+        "周逸轩"
+      ]
+    },
+    {
+      "id": "65dd4336-a19d-4e53-a482-b65347115aa5",
+      "drawnAt": "2026-09-12T11:27:36.461Z",
+      "studentNames": [
+        "郑培昊"
+      ]
+    },
+    {
+      "id": "ed30bf31-4001-49d7-a809-4c33b0d7251b",
+      "drawnAt": "2026-09-12T09:59:02.389Z",
+      "studentNames": [
+        "王欣悦"
+      ]
+    },
+    {
+      "id": "4272c680-339b-4611-a3f9-bd90236dca6c",
+      "drawnAt": "2026-09-12T09:58:58.672Z",
+      "studentNames": [
+        "徐铭泽"
+      ]
+    },
+    {
+      "id": "43741cc2-9ec2-47b0-b068-7af11206af92",
+      "drawnAt": "2026-09-12T09:58:55.011Z",
+      "studentNames": [
+        "张华奕"
+      ]
+    },
+    {
+      "id": "e36c915a-9ef0-4d6c-8f8c-bd1728cb3385",
+      "drawnAt": "2026-09-12T09:57:51.968Z",
+      "studentNames": [
+        "张华奕"
+      ]
+    },
+    {
+      "id": "4e704c52-3bbb-48c1-a0db-e3158dd7b925",
+      "drawnAt": "2026-09-12T09:57:47.092Z",
+      "studentNames": [
+        "丁浩然"
+      ]
+    }
+  ],
+  "settings": {
+    "animationEnabled": true,
+    "animationDurationMs": 5000,
+    "theme": "light",
+    "animationStyle": "spotlight",
+    "allowDuplicates": true,
+    "colorTheme": "dusk",
+    "pityPool": {
+      "enabled": false,
+      "studentIds": [],
+      "threshold": 10
+    },
+    "pityCounter": 0
+  }
+}

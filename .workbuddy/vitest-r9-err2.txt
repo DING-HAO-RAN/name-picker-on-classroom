@@ -1,0 +1,23 @@
+﻿
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+ndler[2m > [22m悬浮球操作按白名单分发到主进程控制
+[31m[1mAssertionError[22m: expected "spy" to be called 1 times, but got 2 ti
+mes[39m
+[36m [2m❯[22m src/main/ipcHandlers.test.ts:[2m606:39[22m[39m
+    [90m604| [39m    [90m// 非法增量不触发移动[39m
+    [90m605| [39m    await expect(handlers.floatingControl('drag-move', { dx:
+ 'x', dy: …
+    [90m606| [39m    [34mexpect[39m(floatingControls[33m.[39mdragMove)[3
+3m.[39m[34mtoHaveBeenCalledTimes[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                      [31m^[39m
+    [90m607| [39m
+    [90m608| [39m    [90m// 白名单外的悬浮球操作被拒绝[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m173 passed[39m[22m[90m (174)[39m
+[2m   Start at [22m 22:56:12
+[2m   Duration [22m 12.51s[2m (transform 2.03s, setup 0ms, collect 13.85s, tests 5.84s, environment 38.55s, prepare 4.66s)[22m
+

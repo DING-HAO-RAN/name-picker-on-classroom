@@ -1,0 +1,6 @@
+﻿ [31m❯[39m src/main/ipcHandlers.test.ts [2m([22m[2m49 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 90[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22m悬浮球操作按白名单分发到主进程控制[39m[32m 13[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m173 passed[39m[22m[90m (174)[39m

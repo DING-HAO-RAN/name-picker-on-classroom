@@ -1,0 +1,10 @@
+﻿ [31m❯[39m src/main/ipcHandlers.test.ts [2m([22m[2m49 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 60[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22msaveState 拒绝非法状态（backgroundImage 不是 dataURL）并不写入存储[39m[32m 11[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22msaveState 拒绝非法状态（backgroundImage 超出长度上限）并不写入存储[39m[32m 2[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 handler[2m > [22msaveState 拒绝非法状态（backgr
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 handler[2m > [22msaveState 拒绝非法状态（backgr
+[31m[1mAssertionError[22m: promise resolved "undefined" instead of rejecting[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m171 passed[39m[22m[90m (173)[39m
+[2m   Duration [22m 8.65s[2m (transform 1.14s, setup 0ms, collect 5.44s, tests 4.31s, environment 35.43s, prepare 3.97s)[22m

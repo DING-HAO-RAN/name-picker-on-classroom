@@ -1,0 +1,4 @@
+﻿  - NamePicker Setup-1.0.0.exe.blockmap
+删除失败：
+  ! NamePicker-1.0.0.exe: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release13\NamePicker-1.0.0.exe: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }
+  ! win-unpacked: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release13\win-unpacked: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }

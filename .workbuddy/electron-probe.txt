@@ -1,0 +1,21 @@
+﻿electron binary: D:\桌面\项目‘\抽取器\node_modules\electron\dist\electron.exe
+main script: D:\桌面\项目‘\抽取器\dist\main\index.js
+user-data-dir: C:\Users\17819\AppData\Local\Temp\name-picker-probe-E4zoP2
+ELECTRON_RUN_AS_NODE = undefined
+[out] 
+[err] [18720:0912/144522.808:ERROR:content\browser\gpu\gpu_process_host.cc:956] GPU process exited unexpectedly: exit_code=1
+[18720:0912/144522.808:WARNING:content\browser\gpu\gpu_process_host.cc:1397] The GPU process has crashed 1 time(s)
+[out] Renderer process killed - see https://www.electronjs.org/docs/tutorial/application-debugging for potential debugging information.
+[err] [18720:0912/144522.899:ERROR:content\browser\gpu\gpu_process_host.cc:956] GPU process exited unexpectedly: exit_code=1
+[18720:0912/144522.899:WARNING:content\browser\gpu\gpu_process_host.cc:1397] The GPU process has crashed 2 time(s)
+[err] [18720:0912/144522.985:ERROR:content\browser\gpu\gpu_process_host.cc:956] GPU process exited unexpectedly: exit_code=1
+[18720:0912/144522.985:WARNING:content\browser\gpu\gpu_process_host.cc:1397] The GPU process has crashed 3 time(s)
+[err] [18720:0912/144523.087:ERROR:content\browser\gpu\gpu_process_host.cc:956] GPU process exited unexpectedly: exit_code=1
+[18720:0912/144523.087:WARNING:content\browser\gpu\gpu_process_host.cc:1397] The GPU process has crashed 4 time(s)
+[out] Renderer process killed - see https://www.electronjs.org/docs/tutorial/application-debugging for potential debugging information.
+[err] [18720:0912/144523.163:ERROR:content\browser\gpu\gpu_process_host.cc:956] GPU process exited unexpectedly: exit_code=1
+[18720:0912/144523.163:WARNING:content\browser\gpu\gpu_process_host.cc:1397] The GPU process has crashed 5 time(s)
+[err] [18720:0912/144523.240:ERROR:content\browser\gpu\gpu_process_host.cc:956] GPU process exited unexpectedly: exit_code=1
+[18720:0912/144523.240:WARNING:content\browser\gpu\gpu_process_host.cc:1397] The GPU process has crashed 6 time(s)
+[18720:0912/144523.240:FATAL:content\browser\gpu\gpu_data_manager_impl_private.cc:416] GPU process isn't usable. Goodbye.
+exit code: 2147483651 signal: null

@@ -1,0 +1,3 @@
+﻿[master aec1d67] feat: draft-mode numeric inputs, stretched background, color themes, floating ball on close
+ 14 files changed, 688 insertions(+), 120 deletions(-)
+ create mode 100644 src/renderer/components/FloatingBall.tsx

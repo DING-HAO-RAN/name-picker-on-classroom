@@ -1,0 +1,2 @@
+﻿[master 2bdea9c] fix: touch-friendly incremental drag reporting; restore GPU to fix animation lag
+ 7 files changed, 112 insertions(+), 65 deletions(-)

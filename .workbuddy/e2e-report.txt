@@ -1,0 +1,57 @@
+﻿
+> name-picker@1.0.0 test:e2e
+> npm run build && playwright test
+
+
+> name-picker@1.0.0 build
+> electron-vite build
+
+[36mvite v6.3.5 [32mbuilding SSR bundle for production...[36m[39m
+transforming...
+[32m✓[39m 11 modules transformed.
+rendering chunks...
+[2mdist/main/[22m[36mindex.js  [39m[1m[2m23.62 kB[22m[1m[22m
+[32m✓ built in 403ms[39m
+[36mvite v6.3.5 [32mbuilding SSR bundle for production...[36m[39m
+transforming...
+[32m✓[39m 2 modules transformed.
+rendering chunks...
+[2mdist/preload/[22m[36mindex.js  [39m[1m[2m2.62 kB[22m[1m[22m
+[32m✓ built in 101ms[39m
+[36mvite v6.3.5 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 41 modules transformed.
+rendering chunks...
+[2m../../dist/renderer/[22m[32mindex.html                 [39m[1m[2m  0.49 kB[22m[1m[22m
+[2m../../dist/renderer/[22m[35massets/index-CfZeebCv.css  [39m[1m[2m 30.91 kB[22m[1m[22m
+[2m../../dist/renderer/[22m[36massets/index-g7eMmIvD.js   [39m[1m[33m616.27 kB[39m[22m
+[32m✓ built in 1.63s[39m
+
+Running 1 test using 1 worker
+
+  x  1 tests\e2e\classroom-flow.spec.ts:52:5 › 完成启动、导入、抽取、重置和权重设置流程 (0ms)
+
+
+  1) tests\e2e\classroom-flow.spec.ts:52:5 › 完成启动、导入、抽取、重置和权重设置流程 ──────────────────────────────────
+
+    [31m"beforeAll" hook timeout of 30000ms exceeded.[39m
+
+      25 | }
+      26 |
+    > 27 | test.beforeAll(async () => {
+         |      ^
+      28 |   userDataDir = await mkdtemp(join(tmpdir(), 'name-picker-e2e-'));
+      29 |   electronApp = await electron.launch({
+      30 |     args: [
+        at D:\桌面\项目‘\抽取器\tests\e2e\classroom-flow.spec.ts:27:6
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\classroom-flow-完成启动、导入、抽取、重置和权重设置流程\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\classroom-flow-完成启动、导入、抽取、重置和权重设置流程\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\e2e\classroom-flow.spec.ts:52:5 › 完成启动、导入、抽取、重置和权重设置流程 ───────────────────────────────────

@@ -1,0 +1,27 @@
+﻿[31m[1mAssertionError[22m[39m: expected "spy" to be called 1 times, but got
+ 0 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"app-shell theme-light color-ink"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-titlebar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-titlebar__brand"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"app-titlebar__mark"[39m
+            [36m>[39m
+              [0m🎲[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-titlebar__title"[39m
+            [36m>[39m
+              [0m名字抽取器[0m

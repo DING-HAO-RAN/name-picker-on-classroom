@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createIpcHandlers, registerIpcHandlers, type IpcWindowControls } from './ipcHandlers';
 import { importRoster } from './importers/importRoster';
+import { syncStarsToRosterFile } from './importers/syncStars';
 import { getDevelopmentRendererUrl } from './renderer-url';
 import { LocalStore } from './storage/localStore';
 import { IPC_CHANNELS } from '../shared/ipcTypes';
@@ -328,30 +329,36 @@ if (!gotSingleInstanceLock) {
           app.setLoginItemSettings({ openAtLogin: enabled, path: process.execPath, args: [] });
         },
       },
-      // 品牌自定义：实时应用窗口标题与窗口图标（exe 内置图标需重新打包）
-      brandingControls: {
-        apply(branding: { windowTitle?: string; iconData?: string }) {
-          const window = BrowserWindow.getAllWindows().find(
-            (item) => !item.isDestroyed() && item !== floatingWindow,
-          );
-          if (window) {
-            if (branding.windowTitle) {
-              window.setTitle(branding.windowTitle);
-            }
-            if (branding.iconData) {
-              try {
-                const icon = nativeImage.createFromDataURL(branding.iconData);
-                if (!icon.isEmpty()) {
-                  window.setIcon(icon);
-                }
-              } catch {
-                // 图标数据非法时忽略，保持当前图标
+    // 品牌自定义：实时应用窗口标题与窗口图标（exe 内置图标需重新打包）
+    brandingControls: {
+      apply(branding: { windowTitle?: string; iconData?: string }) {
+        const window = BrowserWindow.getAllWindows().find(
+          (item) => !item.isDestroyed() && item !== floatingWindow,
+        );
+        if (window) {
+          if (branding.windowTitle) {
+            window.setTitle(branding.windowTitle);
+          }
+          if (branding.iconData) {
+            try {
+              const icon = nativeImage.createFromDataURL(branding.iconData);
+              if (!icon.isEmpty()) {
+                window.setIcon(icon);
               }
+            } catch {
+              // 图标数据非法时忽略，保持当前图标
             }
           }
-        },
+        }
       },
-    });
+    },
+    // 星级回写：改动的星级同步回名单源文件（内部失败静默忽略）
+    starSyncControls: {
+      sync(sourcePath: string, entries: { name: string; star: number }[]) {
+        void syncStarsToRosterFile(sourcePath, entries);
+      },
+    },
+  });
     registerIpcHandlers(ipcMain, handlers);
 
     mainWindowRef = createMainWindow();

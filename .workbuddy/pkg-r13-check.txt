@@ -1,0 +1,7 @@
+﻿FILECOUNT=48
+  • electron-builder  version=26.0.12 os=10.0.26200
+  • loaded configuration  file=D:\桌面\项目‘\抽取器\electron-builder.config.cjs
+  • executing @electron/rebuild  electronVersion=36.3.2 arch=x64 buildFromSource=false appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=36.3.2 appOutDir=release13\win-unpacked

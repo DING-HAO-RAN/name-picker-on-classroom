@@ -1,0 +1,3 @@
+﻿[master d022ca2] chore: prepare repository metadata for GitHub release
+ 3 files changed, 87 insertions(+), 33 deletions(-)
+ create mode 100644 LICENSE

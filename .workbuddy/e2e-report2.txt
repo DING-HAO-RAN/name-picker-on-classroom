@@ -1,0 +1,29 @@
+﻿
+Running 1 test using 1 worker
+
+  x  1 tests\e2e\classroom-flow.spec.ts:52:5 › 完成启动、导入、抽取、重置和权重设置流程 (0ms)
+
+
+  1) tests\e2e\classroom-flow.spec.ts:52:5 › 完成启动、导入、抽取、重置和权重设置流程 ──────────────────────────────────
+
+    [31m"beforeAll" hook timeout of 30000ms exceeded.[39m
+
+      25 | }
+      26 |
+    > 27 | test.beforeAll(async () => {
+         |      ^
+      28 |   userDataDir = await mkdtemp(join(tmpdir(), 'name-picker-e2e-'));
+      29 |   electronApp = await electron.launch({
+      30 |     args: [
+        at D:\桌面\项目‘\抽取器\tests\e2e\classroom-flow.spec.ts:27:6
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\classroom-flow-完成启动、导入、抽取、重置和权重设置流程\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\classroom-flow-完成启动、导入、抽取、重置和权重设置流程\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\e2e\classroom-flow.spec.ts:52:5 › 完成启动、导入、抽取、重置和权重设置流程 ───────────────────────────────────

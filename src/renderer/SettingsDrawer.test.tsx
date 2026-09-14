@@ -317,11 +317,13 @@ describe('设置抽屉', () => {
     expandSection('学生权重');
     fireEvent.click(within(dialog).getByRole('button', { name: '恢复默认权重' }));
 
+    const weightItems = within(dialog).getAllByRole('listitem');
     expect(
-      within(dialog)
-        // 只取学生权重输入框：设置面板里还有「动画时长」等其他数字输入
-        .getAllByRole('textbox', { name: /权重百分比$/ })
-        .map((input) => (input as HTMLInputElement).value),
+      weightItems
+        // 只取学生权重列表里的输入框：设置面板里还有「统一权重百分比」等输入
+        .map((item) => item.querySelector('input[aria-label$="权重百分比"]'))
+        .filter((input): input is HTMLInputElement => input !== null)
+        .map((input) => input.value),
     ).toEqual(['100', '100', '100']);
     await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
     const savedStudents = vi.mocked(api.saveState).mock.calls[0][0].students;

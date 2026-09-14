@@ -1,0 +1,17 @@
+﻿commit df1602ddbe3d61cf43ef0e6c079b974d80174770
+Author: DING_RAN <1799548606@qq.com>
+Date:   Sat Sep 12 18:25:54 2026 +0800
+
+    feat: keep numeric inputs as drafts and move roster import into settings
+    
+    - 抽取人数、动画时长、全屏停留时长改为草稿态输入：输入过程中保留原文，失焦或输入合法整数后再收敛
+    - 权重输入先做字符级格式校验（拒绝负号、字母、多个小数点）再做数值校验，支持小数中间态，清空时不报错
+    - 名单导入入口从侧栏的紧凑区域移入设置抽屉，重新导入成功后自动关闭抽屉回到主界面
+
+ src/renderer/App.test.tsx                     | 29 ++++++++++++++-
+ src/renderer/App.tsx                          | 13 ++-----
+ src/renderer/SettingsDrawer.test.tsx          | 44 +++++++++++++++++-----
+ src/renderer/components/DrawControls.tsx      | 22 ++++++++---
+ src/renderer/components/SettingsDrawer.tsx    | 53 ++++++++++++++++++++++++---
+ src/renderer/components/StudentWeightList.tsx | 39 +++++++++++++++-----
+ 6 files changed, 159 insertions(+), 41 deletions(-)

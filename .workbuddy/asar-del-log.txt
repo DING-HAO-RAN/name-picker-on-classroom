@@ -1,0 +1,29 @@
+﻿python.exe : [safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app
+.asar", "reason": "trash-failed", "detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resourc
+es\\app.asar: Error during a `trash` operation: Unknown { description: \"Some operations were aborted\" }"}
+At line:451 char:1
++ & 'C:\Users\17819\.workbuddy\binaries\python\versions\3.13.12\python. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([safe-delete][S...e aborted\" }"}:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import os,stat,time; p=os.path.join(os.getcwd(),'release','win-unpacked','resources','app.asar'); f=open(p,'r+b'); 
+f.truncate(0); f.close(); time.sleep(0.5); os.chmod(p,stat.S_IWRITE); os.remove(p); print('deleted')
+                                                                                                                       
+                                                                      ~~~~~~~~~^^^
+  File "D:\dinghaoran'\WorkBuddy\resources\app.asar.unpacked\cli\vendor\shim\sitecustomize.py", line 1093, in _safe_rem
+ove
+    _try_trash(abs_path)
+    ~~~~~~~~~~^^^^^^^^^^
+  File "D:\dinghaoran'\WorkBuddy\resources\app.asar.unpacked\cli\vendor\shim\sitecustomize.py", line 978, in _try_trash
+    if _try_trash_via_binary(abs_path):
+       ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "D:\dinghaoran'\WorkBuddy\resources\app.asar.unpacked\cli\vendor\shim\sitecustomize.py", line 902, in _try_trash
+_via_binary
+    raise OSError(
+    ...<2 lines>...
+    )
+OSError: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release\win-unpacked\resources\app.asar: Error during a `trash` operat
+ion: Unknown { description: "Some operations were aborted" }

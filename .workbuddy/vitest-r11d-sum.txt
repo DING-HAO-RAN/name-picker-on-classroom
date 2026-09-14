@@ -1,0 +1,9 @@
+﻿ [31m❯[39m src/renderer/SettingsDrawer.test.tsx [2m([22m[2m20 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1418[2mms[22m[39m
+[31m   [31m×[31m 设置抽屉[2m > [22m支持按姓名搜索、提示同名并把权重 0 设为暂不参与[39m[32m 106[2mms[22m[39m
+[31m   [31m×[31m 设置抽屉[2m > [22m权重按百分比输入并在失焦后提交数值[39m[32m 41[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/renderer/SettingsDrawer.test.tsx[2m > [22m设置抽屉
+[41m[1m FAIL [22m[49m src/renderer/SettingsDrawer.test.tsx[2m > [22m设置抽屉
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m172 passed[39m[22m[90m (174)[39m
+[2m   Duration [22m 9.39s[2m (transform 5.00s, setup 0ms, collect 13.49s, tests 4.94s, environment 24.00s, prepare 2.79s)[22m

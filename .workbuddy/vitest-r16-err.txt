@@ -1,0 +1,10 @@
+﻿ [31m❯[39m src/preload/index.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 711[2mms[22m[39m
+[31m   [31m×[31m preload namePicker bridge[2m > [22m只暴露固定业务方法，并将调用转发到固定 channel[39m[32m 42[2mms[22m[39m
+ [31m❯[39m src/renderer/SettingsDrawer.test.tsx [2m([22m[2m20 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1874[2mms[22m[39m
+[31m   [31m×[31m 设置抽屉[2m > [22m恢复默认权重后 App 状态和保存快照中的权重都为 1[39m[32m 166[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m [ src/main/ipcHandle
+[31m[1mError[22m: Transform failed with 1 error:
+[90m [2m❯[22m failureErrorWithLog node_modules/esbuild/lib/main.js:[2m1467:
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/renderer/SettingsDrawer.test.tsx[2m > [22m设置抽屉

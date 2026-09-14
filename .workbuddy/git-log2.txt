@@ -1,0 +1,4 @@
+﻿e272488 docs: add MIT license, open-source README and condensed release notes
+df1602d feat: keep numeric inputs as drafts and move roster import into settings
+d022ca2 chore: prepare repository metadata for GitHub release
+6315310 docs: record packaging evidence for custom titlebar build

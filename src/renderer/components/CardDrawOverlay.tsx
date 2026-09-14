@@ -73,15 +73,18 @@ export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlay
               aria-label={isRevealed ? `${student.name}，${star} 星` : `第 ${index + 1} 张卡，点击翻面`}
               onClick={() => reveal(index)}
             >
-              {/* 卡片容器：内层 3D 翻转 */}
-              <span className="card-draw__flipper">
+              {/* 卡片容器：内层 3D 翻转；入场时从中央牌堆飞到位（deal-index 控制延迟） */}
+              <span
+                className="card-draw__flipper"
+                style={{ '--deal-index': String(index) } as React.CSSProperties}
+              >
                 {/* 背面：深邃星穹 + 中央星徽 + 流光 */}
                 <span className="card-draw__face card-draw__face--back">
                   <span className="card-draw__back-glow" aria-hidden="true" />
                   <span className="card-draw__back-star" aria-hidden="true">✦</span>
                   <span className="card-draw__back-text" aria-hidden="true">DRAW</span>
                 </span>
-                {/* 正面：星级配色 + 名字 + 星星行 */}
+                {/* 正面：星级配色 + 名字 + 星星行（只按星星个数区分等级，不显示文字） */}
                 <span
                   className={`card-draw__face card-draw__face--front ${
                     STAR_THEME_CLASSES[star - 1]
@@ -92,6 +95,7 @@ export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlay
                       保底
                     </span>
                   ) : null}
+                  <span className="card-draw__band" aria-hidden="true" />
                   <span className="card-draw__name">{student.name}</span>
                   <span className="card-draw__stars" aria-hidden="true">
                     {Array.from({ length: star }, (_, starIndex) => (
@@ -104,7 +108,6 @@ export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlay
                       </span>
                     ))}
                   </span>
-                  <span className="card-draw__rank">{star} 星</span>
                 </span>
               </span>
             </button>

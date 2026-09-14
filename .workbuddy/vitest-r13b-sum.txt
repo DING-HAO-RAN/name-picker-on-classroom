@@ -1,0 +1,14 @@
+﻿ [31m❯[39m src/preload/index.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 130[2mms[22m[39m
+[31m   [31m×[31m preload namePicker bridge[2m > [22m只暴露固定业务方法，并将调用转发到固定 channel[39m[32m 83[2mms[22m[39m
+ [31m❯[39m src/main/ipcHandlers.test.ts [2m([22m[2m49 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 127[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22msaveState 将合法状态投影为安全的最小结构[39m[32m 25[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22mloadState 校验并投影存储结果，移除路径和多余字段[39m[32m 8[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22m只注册固定的最小 IPC channel，并把请求参数交给对应业务方法[39m[32m 4[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+[41m[1m FAIL [22m[49m src/preload/index.test.ts[2m > [22mpreload namePick
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m175 passed[39m[22m[90m (179)[39m
+[2m   Duration [22m 14.14s[2m (transform 3.22s, setup 0ms, collect 14.12s, tests 7.45s, environment 41.74s, prepare 5.04s)[22m

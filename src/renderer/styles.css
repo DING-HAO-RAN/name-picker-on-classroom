@@ -1300,8 +1300,8 @@ h2 {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  /* 遮罩底色随颜色主题的主色调深，保持深色投影氛围的同时跟随主题 */
-  background: color-mix(in srgb, var(--c-primary) 30%, rgba(5, 12, 10, 0.9));
+  /* 遮罩底色随颜色主题的主色轻染，整体为浅色调 */
+  background: color-mix(in srgb, var(--c-primary) 10%, rgba(250, 249, 244, 0.94));
   backdrop-filter: blur(10px);
   animation: overlayFadeIn 0.25s ease-out;
   cursor: pointer;
@@ -2175,13 +2175,29 @@ body.is-floating-window {
   perspective: 1200px;
 }
 
-/* 卡槽：hover 时未翻开的卡轻轻上浮提示可点 */
+/* 卡槽：入场时从中央牌堆飞到位（从卡堆抽牌的效果），延迟按序号递增 */
 .card-draw__slot {
   border: none;
   padding: 0;
   background: transparent;
   cursor: pointer;
   transition: transform 180ms ease;
+  animation: cardDealIn 560ms cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
+  animation-delay: calc(var(--deal-index, 0) * 110ms);
+}
+
+@keyframes cardDealIn {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--deal-index, 0) * -14px), -46vh) scale(0.4) rotate(-24deg);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
 }
 
 .card-draw__slot:hover {
@@ -2198,7 +2214,23 @@ body.is-floating-window {
 }
 
 .card-draw__slot--revealed .card-draw__flipper {
-  transform: rotateY(180deg);
+  /* 翻面动作感：先抬升加速，越过中段后落回定格 */
+  animation: cardFlipReveal 720ms cubic-bezier(0.3, 1.1, 0.4, 1) forwards;
+}
+
+@keyframes cardFlipReveal {
+  0% {
+    transform: rotateY(0deg) scale(1) translateY(0);
+  }
+  45% {
+    transform: rotateY(92deg) scale(1.16) translateY(-16px);
+  }
+  70% {
+    transform: rotateY(170deg) scale(1.04) translateY(2px);
+  }
+  100% {
+    transform: rotateY(180deg) scale(1) translateY(0);
+  }
 }
 
 .card-draw__face {
@@ -2264,27 +2296,56 @@ body.is-floating-window {
   text-indent: 0.42em;
 }
 
-/* 正面通用：星级渐变底 + 内描边 */
+/* 正面通用：星级渐变底 + 星级色边框 + 顶部色带（颜色感知更强） */
 .card-draw__face--front {
   transform: rotateY(180deg);
-  border: 2px solid rgba(255, 255, 255, 0.35);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
 .card-draw__face--star1 {
   background: linear-gradient(165deg, #f4f4f6 0%, #cfd3da 100%);
+  border-color: #aeb4bd;
 }
 .card-draw__face--star2 {
   background: linear-gradient(165deg, #3f7fe0 0%, #1c3f8f 100%);
+  border-color: #6ea8ff;
 }
 .card-draw__face--star3 {
   background: linear-gradient(165deg, #9a5cf0 0%, #4c2392 100%);
+  border-color: #c39bff;
 }
 .card-draw__face--star4 {
   background: linear-gradient(165deg, #f05a5a 0%, #8f1c2e 100%);
+  border-color: #ff9d9d;
 }
 .card-draw__face--star5 {
   background: linear-gradient(165deg, #ffd873 0%, #c98f1d 100%);
+  border-color: #ffe9a8;
+}
+
+/* 顶部星级色带：随卡面渐变同色，强化稀有度第一眼观感 */
+.card-draw__band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+.card-draw__face--star1 .card-draw__band {
+  background: linear-gradient(90deg, #d7dade, #b9bfc8);
+}
+.card-draw__face--star2 .card-draw__band {
+  background: linear-gradient(90deg, #6ea8ff, #2d5cb8);
+}
+.card-draw__face--star3 .card-draw__band {
+  background: linear-gradient(90deg, #c39bff, #6a35c4);
+}
+.card-draw__face--star4 .card-draw__band {
+  background: linear-gradient(90deg, #ff9d9d, #c23a4d);
+}
+.card-draw__face--star5 .card-draw__band {
+  background: linear-gradient(90deg, #ffe9a8, #e2a93a);
 }
 
 /* 保底命中：卡面附加金色流光环 */
@@ -2346,16 +2407,35 @@ body.is-floating-window {
   to { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-.card-draw__rank {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
+/* 星级过滤按钮：选中时按星级行业惯例高亮为金色系 */
+.star-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
 }
 
-.card-draw__face--star1 .card-draw__rank,
-.card-draw__face--star5 .card-draw__rank {
-  color: rgba(0, 0, 0, 0.55);
+.star-filter-button {
+  padding: 8px 14px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--c-ink-soft);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.star-filter-button--on {
+  border-color: #d9a53a;
+  background: linear-gradient(120deg, #fff3d1, #ffe08a);
+  color: #6b4a00;
+  box-shadow: 0 2px 10px rgba(217, 165, 58, 0.35);
+}
+
+.star-filter-button:hover {
+  border-color: var(--c-primary-strong);
 }
 
 /* 收下结果按钮：金色渐变 + 微光 */

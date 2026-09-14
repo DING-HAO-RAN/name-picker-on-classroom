@@ -1,0 +1,2 @@
+﻿[master 3b4e09d] chore: ignore release11 packaging output directory
+ 1 file changed, 1 insertion(+)

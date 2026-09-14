@@ -1,0 +1,13 @@
+﻿python.exe : [safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app
+.asar", "reason": "trash-failed", "detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resourc
+es\\app.asar: Error during a `trash` operation: Unknown { description: \"Some operations were aborted\" }"}
+At line:445 char:1
++ & 'C:\Users\17819\.workbuddy\binaries\python\versions\3.13.12\python. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([safe-delete][S...e aborted\" }"}:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+文件删除失败: D:\桌面\项目‘\抽取器\release\win-unpacked\resources\app.asar -> [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release\win-unpacked\resources\app.asar: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }
+目录删除失败: D:\桌面\项目‘\抽取器\release\win-unpacked\resources -> [WinError 145] 目录不是空的。: 'D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources'
+顶层目录删除失败: [WinError 145] 目录不是空的。: 'D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked'
+文件总数 74，失败 1；目录总数 2，失败 1

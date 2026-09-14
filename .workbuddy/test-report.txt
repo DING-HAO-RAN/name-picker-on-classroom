@@ -1,0 +1,91 @@
+﻿
+> name-picker@1.0.0 test
+> vitest --run
+
+
+[1m[46m RUN [49m[22m [36mv3.1.3 [39m[90mD:/桌面/项目‘/抽取器[39m
+
+ [32m✓[39m src/main/renderer-url.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/renderer/rollPacing.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/shared/drawEngine.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/preload/index.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 113[2mms[22m[39m
+ [32m✓[39m src/main/ipcHandlers.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+ [32m✓[39m src/main/storage/localStore.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 173[2mms[22m[39m
+ [32m✓[39m src/main/importers/importRoster.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 174[2mms[22m[39m
+ [32m✓[39m src/renderer/main.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 355[2mms[22m[39m
+   [33m[2m✓[22m[39m 名字抽取器根组件[2m > [22m渲染中文标题 [33m 320[2mms[22m[39m
+ [32m✓[39m src/renderer/SettingsDrawer.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[33m 1597[2mms[22m[39m
+node.exe : [90mstderr[2m | src/renderer/App.test.tsx[2m > [22m[2m课堂主界面[2m
+ > [22m[2m保存失败后锁定写操作并可通过重试继续
+At line:1 char:1
++ & "C:\Users\17819\.workbuddy\binaries\node\versions\22.22.2/node.exe" ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([90mstderr[2m...败后锁定写操作并可通过重试继续 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[22m[39mAn update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(.
+..):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser
+. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/renderer/App.test.tsx[2m > [22m[2m课堂主界面[2m > [22m[2
+m保存失败后锁定写操作并可通过重试继续
+[22m[39mAn update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(.
+..):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser
+. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/renderer/App.test.tsx[2m > [22m[2m课堂主界面[2m > [22m[2
+m抽屉打开或保存忙碌时快捷键不触发操作
+[22m[39mAn update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(.
+..):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser
+. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/renderer/App.test.tsx[2m > [22m[2m课堂主界面[2m > [22m[2
+m抽屉打开或保存忙碌时快捷键不触发操作
+[22m[39mAn update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(.
+..):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser
+. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m src/renderer/App.test.tsx [2m([22m[2m35 tests[22m[2m)[22m[33m 3460[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m166 passed[39m[22m[90m (166)[39m
+[2m   Start at [22m 18:24:09
+[2m   Duration [22m 13.85s[2m (transform 1.69s, setup 0ms, collect 9.60s, tests 5.99s, environment 44.34s, prepare 6.01s)[22m
+

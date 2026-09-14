@@ -1,0 +1,5 @@
+docs: add GitHub Release v1.0.0 publication record and download entry
+
+- README 增加「下载」小节，直接指向 Release 页面的安装包与便携包
+- release-checklist 记录 v1.0.0 的附件字节数、SHA-256 与发布前启动检查证据
+- 补 release3 输出目录的忽略规则，并说明对外发布时的哈希属于发布信息

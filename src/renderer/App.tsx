@@ -16,6 +16,7 @@ import type {
   DrawHistoryItem,
   PityPoolSettings,
   RosterState,
+  StarFilterSettings,
   StudentRecord,
   Theme,
   WeightPreset,
@@ -412,7 +413,7 @@ export function App() {
     [updateSettingsAndSave],
   );
 
-  /** 更新学生星级（1-5）：抽卡卡面颜色随之变化 */
+  /** 更新学生星级（1-5）：抽卡卡面颜色随之变化；名单文件在原位时同步回写 */
   const handleStarChange = useCallback(
     (id: string, star: number): void => {
       const currentRoster = rosterRef.current;
@@ -435,6 +436,65 @@ export function App() {
         students: currentRoster.students.map((student) =>
           student.id === id ? { ...student, star } : student,
         ),
+        history: normalizeHistory(currentRoster.history),
+      };
+      updateRoster(nextState);
+
+      // 名单文件仍在导入时的位置：把整套星级同步回源文件（失败静默）
+      const sourcePath = nextState.settings.sourcePath;
+      const starSync = window.namePicker?.starSync;
+      if (sourcePath && starSync) {
+        void starSync
+          .sync(
+            sourcePath,
+            nextState.students.map((student) => ({ name: student.name, star: student.star })),
+          )
+          .catch(() => undefined);
+      }
+
+      if (!hasValidRoster(nextState)) {
+        interactionLockRef.current = false;
+        return;
+      }
+
+      void saveState(nextState).finally(() => {
+        interactionLockRef.current = false;
+      });
+    },
+    [isAnimating, isImporting, isLoading, isSaving, saveState, updateRoster],
+  );
+
+  /** 更新按星级过滤抽取设置 */
+  const handleStarFilterChange = useCallback(
+    (starFilter: StarFilterSettings): void => {
+      updateSettingsAndSave({ starFilter });
+    },
+    [updateSettingsAndSave],
+  );
+
+  /** 一键把所有学生的权重设为同一百分比（0-100） */
+  const handleUniformWeight = useCallback(
+    (percent: number): void => {
+      const currentRoster = rosterRef.current;
+      if (
+        isLoading ||
+        isImporting ||
+        isSaving ||
+        isAnimating ||
+        interactionLockRef.current ||
+        !Number.isFinite(percent) ||
+        percent < 0 ||
+        percent > MAX_WEIGHT_PERCENT ||
+        currentRoster.students.length === 0
+      ) {
+        return;
+      }
+
+      interactionLockRef.current = true;
+      const weight = Math.round(percent * 100) / (MAX_WEIGHT_PERCENT * 100);
+      const nextState: RosterState = {
+        ...currentRoster,
+        students: currentRoster.students.map((student) => ({ ...student, weight })),
         history: normalizeHistory(currentRoster.history),
       };
       updateRoster(nextState);
@@ -685,6 +745,8 @@ export function App() {
           allowDuplicates: allowDuplicatesRef.current,
           theme: themeRef.current,
           colorTheme: colorThemeRef.current,
+          // 记录名单文件完整路径，供星级改动同步回写
+          sourcePath: importedRoster.sourcePath,
           // 重新导入名单时保留已设置的自定义背景图；未设置时不写入该键
           ...(backgroundImageRef.current
             ? { backgroundImage: backgroundImageRef.current }
@@ -926,18 +988,23 @@ export function App() {
       interactionLockRef.current = true;
       setErrorMessage(null);
 
-      // 计算加权抽签结果：启用保底池时传入保底参数，达到阈值则本次必中保底池
+      // 计算加权抽签结果：启用保底池时传入保底参数，达到阈值则本次必中保底池；
+      // 启用星级过滤时只抽取勾选星级的学生
       const pitySettings = currentRoster.settings.pityPool;
       const pityCounterBefore = currentRoster.settings.pityCounter ?? 0;
       const usePity =
         pitySettings?.enabled === true &&
         pitySettings.studentIds.length > 0 &&
         pitySettings.threshold > 0;
+      const starFilterSettings = currentRoster.settings.starFilter;
+      const useStarFilter =
+        starFilterSettings?.enabled === true && starFilterSettings.stars.length > 0;
       const drawResult = drawStudents(currentRoster.students, count, Math.random, {
         allowDuplicates: isAllowDup,
         pityStudentIds: usePity ? pitySettings.studentIds : undefined,
         pityThreshold: usePity ? Math.min(pitySettings.threshold, MAX_PITY_THRESHOLD) : undefined,
         pityCounter: pityCounterBefore,
+        allowedStars: useStarFilter ? starFilterSettings.stars : undefined,
       });
       // 抽中保底池成员后计数清零，否则累计未中次数
       const pityCounterAfter = usePity ? (drawResult.hitPity ? 0 : pityCounterBefore + 1) : 0;
@@ -997,7 +1064,11 @@ export function App() {
       );
 
       if (drawResult.shortage) {
-        setErrorMessage(`仅抽到 ${drawResult.selected.length} 人，当前可抽取学生不足。`);
+        setErrorMessage(
+          useStarFilter
+            ? `仅抽到 ${drawResult.selected.length} 人，勾选的星级里可抽取学生不足。`
+            : `仅抽到 ${drawResult.selected.length} 人，当前可抽取学生不足。`,
+        );
       }
 
       if (drawResult.selected.length === 0) {
@@ -1014,8 +1085,13 @@ export function App() {
 
       const duration = Math.max(0, nextState.settings.animationDurationMs);
       const currentStyle = animationStyleRef.current;
+      // 翻滚名字的候选池与抽取规则保持一致（含星级过滤）
       const candidates = currentRoster.students.filter(
-        (s) => (isAllowDup || !s.drawnThisRound) && validateWeight(s.weight) && s.weight > 0,
+        (s) =>
+          (isAllowDup || !s.drawnThisRound) &&
+          validateWeight(s.weight) &&
+          s.weight > 0 &&
+          (!useStarFilter || starFilterSettings.stars.includes(s.star)),
       );
       const candidateNames = candidates.map((s) => s.name);
 
@@ -1605,6 +1681,9 @@ export function App() {
           onStarChange={handleStarChange}
           branding={roster.settings.branding}
           onBrandingChange={handleBrandingChange}
+          starFilter={roster.settings.starFilter}
+          onStarFilterChange={handleStarFilterChange}
+          onUniformWeightChange={handleUniformWeight}
         />
       ) : null}
 

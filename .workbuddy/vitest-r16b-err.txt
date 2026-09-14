@@ -1,0 +1,8 @@
+﻿ [31m❯[39m src/preload/index.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 113[2mms[22m[39m
+[31m   [31m×[31m preload namePicker bridge[2m > [22m只暴露固定业务方法，并将调用转发到固定 channel[39m[32m 53[2mms[22m[39m
+ [31m❯[39m src/main/ipcHandlers.test.ts [2m([22m[2m49 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 80[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22m只注册固定的最小 IPC channel，并把请求参数交给对应业务方法[39m[32m 16[2mms[22m[39m
+ [31m❯[39m src/renderer/SettingsDrawer.test.tsx [2m([22m[2m20 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1590[2mms[22m[39m
+[31m   [31m×[31m 设置抽屉[2m > [22m恢复默认权重后 App 状态和保存快照中的权重都为 1[39m[32m 120[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha

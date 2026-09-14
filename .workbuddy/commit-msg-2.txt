@@ -1,0 +1,6 @@
+docs: record packaging evidence for custom titlebar build
+
+- 按新基线 fc3fdce 重新打包，更新 NSIS 与 portable 两个产物的字节数、SHA-256 与未签名状态
+- 补记本轮受限打包日志、解包版 7 项启动检查与 ASAR 358 条归档条目
+- 如实标注 portable 本轮只有构建证据：Playwright 无法 attach，且沙箱内进程级启动不可靠（解包版同样立即退出）
+- 收货基线改为 fc3fdce，并更新已知限制中「两个包内未完成 UI 流程」的表述

@@ -1,0 +1,80 @@
+=== release12 (marker at 20814236) ===
+icon.isEmpty()) {
+                window.setIcon(icon);
+              }
+            } catch {
+            }
+          }
+        }
+      }
+    }
+  });
+  registerIpcHandlers(electron.ipcMain, handlers);
+  mainWindowRef = createMainWindow();
+  electron.app.on("activate", () => {
+    if (electron.BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow();
+    }
+  });
+});
+if (!electron.app.requestSingleInstanceLock()) {
+  electron.app.quit();
+} else {
+  electron.app.on("second-instance", () => {
+    const mainWindow = mainWindowRef;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+electron.app.on("before-quit", () => {
+  isQuitting = true;
+});
+electron.app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    electron.app.quit();
+  }
+});
+"use strict";
+const electron = require("electron");
+const IPC_CHANNELS = {
+  impo
+
+=== release14 (marker at 20812983) ===
+dx, dy) {
+    if (!floatingWindow || floatingWindow.isDestroyed() || !dragActive) {
+      return;
+    }
+    const [x, y] = floatingWindow.getPosition();
+    floatingWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
+    floatingWindow.webContents.invalidate();
+  },
+  /** 指针抬起：结束拖动 */
+  dragEnd() {
+    dragActive = false;
+  }
+};
+const gotSingleInstanceLock = electron.app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  electron.app.quit();
+} else {
+  electron.app.on("second-instance", () => {
+    const mainWindow = mainWindowRef;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+  void electron.app.whenReady().then(() => {
+    electron.Menu.setApplicationMenu(null);
+    const store = new LocalStore(electron.app.getPath("userData"));
+    appStore = store;
+    const handlers = createIpcHandlers({
+      showOpenDi

@@ -126,6 +126,11 @@ export interface SettingsDrawerProps {
   onDeleteWeightPreset?: (name: string) => void;
   /** 提交学生星级（1-5） */
   onStarChange?: (id: string, star: number) => void;
+  /** 按星级过滤抽取设置 */
+  starFilter?: { enabled: boolean; stars: number[] };
+  onStarFilterChange?: (starFilter: { enabled: boolean; stars: number[] }) => void;
+  /** 一键把所有学生权重设为同一百分比（0-100） */
+  onUniformWeightChange?: (percent: number) => void;
   /** 品牌自定义设置 */
   branding?: BrandingSettings;
   /** 更新品牌自定义（会实时应用窗口标题与图标） */
@@ -207,6 +212,9 @@ export function SettingsDrawer({
   onApplyWeightPreset,
   onDeleteWeightPreset,
   onStarChange,
+  starFilter,
+  onStarFilterChange,
+  onUniformWeightChange,
   branding,
   onBrandingChange,
 }: SettingsDrawerProps) {
@@ -228,6 +236,8 @@ export function SettingsDrawer({
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   // 权重预设名称输入草稿
   const [presetNameDraft, setPresetNameDraft] = useState('');
+  // 统一权重输入草稿
+  const [uniformWeightDraft, setUniformWeightDraft] = useState('');
   // 品牌自定义草稿：标题类输入用草稿态，失焦或回车提交并实时应用
   const brandingIconInputRef = useRef<HTMLInputElement>(null);
   const [draftBranding, setDraftBranding] = useState<BrandingSettings>(
@@ -932,6 +942,48 @@ export function SettingsDrawer({
             onStarChange={onStarChange}
           />
 
+          {/* 统一权重：一键把所有学生设为同一百分比 */}
+          <section className="settings-group" aria-labelledby="uniform-weight-title">
+            <h3 id="uniform-weight-title" className="settings-group-title">
+              统一权重
+            </h3>
+            <div className="weight-preset-row">
+              <input
+                className="settings-input"
+                type="text"
+                inputMode="decimal"
+                aria-label="统一权重百分比"
+                placeholder="例如 50"
+                value={uniformWeightDraft}
+                disabled={disabled || students.length === 0}
+                onChange={(event) => setUniformWeightDraft(event.target.value)}
+              />
+              <button
+                type="button"
+                className="secondary-button weight-preset-save"
+                disabled={
+                  disabled ||
+                  students.length === 0 ||
+                  !/^\d{1,3}(\.\d+)?$/.test(uniformWeightDraft.trim()) ||
+                  Number(uniformWeightDraft) < 0 ||
+                  Number(uniformWeightDraft) > 100
+                }
+                onClick={() => {
+                  const percent = Number(uniformWeightDraft.trim());
+                  if (Number.isFinite(percent)) {
+                    onUniformWeightChange?.(percent);
+                    setUniformWeightDraft('');
+                  }
+                }}
+              >
+                应用给所有人
+              </button>
+            </div>
+            <small className="settings-field-hint">
+              把全部学生的权重设为同一百分比（0-100），恢复完全等概率抽取。
+            </small>
+          </section>
+
           {/* 权重预设：保存当前权重分配方案，随时套用 */}
           <section className="settings-group" aria-labelledby="weight-preset-title">
             <h3 id="weight-preset-title" className="settings-group-title">
@@ -1026,6 +1078,63 @@ export function SettingsDrawer({
                 预设按学生记录权重比例，保存在本机，换名单后同名的同学会套用对应权重。
               </small>
             </div>
+          </section>
+
+          {/* 星级过滤：开启后只抽取勾选星级的学生 */}
+          <section className="settings-group" aria-labelledby="star-filter-title">
+            <h3 id="star-filter-title" className="settings-group-title">
+              按星级抽取
+            </h3>
+            <PillSwitch
+              checked={starFilter?.enabled ?? false}
+              disabled={disabled || students.length === 0}
+              label="只抽取指定星级的学生"
+              ariaLabel="只抽取指定星级的学生"
+              description={
+                starFilter?.enabled
+                  ? '勾选要参与的星级，抽取时只考虑这些星级的学生。'
+                  : '开启后可勾选 1-5 星，抽取范围限定在勾选的星级内。'
+              }
+              onChange={(enabled) =>
+                onStarFilterChange?.({
+                  enabled,
+                  stars: starFilter?.stars?.length ? starFilter.stars : [3, 4, 5],
+                })
+              }
+            />
+            {starFilter?.enabled ? (
+              <>
+                <div className="star-filter-row" role="group" aria-label="选择参与的星级">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isOn = starFilter.stars.includes(star);
+                    return (
+                      <button
+                        key={star}
+                        type="button"
+                        className={`star-filter-button star-filter-button--${star}${
+                          isOn ? ' star-filter-button--on' : ''
+                        }`}
+                        disabled={disabled}
+                        aria-pressed={isOn}
+                        onClick={() => {
+                          const stars = isOn
+                            ? starFilter.stars.filter((item) => item !== star)
+                            : [...starFilter.stars, star].sort((a, b) => a - b);
+                          onStarFilterChange?.({ enabled: starFilter.enabled, stars });
+                        }}
+                      >
+                        {'★'.repeat(star) || '★'}
+                      </button>
+                    );
+                  })}
+                </div>
+                {starFilter.stars.length === 0 ? (
+                  <p className="settings-bg-error" role="status">
+                    至少勾选一个星级，否则无法抽取。
+                  </p>
+                ) : null}
+              </>
+            ) : null}
           </section>
 
           {/* 品牌自定义：主界面标题、窗口标题、程序名字、标题栏文字与图标 */}

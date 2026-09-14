@@ -1,0 +1,5 @@
+﻿win-unpacked
+builder-debug.yml
+NamePicker Setup-1.0.0.exe
+NamePicker Setup-1.0.0.exe.blockmap
+NamePicker-1.0.0.exe

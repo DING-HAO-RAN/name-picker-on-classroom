@@ -1,0 +1,13 @@
+﻿target=release\win-unpacked\NamePicker.exe
+launcher pid=28580 startTime=18:03:40
+t= 3s alive=0 [none]
+t= 6s alive=0 [none]
+t= 9s alive=0 [none]
+t=12s alive=0 [none]
+t=15s alive=0 [none]
+t=18s alive=0 [none]
+t=21s alive=0 [none]
+t=24s alive=0 [none]
+t=27s alive=0 [none]
+t=30s alive=0 [none]
+--- 结束采样，清理进程 ---

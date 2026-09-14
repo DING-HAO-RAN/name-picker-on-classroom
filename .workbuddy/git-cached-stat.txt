@@ -1,0 +1,4 @@
+﻿ LICENSE      | 21 ++++++++++++++
+ README.md    | 90 +++++++++++++++++++++++++++++++++++++++---------------------
+ package.json |  9 +++++-
+ 3 files changed, 87 insertions(+), 33 deletions(-)

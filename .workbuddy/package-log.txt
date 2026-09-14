@@ -1,0 +1,9 @@
+﻿  • electron-builder  version=26.0.12 os=10.0.26200
+  ⨯ ENOENT: no such file or directory, open 'D:\桌面\项目‘\抽取器\.directories.output=release2'  failedTask=build stackTrace=Error: ENOENT: no such file or directory, open 'D:\桌面\项目‘\抽取器\.directories.output=release2'
+    at open (node:internal/fs/promises:639:25)
+    at Object.readFile (node:internal/fs/promises:1249:14)
+    at readConfig (D:\桌面\项目‘\抽取器\node_modules\app-builder-lib\src\util\config\load.ts:17:16)
+    at getConfig (D:\桌面\项目‘\抽取器\node_modules\app-builder-lib\src\util\config\config.ts:43:34)
+    at Packager.validateConfig (D:\桌面\项目‘\抽取器\node_modules\app-builder-lib\src\packager.ts:361:27)
+    at Packager.build (D:\桌面\项目‘\抽取器\node_modules\app-builder-lib\src\packager.ts:392:5)
+    at executeFinally (D:\桌面\项目‘\抽取器\node_modules\builder-util\src\promise.ts:12:14)

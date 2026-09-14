@@ -1,0 +1,14 @@
+﻿python.exe : [safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked", "reason": "tr
+ash-failed", "detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked: Error during a `trash` opera
+tion: Unknown { description: \"Some operations were aborted\" }"}
+At line:445 char:1
++ & 'C:\Users\17819\.workbuddy\binaries\python\versions\3.13.12\python. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([safe-delete][S...e aborted\" }"}:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked", "reason": "trash-failed", 
+"detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked: Error during a `trash` operation: Unknown
+ { description: \"Some operations were aborted\" }"}
+删除失败 win-unpacked: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release\win-unpacked: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }
+共删除 0 个条目

@@ -1,0 +1,33 @@
+﻿STATE MTIME BEFORE | 1789313878068.1167
+node.exe : D:\桌面\项目‘\抽取器\node_modules\playwright-core\lib\server\electron\elect
+ron.js:282
+At line:445 char:72
++ ... ralPath $p; & 'C:\Users\17819\.workbuddy\binaries\node\versions\22.22 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\桌面\项目‘\抽取器\n...electron.js:282 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    const failError = new Error('Process failed to launch!');
+                      ^
+
+Error: Process failed to launch!
+    at D:\桌面\项目‘\抽取器\node_modules\playwright-core\lib\server\electron\electron.
+js:282:23
+    at new Promise (<anonymous>)
+    at waitForLine (D:\桌面\项目‘\抽取器\node_modules\playwright-core\lib\server\elect
+ron\electron.js:278:10)
+    at D:\桌面\项目‘\抽取器\node_modules\playwright-core\lib\server\electron\electron.
+js:233:34
+    at async ProgressController.run (D:\桌面\项目‘\抽取器\node_modules\playwright-core
+\lib\server\progress.js:79:22)
+    at async ElectronDispatcher.launch (D:\桌面\项目‘\抽取器\node_modules\playwright-c
+ore\lib\server\dispatchers\electronDispatcher.js:34:33)
+    at async LongStandingScope._race (D:\桌面\项目‘\抽取器\node_modules\playwright-cor
+e\lib\utils\isomorphic\manualPromise.js:94:14)
+    at async ElectronDispatcher._handleCommand (D:\桌面\项目‘\抽取器\node_modules\play
+wright-core\lib\server\dispatchers\dispatcher.js:98:14)
+    at async DispatcherConnection.dispatch (D:\桌面\项目‘\抽取器\node_modules\playwrig
+ht-core\lib\server\dispatchers\dispatcher.js:366:22)
+
+Node.js v22.22.2

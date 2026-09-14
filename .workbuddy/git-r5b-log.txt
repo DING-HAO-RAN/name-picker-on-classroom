@@ -1,0 +1,3 @@
+﻿98f493c chore: ignore release5 packaging output directory
+aec1d67 feat: draft-mode numeric inputs, stretched background, color themes, floating ball on close
+adb0fe1 chore: ignore release4 packaging output directory

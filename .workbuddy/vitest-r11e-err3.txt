@@ -1,0 +1,5 @@
+﻿4: [31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with t
+216: [31m[1mAssertionError[22m: expected "spy" to be called with arguments: [ '1'
+219: Received: 
+230: Number of calls: [1m1[22m
+239: [32m'alert'[39m))[33m.[39mnot[33m.[39m[34mtoBeInTheDocument[39m()[33m;

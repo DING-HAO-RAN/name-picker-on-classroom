@@ -1,0 +1,8 @@
+PASS | 打包产物窗口标题正确 | title=名字抽取器
+PASS | 打包产物仍为无边框窗口 | {"widthDiff":0,"heightDiff":0}
+PASS | 打包产物预加载未暴露 Node 对象 | {"apiKeys":["clearState","importRoster","loadState","saveState","windowControls"],"hasRequire":false,"hasProcess":false,"hasModule":false}
+PASS | 打包产物具备窗口控制能力 | apiKeys=clearState,importRoster,loadState,saveState,windowControls
+PASS | 打包产物标题栏三个按钮可用 | [{"label":"最小化窗口","disabled":false},{"label":"最大化窗口","disabled":false},{"label":"关闭窗口","disabled":false}]
+PASS | 打包产物抽屉让开标题栏且标题未被挤压 | {"titlebarBottom":52,"panelTop":52,"titleWidth":66}
+PASS | 打包产物停留时长默认 3000 毫秒 | value=3000
+SUMMARY | total=7 passed=7 failed=0

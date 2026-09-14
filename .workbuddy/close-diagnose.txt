@@ -1,0 +1,17 @@
+﻿pid= 5128 initial exitCode= null
+已点击关闭按钮
+主进程查询失败（可能已退出）: electronApplication.evaluate: Target page, context or browser has been closed
+Browser logs:
+
+<launching> "D:\桌面\项目‘\抽取器\node_modules\electron\dist\electron.exe" "-r" "D:\桌面\项目‘\抽取器\node_modules\playwright-core\lib\server\electron\loader.js" "--inspect=0" "--remote-debugging-port=0" "--no-sandbox" "--disable-gpu" "--disable-gpu-sandbox" "--disable-software-rasterizer" "--disable-dev-shm-usage" "--user-data-dir=C:\Users\17819\AppData\Local\Temp\name-picker-close-LZyiOQ" "D:\桌面\项目‘\抽取器\dist\main\index.js"
+<launched> pid=5128
+[pid=5128][out] 
+[pid=5128][err] Debugger listening on ws://127.0.0.1:25543/435f82c6-6048-473b-a15c-08a55e01713b
+[pid=5128][err] For help, see: https://nodejs.org/en/docs/inspector
+[pid=5128][err] Debugger attached.
+[pid=5128][err] 
+[pid=5128][err] DevTools listening on ws://127.0.0.1:25550/devtools/browser/c75c0fa2-eea1-44c0-8907-43d3cb423ba4
+[pid=5128][err] Waiting for the debugger to disconnect...
+final exitCode= null
+closeEventFired= false
+结论：关闭按钮没有让应用退出

@@ -1,0 +1,2 @@
+﻿[master 12bffe1] fix: floating ball drag via cursor-point DIP with press offset; disable GPU to stop transparent ghosting
+ 7 files changed, 128 insertions(+), 66 deletions(-)

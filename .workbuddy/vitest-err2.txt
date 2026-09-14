@@ -1,0 +1,32 @@
+﻿[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+m重新选取人员名单入口在设置抽屉里，导入成功后回到主界面
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible ele
+ment with the role "button" and name "重新选取人员名单"
+
+Here are the accessible roles:
+
+  main:
+
+  Name "":
+  [36m<main[39m
+    [33mclass[39m=[32m"app-shell theme-light"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"app-titlebar"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"classroom-header"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+

@@ -1,0 +1,3 @@
+﻿4748843 feat: custom background image, maximize on launch, classroom ink-and-paper theme
+5781749 docs: add GitHub Release v1.0.0 publication record and download entry
+885f488 build: allow overriding packaging output directory via NAME_PICKER_OUTPUT_DIR

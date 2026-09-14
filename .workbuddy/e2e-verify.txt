@@ -1,0 +1,20 @@
+﻿PASS | 窗口无原生边框（内容区与窗口同尺寸） | {"widthDiff":0,"heightDiff":0}
+PASS | 顶部副标题已移除 | matchCount=0
+PASS | 标题栏按钮可用：最小化窗口 | enabled=true
+PASS | 标题栏按钮可用：最大化窗口 | enabled=true
+PASS | 标题栏按钮可用：关闭窗口 | enabled=true
+PASS | 最大化生效且按钮切换为「还原」 | isMaximized=true, restoreButton=true
+PASS | 还原生效且按钮切回「最大化」 | isMaximized=false, maximizeButton=true
+PASS | 最小化生效 | isMinimized=true
+PASS | 导入名单 | 共 4 名学生
+PASS | 权重与历史默认折叠 | weight=false, history=false
+PASS | 折叠时权重输入框不渲染 | count=0
+PASS | 设置抽屉让开标题栏且标题未被挤压 | {"titlebarBottom":52,"panelTop":52,"titleWidth":66}
+PASS | 结果全屏停留时长默认 3000 毫秒 | value=3000
+PASS | 展开权重后可编辑并保存 | 甲同学权重=2
+PASS | 全屏结果提示 3 秒 | tipMatchCount=1
+PASS | 全屏结果约 3 秒后自动关闭 | visibleMs=3380
+PASS | 重置本轮后恢复等待抽取 | 等待抽取 x4
+PASS | 关闭按钮退出应用 | quitDetected=true
+SUMMARY | total=18 passed=18 failed=0
+verify exit=0

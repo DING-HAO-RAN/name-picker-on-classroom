@@ -1,0 +1,2 @@
+﻿CLEAN RUN ALIVE=True
+WINDOW TITLE=name-picker

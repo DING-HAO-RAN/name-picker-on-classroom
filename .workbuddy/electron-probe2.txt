@@ -1,0 +1,15 @@
+﻿electron binary: D:\桌面\项目‘\抽取器\node_modules\electron\dist\electron.exe
+main script: D:\桌面\项目‘\抽取器\dist\main\index.js
+user-data-dir: C:\Users\17819\AppData\Local\Temp\name-picker-probe-yAL3Nn
+ELECTRON_RUN_AS_NODE = undefined
+[out] 
+[err] [26572:0912/144553.306:INFO:CONSOLE:2] "%cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+probe timeout: 已运行 10 秒仍未退出，视为启动成功
+exit code: null signal: SIGTERM

@@ -1,0 +1,4 @@
+EXIT FILE: ﻿PKG_EXIT=0
+release13 file count: 45
+  NamePicker Setup-1.0.0.exe 84.7MB
+  NamePicker-1.0.0.exe 84.5MB

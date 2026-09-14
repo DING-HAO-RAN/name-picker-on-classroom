@@ -1,0 +1,5 @@
+﻿[master 57e727b] fix: skip full init when single-instance lock is taken (ghost window save failure on relaunch); card-draw, star system, branding
+ 26 files changed, 2199 insertions(+), 254 deletions(-)
+ create mode 100644 src/main/importers/rosterEntry.ts
+ create mode 100644 src/renderer/components/CardDrawOverlay.tsx
+ create mode 100644 src/renderer/components/PillSwitch.tsx

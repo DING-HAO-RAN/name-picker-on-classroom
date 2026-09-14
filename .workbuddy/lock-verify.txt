@@ -1,0 +1,12 @@
+FATAL | electron.launch: Target page, context or browser has been closed
+Browser logs:
+
+<launching> "D:\桌面\项目‘\抽取器\release14\win-unpacked\NamePicker.exe" "--inspect=0" "--remote-debugging-port=0" "--no-sandbox" "--disable-gpu" "--disable-gpu-sandbox" "--disable-dev-shm-usage"
+<launched> pid=32576
+[pid=32576][out] 
+[pid=32576][err] Debugger listening on ws://127.0.0.1:12692/867ad015-2a5e-490d-8777-5d15bc97e00a
+[pid=32576][err] For help, see: https://nodejs.org/en/docs/inspector
+[pid=32576][err] Debugger attached.
+[pid=32576][err] 
+[pid=32576][err] DevTools listening on ws://127.0.0.1:12694/devtools/browser/5996206e-3eaa-4430-bc2e-2e9cfadb5b1a
+[pid=32576][err] Waiting for the debugger to disconnect...

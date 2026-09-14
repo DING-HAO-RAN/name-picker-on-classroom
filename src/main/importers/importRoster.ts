@@ -18,7 +18,7 @@ const importers = new Map<string, (filePath: string) => Promise<{ name: string; 
 
 export async function importRoster(
   filePath: string,
-): Promise<{ sourceName: string; students: StudentRecord[] }> {
+): Promise<{ sourceName: string; sourcePath: string; students: StudentRecord[] }> {
   const importer = importers.get(extname(filePath).toLowerCase());
   if (importer === undefined) {
     throw new RosterImportError('UNSUPPORTED_FORMAT', '不支持的名单文件格式。');
@@ -43,6 +43,8 @@ export async function importRoster(
 
   return {
     sourceName: basename(filePath),
+    // 记录完整路径：之后改星级时可以同步回写名单文件（文件移动后静默忽略）
+    sourcePath: filePath,
     students: normalizedEntries.map((entry) => ({
       id: randomUUID(),
       name: entry.name,

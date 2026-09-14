@@ -1,0 +1,11 @@
+﻿[516]   padding: 16px 20px; |   border: 1px solid var(--c-wash-border); |   border-radius: 14px; |   background: #ffffff;
+[590]   width: 100%; |   border: 2px solid var(--c-wash-border); |   border-radius: 12px; |   background: #ffffff;
+[664]  | .secondary-button { |   border: 2px solid var(--c-primary); |   background: #ffffff;
+[756]   padding: 10px 16px; |   border: 2px solid var(--c-wash-border); |   border-radius: 12px; |   background: #ffffff;
+[836]   padding: 8px 10px; |   border: 2px solid var(--c-wash-border); |   border-radius: 10px; |   background: #ffffff;
+[983]   min-height: 56px; |   padding: 8px 12px; |   border: 1px solid #f59e0b; |   background: #ffffff;
+[1132]   min-width: 180px; |   padding: 16px 36px; |   border-radius: 24px; |   background: #ffffff;
+[1167]  | .result-card--rolling { |   border: 2px dashed var(--c-primary); |   background: #ffffff;
+[1262]   padding: 0 14px; |   border: 1px solid #cbd5e1; |   border-radius: 12px; |   background: #ffffff;
+[1373]   padding: 0 14px; |   border: 1px solid #cbd5e1; |   border-radius: 12px; |   background: #ffffff;
+[1427]   padding: 26px clamp(20px, 4vw, 32px); |   border: 1px solid #fecaca; |   border-radius: 22px; |   background: #ffffff;

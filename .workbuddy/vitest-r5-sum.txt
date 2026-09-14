@@ -1,0 +1,21 @@
+﻿ [31m❯[39m src/preload/index.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 831[2mms[22m[39m
+[31m   [31m×[31m preload namePicker bridge[2m > [22m只暴露固定业务方法，并将调用转发到固定 channel[39m[32m 31[2mms[22m[39m
+ [31m❯[39m src/main/ipcHandlers.test.ts [2m([22m[2m47 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 65[2mms[22m[39m
+[31m   [31m×[31m 主进程 IPC 业务 handler[2m > [22m只注册固定的最小 IPC channel，并把请求参数交给对应业务方法[39m[32m 17[2mms[22m[39m
+ [31m❯[39m src/renderer/App.test.tsx [2m([22m[2m35 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 3174[2mms[22m[39m
+[31m   [31m×[31m 课堂主界面[2m > [22m导入名单后显示人数并保存状态[39m[32m 96[2mms[22m[39m
+[31m   [31m×[31m 课堂主界面[2m > [22m支持抽取人数步进器和动画开关[39m[33m 1043[2mms[22m[39m
+[31m   [31m×[31m 课堂主界面[2m > [22m加载并保存动画时长和主题，同时应用主题 class[39m[32m 96[2mms[22m[39m
+[31m   [31m×[31m 课堂主界面[2m > [22m快捷键可导入、抽取和重置，且不会抢占输入框[39m[32m 68[2mms[22m[39m
+[31m   [31m×[31m 课堂主界面[2m > [22m结果全屏停留时长默认 3 秒，并可在设置中修改后保存[39m[32m 113[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 7 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+[41m[1m FAIL [22m[49m src/preload/index.test.ts[2m > [22mpreload namePick
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+[2m Test Files [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m7 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m164 passed[39m[22m[90m (171)[39m
+[2m   Duration [22m 11.56s[2m (transform 1.28s, setup 0ms, collect 7.82s, tests 5.72s, environment 36.49s, prepare 5.21s)[22m

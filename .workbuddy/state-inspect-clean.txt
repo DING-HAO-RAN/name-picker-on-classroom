@@ -1,0 +1,13 @@
+﻿size: 10339
+top keys: ['history', 'settings', 'sourceName', 'students']
+students: 30
+first student keys: ['drawnThisRound', 'id', 'name', 'weight']
+students with non-int star: 30
+students with non-int drawCount: 30
+settings keys: ['allowDuplicates', 'animationDurationMs', 'animationEnabled', 'animationStyle', 'colorTheme', 'pityCounter', 'pityPool', 'theme']
+soundDrawnData length: None
+pityPool: {'enabled': False, 'studentIds': 0, 'threshold': 10}
+pityCounter: 0
+weightPresets: None
+history: 32
+directory writable: yes

@@ -1,0 +1,3 @@
+﻿9727fee chore: ignore release9 packaging output directory
+2bdea9c fix: touch-friendly incremental drag reporting; restore GPU to fix animation lag
+2c63836 chore: ignore release8 packaging output directory

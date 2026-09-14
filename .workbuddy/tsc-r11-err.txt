@@ -1,0 +1,14 @@
+﻿src/renderer/App.test.tsx(446,62): error TS2345: Argument of type '{ selected: { drawnThisRound: boolean; id: string; name: string; weight: number; }[]; updatedStudents: StudentRecord[]; shortage: true; }' is not assignable to parameter of type 'DrawResult'.
+  Property 'hitPity' is missing in type '{ selected: { drawnThisRound: boolean; id: string; name: string; weight: number; }[]; updatedStudents: StudentRecord[]; shortage: true; }' but required in type 'DrawResult'.
+src/renderer/App.tsx(256,53): error TS2448: Block-scoped variable 'saveState' used before its declaration.
+src/renderer/App.tsx(256,53): error TS2454: Variable 'saveState' is used before being assigned.
+src/renderer/App.tsx(340,6): error TS2448: Block-scoped variable 'saveState' used before its declaration.
+src/renderer/App.tsx(340,6): error TS2454: Variable 'saveState' is used before being assigned.
+src/renderer/components/DrawControls.tsx(158,11): error TS2322: Type '((allowDuplicates: boolean) => void) | undefined' is not assignable to type '(checked: boolean) => void'.
+  Type 'undefined' is not assignable to type '(checked: boolean) => void'.
+src/renderer/components/SettingsDrawer.tsx(648,15): error TS2322: Type '((show: boolean) => void) | undefined' is not assignable to type '(checked: boolean) => void'.
+  Type 'undefined' is not assignable to type '(checked: boolean) => void'.
+src/renderer/components/SettingsDrawer.tsx(660,15): error TS2322: Type '((enabled: boolean) => void) | undefined' is not assignable to type '(checked: boolean) => void'.
+  Type 'undefined' is not assignable to type '(checked: boolean) => void'.
+src/renderer/components/SettingsDrawer.tsx(748,15): error TS2322: Type '((enabled: boolean) => void) | undefined' is not assignable to type '(checked: boolean) => void'.
+  Type 'undefined' is not assignable to type '(checked: boolean) => void'.

@@ -1,0 +1,3 @@
+﻿885f488 build: allow overriding packaging output directory via NAME_PICKER_OUTPUT_DIR
+e272488 docs: add MIT license, open-source README and condensed release notes
+df1602d feat: keep numeric inputs as drafts and move roster import into settings

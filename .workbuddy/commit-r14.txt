@@ -1,0 +1,39 @@
+﻿On branch master
+Your branch is based on 'origin/main', but the upstream is gone.
+  (use "git branch --unset-upstream" to fixup)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   README.md
+	modified:   src/main/importers/csvImporter.ts
+	modified:   src/main/importers/importRoster.ts
+	modified:   src/main/importers/textImporter.ts
+	modified:   src/main/importers/xlsxImporter.ts
+	modified:   src/main/index.ts
+	modified:   src/main/ipcHandlers.test.ts
+	modified:   src/main/ipcHandlers.ts
+	modified:   src/main/storage/localStore.test.ts
+	modified:   src/preload/index.test.ts
+	modified:   src/preload/index.ts
+	modified:   src/renderer/App.test.tsx
+	modified:   src/renderer/App.tsx
+	modified:   src/renderer/SettingsDrawer.test.tsx
+	modified:   src/renderer/components/AppTitleBar.tsx
+	modified:   src/renderer/components/ClassroomHeader.tsx
+	modified:   src/renderer/components/DrawControls.tsx
+	modified:   src/renderer/components/SettingsDrawer.tsx
+	modified:   src/renderer/components/StudentWeightList.tsx
+	modified:   src/renderer/styles.css
+	modified:   src/shared/drawEngine.test.ts
+	modified:   src/shared/drawEngine.ts
+	modified:   src/shared/ipcTypes.ts
+	modified:   src/shared/types.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	src/main/importers/rosterEntry.ts
+	src/renderer/components/CardDrawOverlay.tsx
+	src/renderer/components/PillSwitch.tsx
+
+no changes added to commit (use "git add" and/or "git commit -a")

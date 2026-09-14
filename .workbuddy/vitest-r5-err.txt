@@ -1,0 +1,91 @@
+﻿
+[41m[1m FAIL [22m[49m src/main/ipcHandlers.test.ts[2m > [22m主进程 IPC 业务 ha
+ndler[2m > [22m只注册固定的最小 IPC channel，并把请求参数交给对应业务方法
+[31m[1mAssertionError[22m: expected [ 'name-picker:import-roster', …(5) ] to
+ deeply equal [ 'name-picker:import-roster', …(4) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,6 +2,7 @@[39m
+[2m    "name-picker:import-roster",[22m
+[2m    "name-picker:load-state",[22m
+[2m    "name-picker:save-state",[22m
+[2m    "name-picker:clear-state",[22m
+[2m    "name-picker:window-control",[22m
+[31m+   "name-picker:floating-control",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/main/ipcHandlers.test.ts:[2m466:36[22m[39m
+    [90m464| [39m    [34mregisterIpcHandlers[39m(ipcMain[33m,[39m handler
+s)[33m;[39m
+    [90m465| [39m
+    [90m466| [39m    [34mexpect[39m([[33m...[39mregistered[33m.[39m[34
+mkeys[39m()])[33m.[39m[34mtoEqual[39m([
+    [90m   | [39m                                   [31m^[39m
+    [90m467| [39m      [33mIPC_CHANNELS[39m[33m.[39mimportRoster[33m,[3
+9m
+    [90m468| [39m      [33mIPC_CHANNELS[39m[33m.[39mloadState[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preload/index.test.ts[2m > [22mpreload namePick
+er bridge[2m > [22m只暴露固定业务方法，并将调用转发到固定 channel
+[31m[1mAssertionError[22m: expected [ 'importRoster', 'loadState', …(4) ] to
+ deeply equal [ 'importRoster', 'loadState', …(3) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,6 +2,7 @@[39m
+[2m    "importRoster",[22m
+[2m    "loadState",[22m
+[2m    "saveState",[22m
+[2m    "clearState",[22m
+[2m    "windowControls",[22m
+[31m+   "floatingControls",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preload/index.test.ts:[2m50:37[22m[39m
+    [90m 48| [39m    ][33m;[39m
+    [90m 49| [39m    [34mexpect[39m(namespace)[33m.[39m[34mtoBe[39m([3
+2m'namePicker'[39m)[33m;[39m
+    [90m 50| [39m    [34mexpect[39m([33mObject[39m[33m.[39m[34mkeys[3
+9m(exposedApi))[33m.[39m[34mtoEqual[39m([
+    [90m   | [39m                                    [31m^[39m
+    [90m 51| [39m      [32m'importRoster'[39m[33m,[39m
+    [90m 52| [39m      [32m'loadState'[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/renderer/App.test.tsx[2m > [22m课堂主界面[2m > [22
+m导入名单后显示人数并保存状态
+[31m[1mAssertionError[22m: expected "spy" to be called with arguments: [ { s
+ourceName: '导入名单.txt', …(3) } ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[33m@@ -4,10 +4,12 @@[90m
+[2m      "settings": {[22m
+[2m        "allowDuplicates": false,[22m
+[2m        "animationDurationMs": 800,[22m
+[2m        "animationEnabled": true,[22m
+[2m        "animationStyle": "slot",[22m
+[31m+       "backgroundImage": undefined,[90m
+[31m+       "colorTheme": "ink",[90m
+[2m        "fullscreenDisplayMs": 3000,[22m
+[2m        "theme": "light",[22m
+[2m      },[22m
+[2m      "sourceName": "导入名单.txt",[22m
+[2m      "students": [[22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/renderer/App.test.tsx:[2m103:27[22m[39m
+    [90m101| [39m    [34mexpect[39m(api[33m.[39mimportRoster)[33m.[39m
+[34mtoHaveBeenCalledTimes[39m([34m1[39m)[33m;[39m
+    [90m102| [39m    await waitFor(() => expect(api.saveState).toHaveBeenCall
+edTimes(1)…

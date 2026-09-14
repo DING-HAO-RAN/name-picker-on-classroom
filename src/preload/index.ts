@@ -123,6 +123,11 @@ const namePicker: NamePickerApi = Object.freeze({
     apply: (branding: { windowTitle?: string; iconData?: string }) =>
       invoke<void>(IPC_CHANNELS.branding, 'apply', branding),
   }),
+  // 星级回写：同步到名单源文件，失败静默
+  starSync: Object.freeze({
+    sync: (sourcePath: string, entries: { name: string; star: number }[]) =>
+      invoke<void>(IPC_CHANNELS.syncStars, 'sync', { sourcePath, entries }),
+  }),
 });
 
 contextBridge.exposeInMainWorld('namePicker', namePicker);

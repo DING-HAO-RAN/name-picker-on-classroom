@@ -1,0 +1,18 @@
+﻿python.exe : Traceback (most recent call last):
+At line:445 char:1
++ & 'C:\Users\17819\.workbuddy\binaries\python\versions\3.13.12\python. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last) 
+   ::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<string>", line 1, in <module>
+    import os,time; p=os.path.join(os.getcwd(),'release','win-unpacked','resour
+ces','app.asar'); q=os.path.join(os.getcwd(),'release','app.asar.trashme'); os.
+replace(p,q); print('moved'); time.sleep(1); os.remove(q); print('deleted')
+                                                                               
+                                                                            ~~~
+~~~~~~~^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\桌面\\项目‘\\抽取器\\release
+\\win-unpacked\\resources\\app.asar' -> 'D:\\桌面\\项目‘\\抽取器\\release\\app.asar.tr
+ashme'

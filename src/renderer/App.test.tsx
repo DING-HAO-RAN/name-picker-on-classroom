@@ -842,13 +842,14 @@ describe('课堂主界面', () => {
     expect(api.saveState).not.toHaveBeenCalled();
 
     fireEvent.keyDown(document, { key: ' ', code: 'Space' });
-    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1));
+    // 全量并行跑测试时定时器可能延迟，放宽等待上限避免偶发超时
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(1), { timeout: 5000 });
     // 等待保存状态落定（isSaving 归零）后再按 R，否则会命中「保存中忽略快捷键」的保护
     await act(async () => {
       await flushPromises();
     });
     fireEvent.keyDown(document, { key: 'r' });
-    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(api.saveState).toHaveBeenCalledTimes(2), { timeout: 5000 });
   });
 
   it('抽屉打开或保存忙碌时快捷键不触发操作', async () => {

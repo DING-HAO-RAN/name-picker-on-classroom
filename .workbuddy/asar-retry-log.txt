@@ -1,0 +1,19 @@
+﻿python.exe : [safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app
+.asar", "reason": "trash-failed", "detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resourc
+es\\app.asar: Error during a `trash` operation: Unknown { description: \"Some operations were aborted\" }"}
+At line:445 char:1
++ & 'C:\Users\17819\.workbuddy\binaries\python\versions\3.13.12\python. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([safe-delete][S...e aborted\" }"}:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app.asar", "reas
+on": "trash-failed", "detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app.asar:
+ Error during a `trash` operation: Unknown { description: \"Some operations were aborted\" }"}
+[safe-delete][SAFE_DELETE_FAIL_CLOSED] {"target": "D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app.asar", "reas
+on": "trash-failed", "detail": "[safe-delete] 操作失败: ERROR D:\\桌面\\项目‘\\抽取器\\release\\win-unpacked\\resources\\app.asar:
+ Error during a `trash` operation: Unknown { description: \"Some operations were aborted\" }"}
+attempt 1 failed: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release\win-unpacked\resources\app.asar: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }
+attempt 2 failed: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release\win-unpacked\resources\app.asar: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }
+attempt 3 failed: [safe-delete] 操作失败: ERROR D:\桌面\项目‘\抽取器\release\win-unpacked\resources\app.asar: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }
+STILL LOCKED

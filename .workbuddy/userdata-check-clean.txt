@@ -1,0 +1,26 @@
+﻿APPDATA = C:\Users\17819\AppData\Roaming
+MISSING: C:\Users\17819\AppData\Roaming\NamePicker
+EXISTS : C:\Users\17819\AppData\Roaming\name-picker
+    blob_storage 0 1789364590.3999658
+    Cache 0 1789121327.5060034
+    Code Cache 0 1789121327.51105
+    DawnGraphiteCache 0 1789121327.610202
+    DawnWebGPUCache 0 1789121327.6005628
+    DIPS 36864 1789313890.7640624
+    DIPS-shm 0 1789364590.4043944
+    DIPS-wal 0 1789364590.402162
+    GPUCache 0 1789121327.5909243
+    Local State 434 1789125055.9001005
+    Local Storage 0 1789121327.5055003
+    Network 0 1789125237.072267
+    Preferences 57 1789364600.4190092
+    roster-state.json 10339 1789313878.068117
+    Session Storage 0 1789364629.488686
+    Shared Dictionary 0 1789121327.6367006
+    SharedStorage 4096 1789125166.1100736
+MISSING: C:\Users\17819\AppData\Roaming\namepicker
+MISSING: C:\Users\17819\AppData\Roaming\名字抽取器
+MISSING: C:\Users\17819\AppData\Local\NamePicker
+MISSING: C:\Users\17819\AppData\Local\name-picker
+MISSING: C:\Users\17819\AppData\Local\namepicker
+MISSING: C:\Users\17819\AppData\Local\名字抽取器

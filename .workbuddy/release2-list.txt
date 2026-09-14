@@ -1,0 +1,10 @@
+﻿
+Name                                Length  
+----                                ------  
+win-unpacked                                
+builder-debug.yml                   6045    
+NamePicker Setup-1.0.0.exe          88831986
+NamePicker Setup-1.0.0.exe.blockmap 92862   
+NamePicker-1.0.0.exe                88626186
+
+

@@ -1,0 +1,2 @@
+﻿[master 3ff9690] chore: ignore release3 packaging output directory
+ 1 file changed, 1 insertion(+)

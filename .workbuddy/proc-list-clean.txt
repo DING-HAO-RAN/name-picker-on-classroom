@@ -1,0 +1,8 @@
+"Image Name","PID","Session Name","Session#","Mem Usage"
+"NamePicker.exe","35584","Console","1","162,568 K"
+"NamePicker.exe","45248","Console","1","217,796 K"
+"NamePicker.exe","53028","Console","1","52,988 K"
+"NamePicker.exe","38500","Console","1","105,704 K"
+"NamePicker.exe","26948","Console","1","92,272 K"
+
+STDERR:

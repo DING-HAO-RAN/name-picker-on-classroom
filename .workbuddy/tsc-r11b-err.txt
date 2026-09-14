@@ -1,0 +1,1 @@
+﻿src/renderer/components/PillSwitch.tsx(31,30): error TS2722: Cannot invoke an object which is possibly 'undefined'.

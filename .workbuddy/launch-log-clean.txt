@@ -1,0 +1,3 @@
+﻿SPAWNED pid=49468
+EXIT code=0 signal=null
+TIMEOUT-REACHED (10s): killing child

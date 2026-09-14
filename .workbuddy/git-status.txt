@@ -1,0 +1,10 @@
+﻿A  LICENSE
+M  README.md
+ M docs/release-checklist.md
+M  package.json
+ M src/renderer/App.test.tsx
+ M src/renderer/App.tsx
+ M src/renderer/SettingsDrawer.test.tsx
+ M src/renderer/components/DrawControls.tsx
+ M src/renderer/components/SettingsDrawer.tsx
+ M src/renderer/components/StudentWeightList.tsx

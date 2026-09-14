@@ -1,0 +1,2 @@
+﻿[master 9386604] fix: floating window chrome, fullscreen contrast, full theme coverage; add close behavior and autostart settings
+ 10 files changed, 459 insertions(+), 50 deletions(-)

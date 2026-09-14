@@ -1,0 +1,3 @@
+﻿57e727b fix: skip full init when single-instance lock is taken (ghost window save failure on relaunch); card-draw, star system, branding
+a7f5f27 chore: ignore release13 packaging output directory
+6dc8984 fix: acquire single-instance lock before ready to stop quit-race save failure; retry rename on transient locks; persist card animation style

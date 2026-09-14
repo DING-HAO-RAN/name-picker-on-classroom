@@ -1,0 +1,3 @@
+﻿4848246 chore: ignore release6 packaging output directory
+09738b2 feat: bg fill layer, five full color themes, pointer-driven circular floating ball
+98f493c chore: ignore release5 packaging output directory

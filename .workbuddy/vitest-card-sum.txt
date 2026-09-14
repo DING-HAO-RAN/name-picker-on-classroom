@@ -1,0 +1,7 @@
+﻿[31m   [31m×[31m 抽卡式动画[2m > [22m星级只显示星星图案，不显示「N 星」文字[39m[32m 15[2mms[22m[39m
+[31m     → expected <span class="card-draw__rank"></span> to be null[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mAssertionError[22m: expected <span class="card-draw__rank"></span> to
+[32m- Expected:[39m 
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m   Duration [22m 4.94s[2m (transform 77ms, setup 0ms, collect 540ms, tests 121ms, environment 1.45s, prepare 320ms)[22m

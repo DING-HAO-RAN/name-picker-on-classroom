@@ -1,0 +1,83 @@
+diff --git a/src/renderer/components/SettingsDrawer.tsx b/src/renderer/components/SettingsDrawer.tsx
+index 07eda4a..20f0043 100644
+--- a/src/renderer/components/SettingsDrawer.tsx
++++ b/src/renderer/components/SettingsDrawer.tsx
+@@ -1,6 +1,9 @@
+ import { useEffect, useRef, useState } from 'react';
+ import {
++  DEFAULT_FULLSCREEN_DISPLAY_MS,
+   MAX_ANIMATION_DURATION_MS,
++  MAX_FULLSCREEN_DISPLAY_MS,
++  MIN_FULLSCREEN_DISPLAY_MS,
+   type AnimationStyle,
+   type DrawHistoryItem,
+   type StudentRecord,
+@@ -21,6 +24,9 @@ export interface SettingsDrawerProps {
+   onAnimationStyleChange?: (style: AnimationStyle) => void;
+   animationDurationMs?: number;
+   onAnimationDurationChange?: (duration: number) => void;
++  /** 抽取结果全屏停留时长（毫秒） */
++  fullscreenDisplayMs?: number;
++  onFullscreenDisplayChange?: (durationMs: number) => void;
+   theme?: Theme;
+   onThemeChange?: (theme: Theme) => void;
+   /** 清除本机保存的名单、权重与历史；由上层负责调用主进程并更新界面 */
+@@ -45,6 +51,19 @@ function clampAnimationDuration(rawValue: string): number {
+   return Math.min(Math.max(0, Math.round(parsedValue)), MAX_ANIMATION_DURATION_MS);
+ }
+ 
++/** 把任意输入收敛到 MIN - MAX 毫秒的整数，避免写出越界停留时长 */
++function clampFullscreenDisplay(rawValue: string): number {
++  const parsedValue = Number(rawValue);
++  if (!Number.isFinite(parsedValue)) {
++    return DEFAULT_FULLSCREEN_DISPLAY_MS;
++  }
++
++  return Math.min(
++    Math.max(MIN_FULLSCREEN_DISPLAY_MS, Math.round(parsedValue)),
++    MAX_FULLSCREEN_DISPLAY_MS,
++  );
++}
++
+ export function SettingsDrawer({
+   students,
+   onWeightChange,
+@@ -57,6 +76,8 @@ export function SettingsDrawer({
+   onAnimationStyleChange,
+   animationDurationMs = 1800,
+   onAnimationDurationChange,
++  fullscreenDisplayMs = DEFAULT_FULLSCREEN_DISPLAY_MS,
++  onFullscreenDisplayChange,
+   theme = 'light',
+   onThemeChange,
+   onClearLocalData,
+@@ -217,6 +238,29 @@ export function SettingsDrawer({
+               </small>
+             </div>
+ 
++            <div className="settings-field">
++              <label htmlFor="fullscreen-duration-input">结果全屏停留时长（毫秒）</label>
++              <input
++                id="fullscreen-duration-input"
++                className="settings-input"
++                type="number"
++                inputMode="numeric"
++                min={MIN_FULLSCREEN_DISPLAY_MS}
++                max={MAX_FULLSCREEN_DISPLAY_MS}
++                step={500}
++                value={fullscreenDisplayMs}
++                disabled={disabled}
++                onChange={(e) =>
++                  onFullscreenDisplayChange?.(clampFullscreenDisplay(e.target.value))
++                }
++              />
++              <small className="settings-field-hint">
++                抽取结果自动全屏展示的时长，默认{' '}
++                {DEFAULT_FULLSCREEN_DISPLAY_MS / 1000} 秒；支持 {MIN_FULLSCREEN_DISPLAY_MS} -{' '}
++                {MAX_FULLSCREEN_DISPLAY_MS} 毫秒。
++              </small>
++            </div>
++
+             <div className="settings-field">
+               <label htmlFor="theme-select">界面主题</label>
+               <select

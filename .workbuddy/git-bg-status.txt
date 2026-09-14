@@ -1,0 +1,8 @@
+﻿M  src/main/index.ts
+M  src/main/ipcHandlers.test.ts
+M  src/main/ipcHandlers.ts
+M  src/renderer/App.tsx
+M  src/renderer/SettingsDrawer.test.tsx
+M  src/renderer/components/SettingsDrawer.tsx
+M  src/renderer/styles.css
+M  src/shared/types.ts

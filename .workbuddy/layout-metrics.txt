@@ -1,0 +1,107 @@
+﻿{
+  "viewportWidth": 1280,
+  "panel": {
+    "selector": ".settings-drawer__panel",
+    "rect": {
+      "x": 645,
+      "y": 0,
+      "width": 620,
+      "height": 800
+    },
+    "display": "flex",
+    "flexDirection": "column",
+    "minWidth": "auto",
+    "flex": "0 1 auto"
+  },
+  "header": {
+    "selector": ".settings-drawer__header",
+    "rect": {
+      "x": 645,
+      "y": 0,
+      "width": 619,
+      "height": 114
+    },
+    "display": "flex",
+    "flexDirection": "row",
+    "minWidth": "auto",
+    "flex": "0 0 auto"
+  },
+  "headerFirstChild": {
+    "selector": ".settings-drawer__header > div",
+    "rect": {
+      "x": 685,
+      "y": 28,
+      "width": 66,
+      "height": 64
+    },
+    "display": "block",
+    "flexDirection": "row",
+    "minWidth": "auto",
+    "flex": "0 1 auto"
+  },
+  "headerTitle": {
+    "selector": "#settings-drawer-title",
+    "rect": {
+      "x": 685,
+      "y": 55,
+      "width": 66,
+      "height": 36
+    },
+    "display": "block",
+    "flexDirection": "row",
+    "minWidth": "0px",
+    "flex": "0 1 auto"
+  },
+  "headerClose": {
+    "selector": ".settings-drawer__close",
+    "rect": {
+      "x": 1125,
+      "y": 28,
+      "width": 100,
+      "height": 56
+    },
+    "display": "block",
+    "flexDirection": "row",
+    "minWidth": "100px",
+    "flex": "0 0 auto"
+  },
+  "content": {
+    "selector": ".settings-drawer__content",
+    "rect": {
+      "x": 645,
+      "y": 114,
+      "width": 619,
+      "height": 686
+    },
+    "display": "block",
+    "flexDirection": "row",
+    "minWidth": "auto",
+    "flex": "1 1 auto"
+  },
+  "titlebar": {
+    "selector": ".app-titlebar",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1265,
+      "height": 52
+    },
+    "display": "flex",
+    "flexDirection": "row",
+    "minWidth": "0px",
+    "flex": "0 1 auto"
+  },
+  "shell": {
+    "selector": ".app-shell",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1265,
+      "height": 1081
+    },
+    "display": "flex",
+    "flexDirection": "column",
+    "minWidth": "0px",
+    "flex": "0 1 auto"
+  }
+}

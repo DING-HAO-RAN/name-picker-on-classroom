@@ -488,6 +488,7 @@ describe('主进程 IPC 业务 handler', () => {
       IPC_CHANNELS.floatingControl,
       IPC_CHANNELS.launchSettings,
       IPC_CHANNELS.branding,
+      IPC_CHANNELS.syncStars,
     ]);
     expect([...registered.keys()]).not.toContain('namePicker.chooseRosterFile');
 

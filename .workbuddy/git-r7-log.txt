@@ -1,0 +1,3 @@
+﻿0dbdccd chore: ignore release7 packaging output directory
+9386604 fix: floating window chrome, fullscreen contrast, full theme coverage; add close behavior and autostart settings
+4848246 chore: ignore release6 packaging output directory

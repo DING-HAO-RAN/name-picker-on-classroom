@@ -1,0 +1,2 @@
+﻿src/main/ipcHandlers.ts(761,13): error TS2451: Cannot redeclare block-scoped variable 'iconData'.
+src/main/ipcHandlers.ts(767,13): error TS2451: Cannot redeclare block-scoped variable 'iconData'.

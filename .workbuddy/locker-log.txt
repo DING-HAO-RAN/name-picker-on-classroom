@@ -1,0 +1,12 @@
+﻿python.exe : Traceback (most recent call last):
+At line:445 char:1
++ & 'C:\Users\17819\.workbuddy\binaries\python\versions\3.13.12\python. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last) 
+   ::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "D:\桌面\项目‘\抽取器\.workbuddy\scripts\find_locker.py", line 24, in <module>
+    rg_file_infos[0] = FILE_PATH
+    ~~~~~~~~~~~~~^^^
+TypeError: one character unicode string expected

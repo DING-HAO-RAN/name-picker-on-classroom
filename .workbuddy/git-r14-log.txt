@@ -1,0 +1,3 @@
+﻿ddf421e chore: ignore release12 packaging output directory
+3b4e09d chore: ignore release11 packaging output directory
+814200b chore: ignore release10 packaging output directory
