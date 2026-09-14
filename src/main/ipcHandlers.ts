@@ -12,9 +12,12 @@ import {
 import {
   CLOSE_ACTIONS,
   COLOR_THEMES,
+  DEFAULT_BRANDING,
   MAX_ANIMATION_DURATION_MS,
   MAX_BACKGROUND_IMAGE_LENGTH,
   MAX_FULLSCREEN_DISPLAY_MS,
+  MAX_PITY_THRESHOLD,
+  MAX_SOUND_DATA_LENGTH,
   MIN_FULLSCREEN_DISPLAY_MS,
   type RosterState,
   type StudentRecord,
@@ -57,6 +60,11 @@ export interface IpcLaunchControls {
   setEnabled(enabled: boolean): void;
 }
 
+/** 品牌自定义能力：由 main 进程绑定到窗口标题与图标 */
+export interface IpcBrandingControls {
+  apply(branding: { windowTitle?: string; iconData?: string }): void;
+}
+
 export interface IpcHandlerDependencies {
   showOpenDialog: ShowOpenDialog;
   importRoster: (filePath: string) => Promise<ImportResult>;
@@ -68,6 +76,7 @@ export interface IpcHandlerDependencies {
   windowControls?: IpcWindowControls;
   floatingControls?: IpcFloatingControls;
   launchControls?: IpcLaunchControls;
+  brandingControls?: IpcBrandingControls;
 }
 
 export interface IpcHandlers {
@@ -81,6 +90,8 @@ export interface IpcHandlers {
   floatingControl(action: unknown, payload?: unknown): Promise<void>;
   /** 读取/设置开机自启；set 时 payload 为 { enabled } */
   launchSettings(action: unknown, payload?: unknown): Promise<boolean>;
+  /** 应用品牌自定义：窗口标题与窗口图标 */
+  applyBranding(payload: unknown): Promise<void>;
 }
 
 export interface IpcMainLike {
@@ -242,8 +253,24 @@ function normalizeStudentRecord(value: unknown): StudentRecord | undefined {
   return {
     id,
     name,
-    weight: value.weight,
+    // 权重统一收敛到 0-1（界面以 0-100 百分比显示）；旧存档里大于 1 的值一次性收敛到 1
+    weight: Math.min(value.weight, 1),
     drawnThisRound: value.drawnThisRound,
+    // 星级：1-5，缺省或非法时回到默认 1 星
+    star:
+      typeof value.star === 'number' &&
+      Number.isInteger(value.star) &&
+      value.star >= 1 &&
+      value.star <= 5
+        ? value.star
+        : 1,
+    // 抽取计数：非负整数，缺省 0
+    drawCount:
+      typeof value.drawCount === 'number' &&
+      Number.isInteger(value.drawCount) &&
+      value.drawCount >= 0
+        ? value.drawCount
+        : 0,
   };
 }
 
@@ -307,7 +334,8 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
   if (
     value.animationStyle === 'slot' ||
     value.animationStyle === 'marquee' ||
-    value.animationStyle === 'spotlight'
+    value.animationStyle === 'spotlight' ||
+    value.animationStyle === 'card'
   ) {
     normalizedSettings.animationStyle = value.animationStyle;
   }
@@ -358,7 +386,108 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     normalizedSettings.launchAtStartup = value.launchAtStartup;
   }
 
+  // 保底池：校验开关、成员 id 列表与阈值范围
+  const pityPool = value.pityPool;
+  if (isRecord(pityPool) && typeof pityPool.enabled === 'boolean') {
+    const studentIds = Array.isArray(pityPool.studentIds)
+      ? pityPool.studentIds.filter(
+          (id): id is string => typeof id === 'string' && id.length > 0,
+        )
+      : [];
+    const thresholdRaw = pityPool.threshold;
+    const threshold =
+      typeof thresholdRaw === 'number' && Number.isFinite(thresholdRaw)
+        ? Math.min(Math.max(Math.round(thresholdRaw), 1), MAX_PITY_THRESHOLD)
+        : 10;
+    normalizedSettings.pityPool = {
+      enabled: pityPool.enabled,
+      studentIds,
+      threshold,
+    };
+  }
+
+  // 保底计数：非负整数
+  const pityCounter = value.pityCounter;
+  if (
+    typeof pityCounter === 'number' &&
+    Number.isFinite(pityCounter) &&
+    pityCounter >= 0 &&
+    Number.isInteger(pityCounter)
+  ) {
+    normalizedSettings.pityCounter = pityCounter;
+  }
+
+  // 结果音效开关
+  if (typeof value.soundEnabled === 'boolean') {
+    normalizedSettings.soundEnabled = value.soundEnabled;
+  }
+
+  // 音效 dataURL：校验格式与长度上限（约 3MB 音频）
+  const soundDrawnData = value.soundDrawnData;
+  if (isSoundDataUrl(soundDrawnData)) {
+    normalizedSettings.soundDrawnData = soundDrawnData;
+  }
+  const soundPityData = value.soundPityData;
+  if (isSoundDataUrl(soundPityData)) {
+    normalizedSettings.soundPityData = soundPityData;
+  }
+
+  // 权重预设：最多 20 个，每个按学生 id 记录 0-100 的百分比
+  const weightPresets = value.weightPresets;
+  if (Array.isArray(weightPresets)) {
+    const normalizedPresets: RosterState['settings']['weightPresets'] = [];
+    for (const preset of weightPresets) {
+      if (normalizedPresets.length >= 20) {
+        break;
+      }
+      if (!isRecord(preset) || typeof preset.name !== 'string' || preset.name.trim().length === 0) {
+        continue;
+      }
+      if (!isRecord(preset.weights)) {
+        continue;
+      }
+      const weights: Record<string, number> = {};
+      for (const [studentId, percent] of Object.entries(preset.weights)) {
+        if (typeof studentId === 'string' && typeof percent === 'number' && Number.isFinite(percent)) {
+          weights[studentId] = Math.min(Math.max(percent, 0), 100);
+        }
+      }
+      normalizedPresets.push({ name: preset.name.trim().slice(0, 30), weights });
+    }
+    normalizedSettings.weightPresets = normalizedPresets;
+  }
+
+  // 品牌自定义：各标题 1-30 字，图标为 data:image dataURL
+  const branding = value.branding;
+  if (isRecord(branding)) {
+    const normalizedBranding: RosterState['settings']['branding'] = { ...DEFAULT_BRANDING };
+    for (const key of ['appTitle', 'windowTitle', 'productName', 'menuTitle'] as const) {
+      const text = branding[key];
+      if (typeof text === 'string' && text.trim().length > 0) {
+        normalizedBranding[key] = text.trim().slice(0, 30);
+      }
+    }
+    const iconData = branding.iconData;
+    if (
+      typeof iconData === 'string' &&
+      iconData.startsWith('data:image/') &&
+      iconData.length <= MAX_BACKGROUND_IMAGE_LENGTH
+    ) {
+      normalizedBranding.iconData = iconData;
+    }
+    normalizedSettings.branding = normalizedBranding;
+  }
+
   return normalizedSettings;
+}
+
+/** 校验音效 dataURL：data:audio 前缀 + 长度上限 */
+function isSoundDataUrl(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.startsWith('data:audio/') &&
+    value.length <= MAX_SOUND_DATA_LENGTH
+  );
 }
 
 export function normalizeRosterState(value: unknown): RosterState | undefined {
@@ -586,6 +715,26 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
 
       throw invalidWindowActionError();
     },
+
+    async applyBranding(payload: unknown): Promise<void> {
+      const brandingControls = dependencies.brandingControls;
+      if (!brandingControls) {
+        return;
+      }
+
+      const branding = isRecord(payload) ? payload : {};
+      const windowTitle =
+        typeof branding.windowTitle === 'string' && branding.windowTitle.trim().length > 0
+          ? branding.windowTitle.trim().slice(0, 30)
+          : undefined;
+      const iconData =
+        typeof branding.iconData === 'string' &&
+        branding.iconData.startsWith('data:image/') &&
+        branding.iconData.length <= MAX_BACKGROUND_IMAGE_LENGTH
+          ? branding.iconData
+          : undefined;
+      brandingControls.apply({ windowTitle, iconData });
+    },
   };
 }
 
@@ -655,5 +804,8 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   );
   ipcMain.handle(IPC_CHANNELS.launchSettings, (event, action, payload) =>
     handleTrustedRequest(event, () => handlers.launchSettings(action, payload)),
+  );
+  ipcMain.handle(IPC_CHANNELS.branding, (event, payload) =>
+    handleTrustedRequest(event, () => handlers.applyBranding(payload)),
   );
 }

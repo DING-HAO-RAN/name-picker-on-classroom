@@ -123,7 +123,7 @@ export class LocalStore {
     try {
       await mkdir(this.userDataDirectory, { recursive: true });
       await writeFile(temporaryFilePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
-      await rename(temporaryFilePath, this.stateFilePath);
+      await renameWithRetry(temporaryFilePath, this.stateFilePath);
     } catch {
       await removeTemporaryFile(temporaryFilePath);
       throw new LocalStoreError('STORAGE_WRITE_FAILED', '本地名单保存失败。');
@@ -145,4 +145,22 @@ async function removeTemporaryFile(filePath: string): Promise<void> {
   } catch {
     return;
   }
+}
+
+/**
+ * Windows 上目标文件被杀毒软件/索引服务短暂锁定时，rename 会偶发 EPERM。
+ * 间隔 120ms 最多重试 3 次，绝大多数瞬时锁都能在重试内成功。
+ */
+async function renameWithRetry(from: string, to: string, attempts = 3): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      await rename(from, to);
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+  }
+  throw lastError;
 }
