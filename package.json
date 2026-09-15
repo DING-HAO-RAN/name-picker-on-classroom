@@ -1,6 +1,6 @@
 {
   "name": "name-picker",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "author": "NamePicker",
   "description": "离线课堂随机点名桌面应用：名单、权重与抽取记录只存本机，无网络、无遥测。",

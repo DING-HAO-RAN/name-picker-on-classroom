@@ -1,0 +1,14 @@
+﻿ M .workbuddy/memory/2026-09-15.md
+ m .worktrees/name-picker
+?? .workbuddy/build-r19-exit.txt
+?? .workbuddy/build-r19.txt
+?? .workbuddy/check-r19.txt
+?? .workbuddy/commit-r19-leak.txt
+?? .workbuddy/commit-r19.txt
+?? .workbuddy/git-status-r19.txt
+?? .workbuddy/package-r19-exit.txt
+?? .workbuddy/package-r19-log.txt
+?? .workbuddy/r19-verify-clean.txt
+?? .workbuddy/r19-verify.txt
+?? .workbuddy/scripts/verify-r19.py
+?? release19/

@@ -1,0 +1,33 @@
+﻿[master ab96122] feat: remove floating ball entirely (close window quits app); keep draw-finish button visible for large card draws
+ 45 files changed, 518 insertions(+), 763 deletions(-)
+ create mode 100644 .workbuddy/asset-rename-clean.txt
+ create mode 100644 .workbuddy/asset-rename.txt
+ create mode 100644 .workbuddy/big-objects-clean.txt
+ create mode 100644 .workbuddy/big-objects.txt
+ create mode 100644 .workbuddy/commit-final-r18.txt
+ create mode 100644 .workbuddy/git-final-check2.txt
+ create mode 100644 .workbuddy/git-log-final-r18.txt
+ create mode 100644 .workbuddy/publish-log-v110.txt
+ create mode 100644 .workbuddy/publish-run-v110-exit.txt
+ create mode 100644 .workbuddy/publish-run-v110.txt
+ create mode 100644 .workbuddy/push-v110-clean.txt
+ create mode 100644 .workbuddy/push-v110-exit.txt
+ create mode 100644 .workbuddy/push-v110.txt
+ create mode 100644 .workbuddy/scripts/check-big-objects.py
+ create mode 100644 .workbuddy/scripts/publish-release-v110.py
+ create mode 100644 .workbuddy/scripts/rename-asset-v110.py
+ create mode 100644 .workbuddy/staged-leak3.txt
+ create mode 100644 .workbuddy/tsc-r19-exit.txt
+ create mode 100644 .workbuddy/tsc-r19.txt
+ create mode 100644 .workbuddy/vitest-r19-err.txt
+ create mode 100644 .workbuddy/vitest-r19-exit.txt
+ create mode 100644 .workbuddy/vitest-r19-sum.txt
+ create mode 100644 .workbuddy/vitest-r19.txt
+ create mode 100644 .workbuddy/vitest-r19b-sum.txt
+ create mode 100644 .workbuddy/vitest-r19b.txt
+ create mode 100644 .workbuddy/vitest-r19c-sum.txt
+ create mode 100644 .workbuddy/vitest-r19c.txt
+ create mode 100644 .workbuddy/vitest-r19d-exit.txt
+ create mode 100644 .workbuddy/vitest-r19d-sum.txt
+ create mode 100644 .workbuddy/vitest-r19d.txt
+ delete mode 100644 src/renderer/components/FloatingBall.tsx
