@@ -1,0 +1,28 @@
+﻿git : 22:22:59.162641 exec-cmd.c:266          trace: resolved executable dir: D
+:/dinghaoran'/Git/mingw64/bin
+At line:451 char:133
++ ... $env:GIT_TRACE = '1'; $out = git push origin master:main 2>&1 | Out-S ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (22:22:59.162641...Git/mingw64/bin 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+22:22:59.169158 git.c:502               trace: built-in: git push origin master
+:main
+22:22:59.170292 run-command.c:673       trace: run_command: GIT_DIR=.git git re
+mote-https origin https://github.com/DING-HAO-RAN/name-picker-on-classroom.git
+22:22:59.170292 run-command.c:934       trace: start_command: git remote-https 
+origin https://github.com/DING-HAO-RAN/name-picker-on-classroom.git
+22:22:59.824918 exec-cmd.c:266          trace: resolved executable dir: D:/ding
+haoran'/Git/mingw64/libexec/git-core
+22:22:59.829901 git.c:810               trace: exec: git-remote-https origin ht
+tps://github.com/DING-HAO-RAN/name-picker-on-classroom.git
+22:22:59.829901 run-command.c:673       trace: run_command: git-remote-https or
+igin https://github.com/DING-HAO-RAN/name-picker-on-classroom.git
+22:22:59.829901 run-command.c:934       trace: start_command: git-remote-https 
+origin https://github.com/DING-HAO-RAN/name-picker-on-classroom.git
+22:23:00.451902 exec-cmd.c:266          trace: resolved executable dir: D:/ding
+haoran'/Git/mingw64/libexec/git-core
+22:23:02.161463 run-command.c:673       trace: run_command: 'git credential-man
+ager get'
+

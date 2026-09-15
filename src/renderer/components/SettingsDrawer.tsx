@@ -129,6 +129,9 @@ export interface SettingsDrawerProps {
   /** 按星级过滤抽取设置 */
   starFilter?: { enabled: boolean; stars: number[] };
   onStarFilterChange?: (starFilter: { enabled: boolean; stars: number[] }) => void;
+  /** 自动升星开关；缺省表示开启 */
+  autoStarUpgrade?: boolean;
+  onAutoStarUpgradeChange?: (enabled: boolean) => void;
   /** 一键把所有学生权重设为同一百分比（0-100） */
   onUniformWeightChange?: (percent: number) => void;
   /** 品牌自定义设置 */
@@ -214,6 +217,8 @@ export function SettingsDrawer({
   onStarChange,
   starFilter,
   onStarFilterChange,
+  autoStarUpgrade = true,
+  onAutoStarUpgradeChange,
   onUniformWeightChange,
   branding,
   onBrandingChange,
@@ -1135,6 +1140,18 @@ export function SettingsDrawer({
                 ) : null}
               </>
             ) : null}
+            <PillSwitch
+              checked={autoStarUpgrade}
+              disabled={disabled}
+              label="自动升星"
+              ariaLabel="自动升星"
+              description={
+                autoStarUpgrade
+                  ? '学生每被抽中 5 次自动升 1 星（最高 4 星），卡面颜色随之成长。'
+                  : '关闭后星级只随手动设置与名单文件变化。'
+              }
+              onChange={onAutoStarUpgradeChange}
+            />
           </section>
 
           {/* 品牌自定义：主界面标题、窗口标题、程序名字、标题栏文字与图标 */}

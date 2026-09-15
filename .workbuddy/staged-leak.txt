@@ -1,0 +1,8 @@
+﻿
+release15/NamePicker Setup-1.0.0.exe
+release15/NamePicker Setup-1.0.0.exe.blockmap
+release15/NamePicker-1.0.0.exe
+release15/builder-debug.yml
+release15/win-unpacked/LICENSE.electron.txt
+
+

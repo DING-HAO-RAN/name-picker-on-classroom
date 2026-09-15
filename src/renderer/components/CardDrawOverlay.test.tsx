@@ -22,13 +22,22 @@ describe('抽卡式动画', () => {
     expect(document.querySelector('.card-draw__face--star5')).not.toBeNull();
   });
 
-  it('星级只显示星星图案，不显示「N 星」文字', () => {
-    render(<CardDrawOverlay students={[studentWithStar('1', 4)]} hitPity={false} onFinish={vi.fn()} />);
+  it('星级只显示星星图案，不显示「N 星」文字；背面只显示颜色不透露名字与星星', () => {
+    const students = [studentWithStar('1', 4)];
+    render(<CardDrawOverlay students={students} hitPity={false} onFinish={vi.fn()} />);
+    // 卡背内没有名字与星星（正面在 DOM 中存在但被 3D 遮挡，视觉不可见）
+    expect(document.querySelector('.card-draw__face--back .card-draw__name')).toBeNull();
+    expect(document.querySelectorAll('.card-draw__face--back .card-draw__star')).toHaveLength(0);
+    // 卡背挂载 4 星配色类（翻面前即可看到正确颜色）
+    expect(document.querySelectorAll('.card-draw__face--back.card-draw__face--star4')).toHaveLength(1);
+
     fireEvent.click(screen.getByRole('button', { name: '第 1 张卡，点击翻面' }));
 
     expect(document.querySelector('.card-draw__rank')).toBeNull();
-    const stars = document.querySelectorAll('.card-draw__star');
-    expect(stars).toHaveLength(4);
+    // 翻开后正面显示星星：4 颗
+    expect(document.querySelectorAll('.card-draw__face--front .card-draw__star')).toHaveLength(4);
+    // 正反两面都挂载 4 星配色类
+    expect(document.querySelectorAll('.card-draw__face--star4')).toHaveLength(2);
   });
 
   it('全部翻面后出现收下结果按钮，点击触发完成回调', () => {

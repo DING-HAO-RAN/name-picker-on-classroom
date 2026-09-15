@@ -1,0 +1,2 @@
+﻿c86c867 feat: card back shows only rarity color before reveal; smoother flip animation
+07b8823 feat: star-colored card backs with big name, golden stars with white rim, auto-star-upgrade toggle

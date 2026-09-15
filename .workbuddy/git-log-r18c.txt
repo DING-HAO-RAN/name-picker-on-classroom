@@ -1,0 +1,3 @@
+﻿c6dddbd feat: card back shows rarity color only, smoother flip animation, auto-star toggle; star filter, uniform weight, star sync (v1.1.0)
+3636f53 feat: star-colored cards with deal-in and flip motion, star-only reveal, light result overlay, star filter draw, uniform weight, star sync back to roster file
+5770953 chore: ignore release14 packaging output directory

@@ -1,0 +1,6 @@
+﻿ [31m❯[39m src/renderer/components/CardDrawOverlay.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 240[2mms[22m[39m
+[31m   [31m×[31m 抽卡式动画[2m > [22m星级只显示星星图案，不显示「N 星」文字[39m[32m 28[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/renderer/components/CardDrawOverlay.test.tsx[2m 
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m10 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m181 passed[39m[22m[90m (182)[39m

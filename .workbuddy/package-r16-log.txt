@@ -1,0 +1,5 @@
+﻿  • signing with signtool.exe  path=release16\__uninstaller-nsis-name-picker.exe
+  • signing with signtool.exe  path=release16\NamePicker Setup-1.0.0.exe
+  • building block map  blockMapFile=release16\NamePicker Setup-1.0.0.exe.blockmap
+  • building        target=portable file=release16\NamePicker-1.0.0.exe archs=x64
+  • signing with signtool.exe  path=release16\NamePicker-1.0.0.exe

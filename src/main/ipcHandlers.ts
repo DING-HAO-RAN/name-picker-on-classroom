@@ -498,6 +498,11 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
     };
   }
 
+  // 自动升星开关：只接受布尔值
+  if (typeof value.autoStarUpgrade === 'boolean') {
+    normalizedSettings.autoStarUpgrade = value.autoStarUpgrade;
+  }
+
   // 名单源文件路径：用于星级回写，限制长度防撑大状态文件
   const sourcePath = value.sourcePath;
   if (typeof sourcePath === 'string' && sourcePath.trim().length > 0 && sourcePath.length <= 500) {

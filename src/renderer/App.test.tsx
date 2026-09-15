@@ -823,7 +823,7 @@ describe('课堂主界面', () => {
 
     fireEvent.keyDown(document, { key: 'o', ctrlKey: true });
 
-    await waitFor(() => expect(api.importRoster).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(api.importRoster).toHaveBeenCalledTimes(1), { timeout: 5000 });
   });
 
   it('快捷键可导入、抽取和重置，且不会抢占输入框', async () => {

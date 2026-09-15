@@ -136,6 +136,8 @@ export interface AppSettings {
   branding?: BrandingSettings;
   /** 按星级过滤抽取；缺省表示不过滤 */
   starFilter?: StarFilterSettings;
+  /** 抽中累计 5 次自动升 1 星（上限 4 星）；缺省表示开启 */
+  autoStarUpgrade?: boolean;
   /** 名单文件的完整路径（导入时记录），用于星级改动同步回写；文件移动后失效则静默忽略 */
   sourcePath?: string;
 }

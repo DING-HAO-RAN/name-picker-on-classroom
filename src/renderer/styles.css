@@ -2214,22 +2214,23 @@ body.is-floating-window {
 }
 
 .card-draw__slot--revealed .card-draw__flipper {
-  /* 翻面动作感：先抬升加速，越过中段后落回定格 */
-  animation: cardFlipReveal 720ms cubic-bezier(0.3, 1.1, 0.4, 1) forwards;
+  /* 翻面动作感：单程旋转越过 180° 轻微过冲后落定，无中段折返，观感更顺滑 */
+  animation: cardFlipReveal 640ms cubic-bezier(0.32, 0.08, 0.24, 1) forwards;
+  will-change: transform;
 }
 
 @keyframes cardFlipReveal {
   0% {
-    transform: rotateY(0deg) scale(1) translateY(0);
+    transform: rotateY(0deg) scale(1);
   }
-  45% {
-    transform: rotateY(92deg) scale(1.16) translateY(-16px);
+  55% {
+    transform: rotateY(185deg) scale(1.09);
   }
-  70% {
-    transform: rotateY(170deg) scale(1.04) translateY(2px);
+  78% {
+    transform: rotateY(179deg) scale(1.02);
   }
   100% {
-    transform: rotateY(180deg) scale(1) translateY(0);
+    transform: rotateY(180deg) scale(1);
   }
 }
 
@@ -2246,13 +2247,32 @@ body.is-floating-window {
   overflow: hidden;
 }
 
-/* 牌背：深邃紫黑渐变 + 中央星徽 + 呼吸流光 */
+/* 牌背：与正面同星级配色（深色渐变变体），翻开前即可辨认稀有度；
+   名字用大字体 + 强投影保证对比度，星徽作为小装饰保留 */
 .card-draw__face--back {
-  border: 2px solid rgba(176, 122, 255, 0.55);
-  background:
-    radial-gradient(circle at 50% 34%, rgba(176, 122, 255, 0.4) 0%, transparent 46%),
-    linear-gradient(165deg, #1d1633 0%, #241a3f 52%, #141024 100%);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 0 26px rgba(176, 122, 255, 0.18);
+  border-width: 2px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 0 26px rgba(0, 0, 0, 0.25);
+}
+
+.card-draw__face--back.card-draw__face--star1 {
+  background: linear-gradient(165deg, #b9bfc8 0%, #838b96 100%);
+  border-color: #e6e8ec;
+}
+.card-draw__face--back.card-draw__face--star2 {
+  background: linear-gradient(165deg, #24459c 0%, #12255c 100%);
+  border-color: #6ea8ff;
+}
+.card-draw__face--back.card-draw__face--star3 {
+  background: linear-gradient(165deg, #5c2bb4 0%, #2c1358 100%);
+  border-color: #c39bff;
+}
+.card-draw__face--back.card-draw__face--star4 {
+  background: linear-gradient(165deg, #b03040 0%, #57101c 100%);
+  border-color: #ff9d9d;
+}
+.card-draw__face--back.card-draw__face--star5 {
+  background: linear-gradient(165deg, #d09a22 0%, #7a5608 100%);
+  border-color: #ffe9a8;
 }
 
 .card-draw__back-glow {
@@ -2264,7 +2284,7 @@ body.is-floating-window {
     rgba(255, 255, 255, 0.14) 40deg,
     transparent 90deg,
     transparent 240deg,
-    rgba(176, 122, 255, 0.2) 290deg,
+    rgba(255, 255, 255, 0.12) 290deg,
     transparent 340deg
   );
   animation: cardDrawBackGlowSpin 3.4s linear infinite;
@@ -2274,26 +2294,11 @@ body.is-floating-window {
   to { transform: rotate(360deg); }
 }
 
-.card-draw__back-star {
+.card-draw__back-mark {
   position: relative;
-  color: #e6d9ff;
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  text-shadow: 0 0 18px rgba(176, 122, 255, 0.95);
-  animation: cardDrawBackStarPulse 1.8s ease-in-out infinite;
-}
-
-@keyframes cardDrawBackStarPulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.12); opacity: 1; }
-}
-
-.card-draw__back-text {
-  position: relative;
-  color: rgba(230, 217, 255, 0.72);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.42em;
-  text-indent: 0.42em;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
 }
 
 /* 正面通用：星级渐变底 + 星级色边框 + 顶部色带（颜色感知更强） */
@@ -2397,8 +2402,16 @@ body.is-floating-window {
   gap: 4px;
 }
 
+/* 星星统一为耀眼金色 + 细白描边（多向白色 text-shadow 模拟细边） */
 .card-draw__star {
   font-size: clamp(1rem, 2vw, 1.3rem);
+  color: #ffd54a;
+  text-shadow:
+    -1px -1px 0 rgba(255, 255, 255, 0.95),
+    1px -1px 0 rgba(255, 255, 255, 0.95),
+    -1px 1px 0 rgba(255, 255, 255, 0.95),
+    1px 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 10px rgba(255, 200, 40, 0.9);
   animation: cardDrawStarPop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 

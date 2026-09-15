@@ -1,0 +1,8 @@
+﻿unpacked file count: 73
+icudtl.dat: True
+NamePicker Setup-1.0.0.exe 84.7MB
+NamePicker-1.0.0.exe 84.5MB
+cardDealIn: True
+star-filter-button: True
+starSync: True
+card-draw__band: True

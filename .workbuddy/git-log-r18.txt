@@ -1,0 +1,8 @@
+﻿196960d chore: bump version to 1.1.0
+c86c867 feat: card back shows only rarity color before reveal; smoother flip animation
+07b8823 feat: star-colored card backs with big name, golden stars with white rim, auto-star-upgrade toggle
+3636f53 feat: star-colored cards with deal-in and flip motion, star-only reveal, light result overlay, star filter draw, uniform weight, star sync back to roster file
+5770953 chore: ignore release14 packaging output directory
+57e727b fix: skip full init when single-instance lock is taken (ghost window save failure on relaunch); card-draw, star system, branding
+a7f5f27 chore: ignore release13 packaging output directory
+6dc8984 fix: acquire single-instance lock before ready to stop quit-race save failure; retry rename on transient locks; persist card animation style

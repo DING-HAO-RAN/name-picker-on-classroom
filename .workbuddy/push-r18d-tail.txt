@@ -1,0 +1,4 @@
+﻿trace: run_command: 'git credential-man
+ager get'
+
+

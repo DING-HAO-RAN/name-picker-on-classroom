@@ -1,0 +1,11 @@
+﻿PUSH_EXIT=128
+git : 22:22:59.162641 exec-cmd.c:266          trace: resolved executable dir: D
+:/dinghaoran'/Git/mingw64/bin
+At line:451 char:133
++ ... $env:GIT_TRACE = '1'; $out = git push origin master:main 2>&1 | Out-S ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (22:22:59.162641...Git/mingw64/bin 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+22:22:59.169158 git.c:502               trace: bu

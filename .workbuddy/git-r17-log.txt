@@ -1,0 +1,2 @@
+﻿07b8823 feat: star-colored card backs with big name, golden stars with white rim, auto-star-upgrade toggle
+3636f53 feat: star-colored cards with deal-in and flip motion, star-only reveal, light result overlay, star filter draw, uniform weight, star sync back to roster file

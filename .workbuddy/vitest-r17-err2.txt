@@ -1,0 +1,31 @@
+﻿
+[41m[1m FAIL [22m[49m src/renderer/components/CardDrawOverlay.test.tsx[2m 
+> [22m抽卡式动画[2m > [22m星级只显示星星图案，不显示「N 星」文字
+[31m[1mAssertionError[22m: expected <span …(2)></span>
+…(7) to have a length of 4 but got 8[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 8[39m
+
+[36m [2m❯[22m src/renderer/components/CardDrawOverlay.test.tsx:[2m31:19[22
+m[39m
+    [90m 29| [39m    [34mexpect[39m(document[33m.[39m[34mquerySelector[
+39m([32m'.card-draw__rank'[39m))[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m 30| [39m    [35mconst[39m stars [33m=[39m document[33m.[39m[3
+4mquerySelectorAll[39m([32m'.card-draw__star'[39m)[33m;[39m
+    [90m 31| [39m    [34mexpect[39m(stars)[33m.[39m[34mtoHaveLength[39m
+([34m4[39m)[33m;[39m
+    [90m   | [39m                  [31m^[39m
+    [90m 32| [39m  })[33m;[39m
+    [90m 33| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m10 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m181 passed[39m[22m[90m (182)[39m
+[2m   Start at [22m 13:10:31
+[2m   Duration [22m 11.46s[2m (transform 1.76s, setup 0ms, collect 10.87s, tests 5.04s, environment 44.97s, prepare 6.61s)[22m

@@ -1,0 +1,6 @@
+﻿[master 1107338] feat: card back shows rarity color only, smoother flip animation, auto-star toggle; star filter, uniform weight, star sync (v1.1.0)
+ 4 files changed, 264 insertions(+)
+ create mode 100644 .workbuddy/commit-r18c.txt
+ create mode 100644 .workbuddy/git-log-r18c.txt
+ create mode 100644 .workbuddy/reset-unstage.txt
+ create mode 100644 .workbuddy/staged-leak.txt

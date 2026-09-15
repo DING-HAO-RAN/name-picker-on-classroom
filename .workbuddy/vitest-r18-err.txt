@@ -1,0 +1,4 @@
+﻿[31m   [31m×[31m 抽卡式动画[2m > [22m星级只显示星星图案，不显示「N 星」文字；背面只显示颜色不透露名字与星星[39m[32m 23[2mms[22m[39m
+[31m     → expected <span class="card-draw__name"></span> to be null[39m
+[31m[1mAssertionError[22m: expected <span class="card-draw__name"></span> to
+[32m- Expected:[39m 

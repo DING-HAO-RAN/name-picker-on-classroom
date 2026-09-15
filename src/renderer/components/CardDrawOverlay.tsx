@@ -10,9 +10,6 @@ export const STAR_THEME_CLASSES = [
   'card-draw__face--star5',
 ] as const;
 
-/** 星级 -> 星星颜色 */
-const STAR_COLORS = ['#e8eaed', '#4c9aff', '#b07aff', '#ff5d5d', '#ffc94d'] as const;
-
 export interface CardDrawOverlayProps {
   /** 本次抽中的学生（每张卡对应一人） */
   students: StudentRecord[];
@@ -24,8 +21,8 @@ export interface CardDrawOverlayProps {
 
 /**
  * 抽卡式抽取动画：全屏舞台上摆出若干张背面朝上的卡牌，
- * 点击任意卡牌即翻转揭晓；全部翻开后可收下结果。
- * 不使用其它三种动画的结果展示流程。
+ * 卡背与正面同为该学生星级的配色（翻面前只显示颜色），点击任意卡牌即翻转揭晓；
+ * 全部翻开后可收下结果。
  */
 export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlayProps) {
   const [revealed, setRevealed] = useState<Set<number>>(() => new Set());
@@ -65,6 +62,7 @@ export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlay
           const isRevealed = revealed.has(index);
           const star = Math.min(Math.max(student.star, 1), 5);
           const isPityMember = hitPity && index === 0;
+          const starThemeClass = STAR_THEME_CLASSES[star - 1];
           return (
             <button
               key={`${student.id}-${index}`}
@@ -78,17 +76,21 @@ export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlay
                 className="card-draw__flipper"
                 style={{ '--deal-index': String(index) } as React.CSSProperties}
               >
-                {/* 背面：深邃星穹 + 中央星徽 + 流光 */}
-                <span className="card-draw__face card-draw__face--back">
+                {/* 背面：与正面同星级配色（深色渐变变体），翻面前只显示颜色，不透露名字与星级 */}
+                <span
+                  className={`card-draw__face card-draw__face--back ${starThemeClass}${
+                    isPityMember ? ' card-draw__face--pity' : ''
+                  }`}
+                >
+                  <span className="card-draw__band" aria-hidden="true" />
                   <span className="card-draw__back-glow" aria-hidden="true" />
-                  <span className="card-draw__back-star" aria-hidden="true">✦</span>
-                  <span className="card-draw__back-text" aria-hidden="true">DRAW</span>
+                  <span className="card-draw__back-mark" aria-hidden="true">✦</span>
                 </span>
                 {/* 正面：星级配色 + 名字 + 星星行（只按星星个数区分等级，不显示文字） */}
                 <span
-                  className={`card-draw__face card-draw__face--front ${
-                    STAR_THEME_CLASSES[star - 1]
-                  }${isPityMember ? ' card-draw__face--pity' : ''}`}
+                  className={`card-draw__face card-draw__face--front ${starThemeClass}${
+                    isPityMember ? ' card-draw__face--pity' : ''
+                  }`}
                 >
                   {isPityMember ? (
                     <span className="card-draw__pity-tag" aria-hidden="true">
@@ -102,7 +104,7 @@ export function CardDrawOverlay({ students, hitPity, onFinish }: CardDrawOverlay
                       <span
                         key={starIndex}
                         className="card-draw__star"
-                        style={{ color: STAR_COLORS[star - 1], animationDelay: `${starIndex * 90}ms` }}
+                        style={{ animationDelay: `${starIndex * 90}ms` }}
                       >
                         ★
                       </span>

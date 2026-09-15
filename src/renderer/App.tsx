@@ -472,6 +472,14 @@ export function App() {
     [updateSettingsAndSave],
   );
 
+  /** 更新自动升星开关 */
+  const handleAutoStarUpgradeChange = useCallback(
+    (enabled: boolean): void => {
+      updateSettingsAndSave({ autoStarUpgrade: enabled });
+    },
+    [updateSettingsAndSave],
+  );
+
   /** 一键把所有学生的权重设为同一百分比（0-100） */
   const handleUniformWeight = useCallback(
     (percent: number): void => {
@@ -1009,11 +1017,15 @@ export function App() {
       // 抽中保底池成员后计数清零，否则累计未中次数
       const pityCounterAfter = usePity ? (drawResult.hitPity ? 0 : pityCounterBefore + 1) : 0;
 
-      // 抽中计数：每满 5 次自动升 1 星（最高 4 星），用于抽卡卡面成长
+      // 抽中计数：每满 5 次自动升 1 星（最高 4 星），用于抽卡卡面成长；
+      // 自动升星可在设置中关闭（关闭时只累计次数不升星）
+      const autoStarUpgrade = currentRoster.settings.autoStarUpgrade ?? true;
       const bumpStar = (student: StudentRecord): StudentRecord => {
         const drawCount = student.drawCount + 1;
         const star =
-          drawCount % 5 === 0 && drawCount > 0 ? Math.min(student.star + 1, 4) : student.star;
+          autoStarUpgrade && drawCount % 5 === 0 && drawCount > 0
+            ? Math.min(student.star + 1, 4)
+            : student.star;
         return { ...student, drawCount, star };
       };
       const bumpedIds = new Set(drawResult.selected.map((student) => student.id));
@@ -1683,6 +1695,8 @@ export function App() {
           onBrandingChange={handleBrandingChange}
           starFilter={roster.settings.starFilter}
           onStarFilterChange={handleStarFilterChange}
+          autoStarUpgrade={roster.settings.autoStarUpgrade ?? true}
+          onAutoStarUpgradeChange={handleAutoStarUpgradeChange}
           onUniformWeightChange={handleUniformWeight}
         />
       ) : null}

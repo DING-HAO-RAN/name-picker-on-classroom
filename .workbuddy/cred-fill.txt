@@ -1,0 +1,1 @@
+TIMEOUT: credential manager tried to open interactive UI

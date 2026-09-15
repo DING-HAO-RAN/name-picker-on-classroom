@@ -1,0 +1,8 @@
+﻿git : fatal: pathspec 'release17' did not match any files
+At line:451 char:151
++ ... oding utf8; git rm -r --cached release15 release16 release17 release1 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fatal: pathspec...match any files 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
