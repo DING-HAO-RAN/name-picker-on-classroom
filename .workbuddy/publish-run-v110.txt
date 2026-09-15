@@ -1,0 +1,10 @@
+﻿待上传 NamePicker Setup-1.1.0.exe | 88,850,703 字节
+待上传 NamePicker-1.1.0.exe | 88,644,899 字节
+Release 已创建 id=389226602
+Release 页面：https://github.com/DING-HAO-RAN/name-picker-on-classroom/releases/tag/v1.1.0
+UPLOAD OK | NamePicker Setup-1.1.0.exe | 88,850,703 字节 | 17.9s | 4.74 MB/s
+UPLOAD OK | NamePicker-1.1.0.exe | 88,644,899 字节 | 15.8s | 5.36 MB/s
+远端附件清单：
+  - NamePicker-1.1.0.exe | 88,644,899 字节 | 下载数 0
+  - NamePicker.Setup-1.1.0.exe | 88,850,703 字节 | 下载数 0
+SUMMARY | failures=0

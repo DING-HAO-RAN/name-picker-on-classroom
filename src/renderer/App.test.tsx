@@ -822,8 +822,11 @@ describe('课堂主界面', () => {
     expect(await screen.findByText('名单为空，请导入名单后开始抽取。')).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'o', ctrlKey: true });
-
-    await waitFor(() => expect(api.importRoster).toHaveBeenCalledTimes(1), { timeout: 5000 });
+    // 同步触发导入调用：flush 微任务后立即断言，避免全量并行时 waitFor 轮询偶发超时
+    await act(async () => {
+      await flushPromises();
+    });
+    expect(api.importRoster).toHaveBeenCalledTimes(1);
   });
 
   it('快捷键可导入、抽取和重置，且不会抢占输入框', async () => {

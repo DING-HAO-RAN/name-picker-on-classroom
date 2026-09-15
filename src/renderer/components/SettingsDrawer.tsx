@@ -11,7 +11,6 @@ import {
   MIN_FULLSCREEN_DISPLAY_MS,
   type AnimationStyle,
   type BrandingSettings,
-  type CloseAction,
   type ColorTheme,
   type DrawHistoryItem,
   type StudentRecord,
@@ -79,12 +78,6 @@ export interface SettingsDrawerProps {
   /** 配色方案；缺省表示默认墨青 */
   colorTheme?: ColorTheme;
   onColorThemeChange?: (colorTheme: ColorTheme) => void;
-  /** 点击关闭时的默认行为；缺省表示后台运行 */
-  closeAction?: CloseAction;
-  onCloseActionChange?: (closeAction: CloseAction) => void;
-  /** 后台运行时是否显示悬浮球；缺省表示显示 */
-  showFloatingBall?: boolean;
-  onShowFloatingBallChange?: (show: boolean) => void;
   /** 开机自启是否可用（Electron 宿主中可用） */
   canToggleLaunchAtStartup?: boolean;
   /** 开机自启当前状态 */
@@ -189,10 +182,6 @@ export function SettingsDrawer({
   onThemeChange,
   colorTheme = 'ink',
   onColorThemeChange,
-  closeAction = 'background',
-  onCloseActionChange,
-  showFloatingBall = true,
-  onShowFloatingBallChange,
   canToggleLaunchAtStartup = false,
   launchAtStartup = false,
   onLaunchAtStartupChange,
@@ -700,41 +689,11 @@ export function SettingsDrawer({
             ) : null}
           </section>
 
-          {/* 窗口与启动：关闭行为、悬浮球与开机自启 */}
+          {/* 窗口与启动：开机自启 */}
           <section className="settings-group" aria-labelledby="window-behavior-title">
             <h3 id="window-behavior-title" className="settings-group-title">
               窗口与启动
             </h3>
-            <div className="settings-field">
-              <label htmlFor="close-action-select">点击关闭时</label>
-              <select
-                id="close-action-select"
-                className="settings-select"
-                value={closeAction}
-                disabled={disabled}
-                onChange={(e) => onCloseActionChange?.(e.target.value as CloseAction)}
-              >
-                <option value="background">后台运行（推荐）</option>
-                <option value="quit">直接退出程序</option>
-              </select>
-              <small className="settings-field-hint">
-                {closeAction === 'background'
-                  ? '点击关闭后程序在后台待命，随时可以快速回到课堂界面。'
-                  : '点击关闭后程序完全退出。'}
-              </small>
-            </div>
-            <PillSwitch
-              checked={showFloatingBall}
-              disabled={disabled || closeAction !== 'background'}
-              label="后台运行时显示悬浮球"
-              ariaLabel="后台运行时显示悬浮球"
-              description={
-                showFloatingBall
-                  ? '缩到后台时在屏幕右上角显示悬浮球，点击即可一键回到主界面。'
-                  : '缩到后台时不显示悬浮球，再次打开应用即可回到主界面。'
-              }
-              onChange={onShowFloatingBallChange}
-            />
             <PillSwitch
               checked={launchAtStartup}
               disabled={disabled || !canToggleLaunchAtStartup}

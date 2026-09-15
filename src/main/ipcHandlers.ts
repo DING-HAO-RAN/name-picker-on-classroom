@@ -2,7 +2,6 @@ import { basename, extname, win32 } from 'node:path';
 import type { OpenDialogOptions } from 'electron';
 import {
   IPC_CHANNELS,
-  type FloatingControlAction,
   type ImportResult,
   type IpcFailureEnvelope,
   type IpcResponse,
@@ -10,7 +9,6 @@ import {
   type WindowControlAction,
 } from '../shared/ipcTypes';
 import {
-  CLOSE_ACTIONS,
   COLOR_THEMES,
   DEFAULT_BRANDING,
   MAX_ANIMATION_DURATION_MS,
@@ -38,22 +36,6 @@ export interface IpcWindowControls {
   isMaximized(): boolean;
 }
 
-/** 悬浮球控制能力：由 main 进程绑定到真实窗口行为 */
-export interface IpcFloatingControls {
-  /** 隐藏悬浮球并显示主界面 */
-  restore(): void;
-  /** 在悬浮球位置弹出右键菜单（打开主界面 / 退出程序） */
-  menu(): void;
-  /** 真正退出程序（放行窗口关闭） */
-  quit(): void;
-  /** 指针按下：标记拖动开始 */
-  dragStart(): void;
-  /** 指针拖动中：按 DIP 增量移动窗口（screenX/Y 与 setPosition 同单位），兼容鼠标与触控 */
-  dragMove(dx: number, dy: number): void;
-  /** 指针抬起：结束拖动 */
-  dragEnd(): void;
-}
-
 /** 开机自启能力：由 main 进程绑定到 app 登录项 */
 export interface IpcLaunchControls {
   getCurrent(): boolean;
@@ -74,7 +56,6 @@ export interface IpcHandlerDependencies {
     clear: () => Promise<void>;
   };
   windowControls?: IpcWindowControls;
-  floatingControls?: IpcFloatingControls;
   launchControls?: IpcLaunchControls;
   brandingControls?: IpcBrandingControls;
   starSyncControls?: {
@@ -89,8 +70,6 @@ export interface IpcHandlers {
   clearState(): Promise<void>;
   /** 执行窗口操作并返回操作后的最大化状态 */
   windowControl(action: unknown): Promise<boolean>;
-  /** 执行悬浮球操作；drag-start 带 { dpr }，drag-move 带 { dx, dy } 物理像素增量 */
-  floatingControl(action: unknown, payload?: unknown): Promise<void>;
   /** 读取/设置开机自启；set 时 payload 为 { enabled } */
   launchSettings(action: unknown, payload?: unknown): Promise<boolean>;
   /** 应用品牌自定义：窗口标题与窗口图标 */
@@ -193,21 +172,8 @@ const WINDOW_CONTROL_ACTIONS = new Set<WindowControlAction>([
   'get-maximized',
 ]);
 
-const FLOATING_CONTROL_ACTIONS = new Set<FloatingControlAction>([
-  'restore',
-  'menu',
-  'quit',
-  'drag-start',
-  'drag-move',
-  'drag-end',
-]);
-
 function isWindowControlAction(value: unknown): value is WindowControlAction {
   return typeof value === 'string' && WINDOW_CONTROL_ACTIONS.has(value as WindowControlAction);
-}
-
-function isFloatingControlAction(value: unknown): value is FloatingControlAction {
-  return typeof value === 'string' && FLOATING_CONTROL_ACTIONS.has(value as FloatingControlAction);
 }
 
 function normalizeRequiredString(value: unknown): string | undefined {
@@ -371,19 +337,6 @@ function normalizeSettings(value: unknown): RosterState['settings'] | undefined 
   // 配色方案：只接受预定义主题，其他取值丢弃回到默认墨青
   if (typeof value.colorTheme === 'string' && (COLOR_THEMES as string[]).includes(value.colorTheme)) {
     normalizedSettings.colorTheme = value.colorTheme as RosterState['settings']['colorTheme'];
-  }
-
-  // 关闭行为：只接受后台运行 / 直接退出，其他取值丢弃回到默认后台
-  if (
-    typeof value.closeAction === 'string' &&
-    (CLOSE_ACTIONS as string[]).includes(value.closeAction)
-  ) {
-    normalizedSettings.closeAction = value.closeAction as RosterState['settings']['closeAction'];
-  }
-
-  // 后台运行时是否显示悬浮球：只接受布尔值
-  if (typeof value.showFloatingBall === 'boolean') {
-    normalizedSettings.showFloatingBall = value.showFloatingBall;
   }
 
   // 开机自启（UI 回显用）：只接受布尔值，实际生效由主进程登录项管理
@@ -700,36 +653,6 @@ export function createIpcHandlers(dependencies: IpcHandlerDependencies): IpcHand
       return windowControls.isMaximized();
     },
 
-    async floatingControl(action: unknown, payload?: unknown): Promise<void> {
-      if (!isFloatingControlAction(action)) {
-        throw invalidWindowActionError();
-      }
-
-      const floatingControls = dependencies.floatingControls;
-      if (!floatingControls) {
-        return;
-      }
-
-      if (action === 'restore') {
-        floatingControls.restore();
-      } else if (action === 'menu') {
-        floatingControls.menu();
-      } else if (action === 'quit') {
-        floatingControls.quit();
-      } else if (action === 'drag-start') {
-        floatingControls.dragStart();
-      } else if (action === 'drag-move') {
-        const dx = isRecord(payload) ? payload.dx : undefined;
-        const dy = isRecord(payload) ? payload.dy : undefined;
-        // 增量必须是有限数字，否则忽略本次移动
-        if (typeof dx === 'number' && Number.isFinite(dx) && typeof dy === 'number' && Number.isFinite(dy)) {
-          floatingControls.dragMove(dx, dy);
-        }
-      } else if (action === 'drag-end') {
-        floatingControls.dragEnd();
-      }
-    },
-
     async launchSettings(action: unknown, payload?: unknown): Promise<boolean> {
       const launchControls = dependencies.launchControls;
       if (!launchControls) {
@@ -868,9 +791,6 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, handlers: IpcHandlers)
   );
   ipcMain.handle(IPC_CHANNELS.windowControl, (event, action) =>
     handleTrustedRequest(event, () => handlers.windowControl(action)),
-  );
-  ipcMain.handle(IPC_CHANNELS.floatingControl, (event, action) =>
-    handleTrustedRequest(event, () => handlers.floatingControl(action)),
   );
   ipcMain.handle(IPC_CHANNELS.launchSettings, (event, action, payload) =>
     handleTrustedRequest(event, () => handlers.launchSettings(action, payload)),

@@ -1,0 +1,5 @@
+﻿remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File release13/NamePicker-1.0.0.exe is 84.54 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+To https://github.com/DING-HAO-RAN/name-picker-on-classroom.git
+   5781749..cbfcf3b  master -> main

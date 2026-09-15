@@ -98,11 +98,6 @@ export type ColorTheme = 'ink' | 'sunset' | 'meadow' | 'dusk' | 'plum';
 
 export const COLOR_THEMES: ColorTheme[] = ['ink', 'sunset', 'meadow', 'dusk', 'plum'];
 
-// 点击关闭按钮时的默认行为：background 缩到后台（默认）| quit 直接退出
-export type CloseAction = 'background' | 'quit';
-
-export const CLOSE_ACTIONS: CloseAction[] = ['background', 'quit'];
-
 export interface AppSettings {
   animationEnabled: boolean;
   animationDurationMs: number;
@@ -114,10 +109,6 @@ export interface AppSettings {
   colorTheme?: ColorTheme;
   /** 主界面自定义背景图（dataURL）；缺省表示使用主题默认背景 */
   backgroundImage?: string;
-  /** 点击关闭时的默认行为；缺省表示缩到后台运行 */
-  closeAction?: CloseAction;
-  /** 后台运行时是否显示悬浮球；缺省表示显示 */
-  showFloatingBall?: boolean;
   /** 开机自启（UI 回显用，实际生效由主进程登录项管理） */
   launchAtStartup?: boolean;
   /** 保底池设置；缺省表示未启用 */

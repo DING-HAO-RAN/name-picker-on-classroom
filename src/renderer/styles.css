@@ -2076,58 +2076,6 @@ h2 {
   --dark-line: #422c35;
 }
 
-/* 悬浮球窗口：去掉页面底色，重置全局最小尺寸并禁用溢出，
-   否则 html/body 的 320px 最小宽度会在 64px 小窗里撑出滚动条 */
-html.is-floating-window,
-body.is-floating-window {
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: transparent;
-}
-
-/* ==========================================================================
-   悬浮球：主界面缩到后台时显示的置顶圆形图标（64x64 透明无边框小窗）。
-   整个圆形区域可点击、可拖动：border-radius 的圆角外区域不参与命中，
-   配合 Pointer Events 自实现拖动（渲染器上报坐标，主进程移动窗口）。
-   ========================================================================== */
-.floating-ball {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  place-items: center;
-  /* 圆形命中区域：圆角外不接收点击，实际可点击体积就是纯圆形 */
-  border-radius: 50%;
-  /* 几乎不可见但 alpha > 0，让整个圆形区域（含图标镂空处）都能接收指针事件 */
-  background: rgba(255, 255, 255, 0.01);
-  /* 触控优化：禁用浏览器默认手势，保证拖动跟手 */
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: grab;
-  color: #3b82f6;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
-}
-
-.floating-ball:active {
-  cursor: grabbing;
-  transform: scale(0.95);
-  transition: transform 100ms ease;
-}
-
-@media (hover: hover) {
-  .floating-ball:hover {
-    transform: scale(1.06);
-    transition: transform 120ms ease;
-  }
-}
-
-.floating-ball__icon {
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
 /* ==========================================================================
    抽卡式抽取动画：全屏星穹舞台 + 3D 翻卡揭晓
    星级配色：1 白 | 2 蓝 | 3 紫 | 4 红 | 5 金（参考二次元抽卡游戏稀有度）
@@ -2139,9 +2087,10 @@ body.is-floating-window {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 40px 24px;
+  /* 卡牌较多时舞台内部滚动，标题与底部按钮始终留在视口内 */
+  justify-content: flex-start;
+  gap: 18px;
+  padding: 24px;
   /* 星穹夜幕：主题主色晕染的深色底 + 微光星点 */
   background:
     radial-gradient(circle at 20% 15%, rgba(var(--c-primary-rgb), 0.22) 0%, transparent 42%),
@@ -2167,12 +2116,24 @@ body.is-floating-window {
 }
 
 .card-draw__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* 一次性抽很多卡时舞台自身滚动，不再把「收下结果」按钮挤出屏幕 */
+  overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  align-content: safe center;
   justify-content: center;
   gap: clamp(18px, 3vw, 34px);
   perspective: 1200px;
+  padding: 8px;
+}
+
+.card-draw__title,
+.card-draw__finish,
+.card-draw__hint {
+  flex-shrink: 0;
 }
 
 /* 卡槽：入场时从中央牌堆飞到位（从卡堆抽牌的效果），延迟按序号递增 */

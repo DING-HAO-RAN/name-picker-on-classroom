@@ -47,19 +47,16 @@ describe('preload namePicker bridge', () => {
       NamePickerApi,
     ];
     expect(namespace).toBe('namePicker');
-    // 非悬浮球窗口（jsdom 无 ?window=floating）不暴露 floatingControls
     expect(Object.keys(exposedApi)).toEqual([
       'importRoster',
       'loadState',
       'saveState',
       'clearState',
       'windowControls',
-      'floatingControls',
       'launchSettings',
       'brandingControls',
       'starSync',
     ]);
-    expect(exposedApi.floatingControls).toBeUndefined();
     expect(Object.keys(exposedApi.launchSettings ?? {})).toEqual(['getCurrent', 'setEnabled']);
     expect(Object.keys(exposedApi.brandingControls ?? {})).toEqual(['apply']);
     expect(Object.keys(exposedApi.starSync ?? {})).toEqual(['sync']);
@@ -133,37 +130,6 @@ describe('preload namePicker bridge', () => {
       IPC_CHANNELS.windowMaximizedChanged,
       handler,
     );
-  });
-
-  it('悬浮球窗口注入 floatingControls 并转发到固定 channel', async () => {
-    electronMocks.invoke.mockResolvedValue({ ok: true, data: undefined });
-    // 模拟悬浮球窗口的 URL 查询参数
-    vi.stubGlobal('location', new URL('http://localhost/index.html?window=floating'));
-
-    await import('./index');
-
-    const [, exposedApi] = electronMocks.exposeInMainWorld.mock.calls[0] as [
-      string,
-      NamePickerApi,
-    ];
-    const floatingControls = exposedApi.floatingControls;
-    expect(floatingControls).toBeDefined();
-    await floatingControls?.control('restore');
-    await floatingControls?.control('menu');
-    await floatingControls?.control('quit');
-    await floatingControls?.control('drag-start');
-    await floatingControls?.control('drag-move', { dx: 30, dy: -12 });
-    await floatingControls?.control('drag-end');
-
-    expect(electronMocks.invoke.mock.calls).toEqual([
-      [IPC_CHANNELS.floatingControl, 'restore', undefined],
-      [IPC_CHANNELS.floatingControl, 'menu', undefined],
-      [IPC_CHANNELS.floatingControl, 'quit', undefined],
-      [IPC_CHANNELS.floatingControl, 'drag-start', undefined],
-      [IPC_CHANNELS.floatingControl, 'drag-move', { dx: 30, dy: -12 }],
-      [IPC_CHANNELS.floatingControl, 'drag-end', undefined],
-    ]);
-    vi.unstubAllGlobals();
   });
 
   it('收到失败 envelope 时构造带 code 的 renderer Error', async () => {

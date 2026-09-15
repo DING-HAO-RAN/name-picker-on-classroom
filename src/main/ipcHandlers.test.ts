@@ -485,7 +485,6 @@ describe('主进程 IPC 业务 handler', () => {
       IPC_CHANNELS.saveState,
       IPC_CHANNELS.clearState,
       IPC_CHANNELS.windowControl,
-      IPC_CHANNELS.floatingControl,
       IPC_CHANNELS.launchSettings,
       IPC_CHANNELS.branding,
       IPC_CHANNELS.syncStars,
@@ -588,46 +587,6 @@ describe('主进程 IPC 业务 handler', () => {
     });
 
     await expect(handlers.windowControl('minimize')).resolves.toBe(false);
-  });
-
-  it('悬浮球操作按白名单分发到主进程控制', async () => {
-    const floatingControls = {
-      restore: vi.fn(),
-      menu: vi.fn(),
-      quit: vi.fn(),
-      dragStart: vi.fn(),
-      dragMove: vi.fn(),
-      dragEnd: vi.fn(),
-    };
-    const handlers = createIpcHandlers({
-      showOpenDialog: vi.fn(),
-      importRoster: vi.fn(),
-      store: createStore(),
-      floatingControls,
-    });
-
-    await expect(handlers.floatingControl('restore')).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('menu')).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('quit')).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('drag-start')).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('drag-move', { dx: 30, dy: -12 })).resolves.toBeUndefined();
-    await expect(handlers.floatingControl('drag-end')).resolves.toBeUndefined();
-    expect(floatingControls.restore).toHaveBeenCalledTimes(1);
-    expect(floatingControls.menu).toHaveBeenCalledTimes(1);
-    expect(floatingControls.quit).toHaveBeenCalledTimes(1);
-    expect(floatingControls.dragStart).toHaveBeenCalledTimes(1);
-    expect(floatingControls.dragMove).toHaveBeenCalledWith(30, -12);
-    expect(floatingControls.dragEnd).toHaveBeenCalledTimes(1);
-
-    // 非法增量不触发移动
-    await expect(handlers.floatingControl('drag-move', { dx: 'x', dy: 0 })).resolves.toBeUndefined();
-    expect(floatingControls.dragMove).toHaveBeenCalledTimes(1);
-
-    // 白名单外的悬浮球操作被拒绝
-    await expect(handlers.floatingControl('minimize')).rejects.toEqual({
-      code: 'INVALID_WINDOW_ACTION',
-      message: '不支持的窗口操作。',
-    });
   });
 
   it('saveState 保留合法的颜色主题，丢弃未知主题', async () => {

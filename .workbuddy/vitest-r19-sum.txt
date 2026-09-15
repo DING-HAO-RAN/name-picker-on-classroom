@@ -1,0 +1,5 @@
+﻿[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m10 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m179 passed[39m[22m[90m (180)[39m
+[2m   Duration [22m 16.61s[2m (transform 3.15s, setup 0ms, collect 13.17s, tests 10.75s, environment 44.00s, prepare 6.29s)[22m
+VITEST=1
